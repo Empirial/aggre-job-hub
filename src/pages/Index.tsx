@@ -1,3 +1,5 @@
+import { Navigation } from "@/components/Navigation";
+import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { SearchBar } from "@/components/SearchBar";
 import { Card } from "@/components/ui/card";
@@ -20,31 +22,9 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-              JobFinder
-            </h1>
-            <nav className="hidden md:flex items-center gap-6">
-              <Link to="/jobs" className="text-muted-foreground hover:text-foreground transition-colors">
-                Find Jobs
-              </Link>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                Companies
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                Resources
-              </a>
-              <Button variant="outline">Sign In</Button>
-              <Button>Post a Job</Button>
-            </nav>
-          </div>
-        </div>
-      </header>
-
+    <div className="min-h-screen flex flex-col">
+      <Navigation />
+      
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-hero py-20 md:py-32">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
@@ -140,48 +120,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border py-12 bg-card">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <h4 className="font-bold text-lg mb-4 bg-gradient-hero bg-clip-text text-transparent">
-                JobFinder
-              </h4>
-              <p className="text-muted-foreground">
-                Your trusted platform for finding the perfect job opportunity.
-              </p>
-            </div>
-            <div>
-              <h5 className="font-semibold mb-4">For Job Seekers</h5>
-              <ul className="space-y-2 text-muted-foreground">
-                <li><a href="#" className="hover:text-foreground transition-colors">Browse Jobs</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Companies</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Career Advice</a></li>
-              </ul>
-            </div>
-            <div>
-              <h5 className="font-semibold mb-4">For Employers</h5>
-              <ul className="space-y-2 text-muted-foreground">
-                <li><a href="#" className="hover:text-foreground transition-colors">Post a Job</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Resources</a></li>
-              </ul>
-            </div>
-            <div>
-              <h5 className="font-semibold mb-4">Company</h5>
-              <ul className="space-y-2 text-muted-foreground">
-                <li><a href="#" className="hover:text-foreground transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Contact</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground">
-            <p>© 2024 JobFinder. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

@@ -1,3 +1,5 @@
+import { Navigation } from "@/components/Navigation";
+import { Footer } from "@/components/Footer";
 import { JobCard } from "@/components/JobCard";
 import { SearchBar } from "@/components/SearchBar";
 import { FilterSidebar } from "@/components/FilterSidebar";
@@ -66,31 +68,9 @@ const mockJobs = [
 
 const Jobs = () => {
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <a href="/" className="text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-              JobFinder
-            </a>
-            <nav className="hidden md:flex items-center gap-6">
-              <a href="/jobs" className="text-foreground hover:text-primary transition-colors font-medium">
-                Find Jobs
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                Companies
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                Resources
-              </a>
-              <Button variant="outline">Sign In</Button>
-              <Button>Post a Job</Button>
-            </nav>
-          </div>
-        </div>
-      </header>
-
+    <div className="min-h-screen flex flex-col">
+      <Navigation />
+      
       {/* Search Section */}
       <section className="bg-muted/30 border-b border-border">
         <div className="container mx-auto px-4 py-8">
@@ -146,6 +126,8 @@ const Jobs = () => {
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 };

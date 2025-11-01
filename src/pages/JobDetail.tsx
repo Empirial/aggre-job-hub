@@ -1,9 +1,11 @@
+import { useParams, Link } from "react-router-dom";
+import { Navigation } from "@/components/Navigation";
+import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { MapPin, Building2, Clock, DollarSign, Bookmark, Share2, Calendar, Users, Briefcase } from "lucide-react";
-import { useParams, Link } from "react-router-dom";
 
 const JobDetail = () => {
   const { id } = useParams();
@@ -46,31 +48,9 @@ const JobDetail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-              JobFinder
-            </Link>
-            <nav className="hidden md:flex items-center gap-6">
-              <Link to="/jobs" className="text-foreground hover:text-primary transition-colors font-medium">
-                Find Jobs
-              </Link>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                Companies
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                Resources
-              </a>
-              <Button variant="outline">Sign In</Button>
-              <Button>Post a Job</Button>
-            </nav>
-          </div>
-        </div>
-      </header>
-
+    <div className="min-h-screen flex flex-col">
+      <Navigation />
+      
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
@@ -220,6 +200,8 @@ const JobDetail = () => {
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 };
