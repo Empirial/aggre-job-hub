@@ -6,6 +6,10 @@ import { FilterSidebar } from "@/components/FilterSidebar";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SlidersHorizontal } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "react-router-dom";
 
 // Mock data
 const mockJobs = [
@@ -67,6 +71,64 @@ const mockJobs = [
 ];
 
 const Jobs = () => {
+  const [jobs, setJobs] = useState<any[]>(mockJobs);
+  const [loading, setLoading] = useState(false);
+  const [totalJobs, setTotalJobs] = useState(mockJobs.length);
+  const { toast } = useToast();
+  const location = useLocation();
+
+  // Handle search from home page navigation
+  useEffect(() => {
+    if (location.state?.keywords || location.state?.location) {
+      handleSearch(location.state.keywords || '', location.state.location || '');
+    }
+  }, [location.state]);
+
+  const handleSearch = async (keywords: string, location: string) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('search-jobs', {
+        body: {
+          keywords,
+          location,
+          page: 1,
+          pageSize: 20,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.type === 'LOCATIONS') {
+        toast({
+          title: "Location Clarification Needed",
+          description: data.message === 'no matching location found' 
+            ? "No matching location found. Please try a different location."
+            : "Multiple locations found. Please be more specific.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data.type === 'JOBS') {
+        setJobs(data.jobs || []);
+        setTotalJobs(data.hits || 0);
+        toast({
+          title: "Search Complete",
+          description: `Found ${data.hits || 0} matching jobs`,
+        });
+      }
+    } catch (error: any) {
+      console.error('Search error:', error);
+      toast({
+        title: "Search Failed",
+        description: error.message || "Failed to search jobs. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
@@ -74,7 +136,7 @@ const Jobs = () => {
       {/* Search Section */}
       <section className="bg-muted/30 border-b border-border">
         <div className="container mx-auto px-4 py-8">
-          <SearchBar />
+          <SearchBar onSearch={handleSearch} />
         </div>
       </section>
 
@@ -83,7 +145,9 @@ const Jobs = () => {
         {/* Results Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold mb-1">Found {mockJobs.length} jobs</h1>
+            <h1 className="text-2xl font-bold mb-1">
+              {loading ? "Searching..." : `Found ${totalJobs} jobs`}
+            </h1>
             <p className="text-muted-foreground">Browse through the latest opportunities</p>
           </div>
           <div className="flex items-center gap-3">
@@ -113,9 +177,30 @@ const Jobs = () => {
 
           {/* Job Listings */}
           <div className="lg:col-span-3 space-y-4">
-            {mockJobs.map((job) => (
-              <JobCard key={job.id} {...job} />
-            ))}
+            {loading ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Searching for jobs...</p>
+              </div>
+            ) : jobs.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No jobs found. Try a different search.</p>
+              </div>
+            ) : (
+              jobs.map((job, index) => (
+                <JobCard 
+                  key={job.url || index} 
+                  id={index.toString()}
+                  title={job.title}
+                  company={job.company}
+                  location={job.locations}
+                  type={job.salary_type === 'Y' ? 'Full-time' : 'Part-time'}
+                  salary={job.salary || 'Not specified'}
+                  postedDate={job.date}
+                  description={job.description}
+                  tags={[]}
+                />
+              ))
+            )}
 
             {/* Load More */}
             <div className="flex justify-center pt-8">

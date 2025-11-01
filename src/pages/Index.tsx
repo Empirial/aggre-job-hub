@@ -4,9 +4,16 @@ import { Button } from "@/components/ui/button";
 import { SearchBar } from "@/components/SearchBar";
 import { Card } from "@/components/ui/card";
 import { Briefcase, Building2, TrendingUp, Users, MapPin, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const navigate = useNavigate();
+
+  const handleSearch = (keywords: string, location: string) => {
+    // Navigate to jobs page - the Jobs page will handle the search
+    navigate('/jobs', { state: { keywords, location } });
+  };
+
   const categories = [
     { name: "Technology", count: "5,234", icon: Briefcase },
     { name: "Marketing", count: "2,156", icon: TrendingUp },
@@ -37,7 +44,7 @@ const Index = () => {
               Discover thousands of opportunities from top companies across South Africa
             </p>
           </div>
-          <SearchBar variant="hero" />
+          <SearchBar variant="hero" onSearch={handleSearch} />
           <div className="mt-8 text-center">
             <p className="text-white/80">
               Popular searches:{" "}
