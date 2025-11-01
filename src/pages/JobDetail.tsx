@@ -12,10 +12,10 @@ const JobDetail = () => {
   const job = {
     id,
     title: "Senior Frontend Developer",
-    company: "TechCorp Inc.",
-    location: "San Francisco, CA",
+    company: "Digital Solutions SA",
+    location: "Sandton, Johannesburg",
     type: "Full-time",
-    salary: "$120k - $180k",
+    salary: "R720k - R1.08M",
     postedDate: "2 days ago",
     tags: ["React", "TypeScript", "CSS", "JavaScript", "Git"],
     description: `We're looking for an experienced frontend developer to join our growing team. You'll work on cutting-edge web applications using React, TypeScript, and modern tooling.`,
@@ -36,12 +36,12 @@ const JobDetail = () => {
     ],
     benefits: [
       "Competitive salary and equity package",
-      "Health, dental, and vision insurance",
-      "401(k) matching",
-      "Flexible PTO policy",
+      "Medical aid and gap cover",
+      "Retirement annuity matching",
+      "Flexible leave policy",
       "Remote work options",
       "Professional development budget",
-      "Gym membership reimbursement",
+      "Wellness and gym benefits",
     ],
   };
 
@@ -195,7 +195,7 @@ const JobDetail = () => {
                   <Users className="w-5 h-5 text-muted-foreground" />
                   <div>
                     <p className="text-sm font-medium">Company Size</p>
-                    <p className="text-sm text-muted-foreground">500-1000 employees</p>
+                    <p className="text-sm text-muted-foreground">200-500 employees</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -209,7 +209,7 @@ const JobDetail = () => {
                   <MapPin className="w-5 h-5 text-muted-foreground" />
                   <div>
                     <p className="text-sm font-medium">Headquarters</p>
-                    <p className="text-sm text-muted-foreground">San Francisco, CA</p>
+                    <p className="text-sm text-muted-foreground">Sandton, Johannesburg</p>
                   </div>
                 </div>
               </div>

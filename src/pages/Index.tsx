@@ -13,10 +13,10 @@ const Index = () => {
   ];
 
   const locations = [
-    { city: "San Francisco", jobs: "12,234" },
-    { city: "New York", jobs: "10,567" },
-    { city: "Austin", jobs: "8,901" },
-    { city: "Remote", jobs: "25,432" },
+    { city: "Johannesburg", jobs: "8,234" },
+    { city: "Cape Town", jobs: "6,567" },
+    { city: "Durban", jobs: "3,891" },
+    { city: "Remote", jobs: "12,432" },
   ];
 
   return (
@@ -54,7 +54,7 @@ const Index = () => {
               Find Your Dream Job Today
             </h2>
             <p className="text-xl text-white/90 mb-8">
-              Discover thousands of opportunities from top companies around the world
+              Discover thousands of opportunities from top companies across South Africa
             </p>
           </div>
           <SearchBar variant="hero" />
