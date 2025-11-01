@@ -11,6 +11,117 @@ interface Job {
   department: string;
   location: string;
   closingDate: string;
+  source?: string;
+}
+
+interface DepartmentPDF {
+  name: string;
+  url: string;
+}
+
+async function parsePdfText(pdfUrl: string): Promise<string> {
+  try {
+    // Use pdf.co API to extract text from PDF
+    const apiKey = Deno.env.get('PDF_CO_API_KEY') || 'demo';
+    
+    const response = await fetch('https://api.pdf.co/v1/pdf/convert/to/text', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+      },
+      body: JSON.stringify({
+        url: pdfUrl,
+        async: false,
+      }),
+    });
+    
+    if (!response.ok) {
+      console.error(`PDF.co API error for ${pdfUrl}:`, response.status);
+      return '';
+    }
+    
+    const data = await response.json();
+    
+    if (data.url) {
+      // Download the extracted text
+      const textResponse = await fetch(data.url);
+      return await textResponse.text();
+    }
+    
+    return '';
+  } catch (error) {
+    console.error(`Error parsing PDF ${pdfUrl}:`, error);
+    return '';
+  }
+}
+
+function extractJobsFromText(text: string, departmentName: string): Job[] {
+  const jobs: Job[] = [];
+  
+  // Split text into lines
+  const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+  
+  // Look for common patterns in DPSA job listings
+  // Pattern: POST XX/XX: Job Title
+  const postPattern = /POST\s+\d+\/\d+\s*:?\s*(.+)/i;
+  
+  let currentJob: Partial<Job> | null = null;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    
+    // Check if line starts a new job posting
+    const postMatch = line.match(postPattern);
+    if (postMatch) {
+      // Save previous job if exists
+      if (currentJob && currentJob.title) {
+        jobs.push({
+          title: currentJob.title,
+          department: currentJob.department || departmentName,
+          location: currentJob.location || 'Not specified',
+          closingDate: currentJob.closingDate || 'Not specified',
+          source: departmentName,
+        });
+      }
+      
+      // Start new job
+      currentJob = {
+        title: postMatch[1].trim(),
+        department: departmentName,
+      };
+      continue;
+    }
+    
+    // Extract location/centre
+    if (currentJob && (line.toLowerCase().includes('centre:') || line.toLowerCase().includes('station:'))) {
+      const locationMatch = line.match(/(?:centre|station)\s*:?\s*(.+)/i);
+      if (locationMatch) {
+        currentJob.location = locationMatch[1].trim();
+      }
+    }
+    
+    // Extract closing date
+    if (currentJob && line.toLowerCase().includes('closing date')) {
+      const dateMatch = line.match(/closing\s+date\s*:?\s*(.+)/i);
+      if (dateMatch) {
+        currentJob.closingDate = dateMatch[1].trim();
+      }
+    }
+  }
+  
+  // Save last job
+  if (currentJob && currentJob.title) {
+    jobs.push({
+      title: currentJob.title,
+      department: currentJob.department || departmentName,
+      location: currentJob.location || 'Not specified',
+      closingDate: currentJob.closingDate || 'Not specified',
+      source: departmentName,
+    });
+  }
+  
+  return jobs;
 }
 
 serve(async (req) => {
@@ -75,43 +186,57 @@ serve(async (req) => {
       throw new Error('Failed to parse circular page HTML');
     }
     
-    // Step 4: Find all job tables and extract data
-    console.log('Extracting job data from tables...');
-    const jobs: Job[] = [];
-    const tables = circularDoc.querySelectorAll('table');
+    // Step 4: Extract PDF links from the circular page
+    console.log('Extracting department PDF links...');
+    const pdfLinks: DepartmentPDF[] = [];
+    const allLinks = circularDoc.querySelectorAll('a');
     
-    console.log(`Found ${tables.length} tables`);
-    
-    for (const table of tables) {
-      const rows = (table as Element).querySelectorAll('tr');
+    for (const link of allLinks) {
+      const href = (link as Element).getAttribute('href');
+      const text = link.textContent.trim();
       
-      for (let i = 1; i < rows.length; i++) { // Skip header row
-        const cells = (rows[i] as Element).querySelectorAll('td, th');
-        
-        if (cells.length >= 4) {
-          const job: Job = {
-            title: cells[0]?.textContent.trim() || '',
-            department: cells[1]?.textContent.trim() || '',
-            location: cells[2]?.textContent.trim() || '',
-            closingDate: cells[3]?.textContent.trim() || '',
-          };
-          
-          // Only add if we have at least a title
-          if (job.title) {
-            jobs.push(job);
-          }
-        }
+      if (href && href.toLowerCase().endsWith('.pdf') && text) {
+        const fullUrl = href.startsWith('http') ? href : `https://www.dpsa.gov.za${href}`;
+        pdfLinks.push({
+          name: text,
+          url: fullUrl,
+        });
       }
     }
     
-    console.log(`Extracted ${jobs.length} jobs`);
+    console.log(`Found ${pdfLinks.length} department PDFs`);
+    
+    // Step 5: Parse PDFs and extract jobs (limit to first 5 PDFs to avoid timeout)
+    const jobs: Job[] = [];
+    const maxPdfs = 5;
+    
+    for (let i = 0; i < Math.min(pdfLinks.length, maxPdfs); i++) {
+      const pdf = pdfLinks[i];
+      console.log(`Processing PDF ${i + 1}/${Math.min(pdfLinks.length, maxPdfs)}: ${pdf.name}`);
+      
+      try {
+        const pdfText = await parsePdfText(pdf.url);
+        if (pdfText) {
+          const extractedJobs = extractJobsFromText(pdfText, pdf.name);
+          jobs.push(...extractedJobs);
+          console.log(`Extracted ${extractedJobs.length} jobs from ${pdf.name}`);
+        }
+      } catch (error) {
+        console.error(`Failed to process PDF ${pdf.name}:`, error);
+      }
+    }
+    
+    console.log(`Total extracted jobs: ${jobs.length}`);
     
     return new Response(JSON.stringify({
       success: true,
       circular: latestCircularText,
       circularUrl: latestCircularUrl,
+      totalPdfs: pdfLinks.length,
+      processedPdfs: Math.min(pdfLinks.length, maxPdfs),
       totalJobs: jobs.length,
       jobs: jobs,
+      allPdfLinks: pdfLinks.slice(0, 10), // Return first 10 PDF links for reference
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
