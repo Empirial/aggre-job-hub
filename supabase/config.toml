@@ -2,3 +2,6 @@ project_id = "pskbgmguvaijmimfhyph"
 
 [functions.search-jobs]
 verify_jwt = false
+
+[functions.scrape-dpsa-jobs]
+verify_jwt = false
