@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { MapPin, Building2, Clock, DollarSign, Bookmark, Share2, Calendar, Users, Briefcase } from "lucide-react";
 
+// Job detail page component
 const JobDetail = () => {
   const { id } = useParams();
 
