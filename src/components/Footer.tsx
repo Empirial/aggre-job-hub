@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Briefcase, Mail, MapPin, Phone } from "lucide-react";
+import { Briefcase, Mail, MapPin, Phone, Facebook, Twitter, Linkedin, Instagram } from "lucide-react";
 
 export const Footer = () => {
   return (
@@ -14,9 +14,23 @@ export const Footer = () => {
                 JobFinder SA
               </span>
             </Link>
-            <p className="text-sm text-muted-foreground">
-              South Africa's leading job aggregator. Find your dream job today.
+            <p className="text-sm text-muted-foreground mb-4">
+              Empowering South African youth with career opportunities, bursaries, and STEM resources. Your future starts here.
             </p>
+            <div className="flex gap-3">
+              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                <Facebook className="w-5 h-5" />
+              </a>
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                <Twitter className="w-5 h-5" />
+              </a>
+              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                <Linkedin className="w-5 h-5" />
+              </a>
+              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                <Instagram className="w-5 h-5" />
+              </a>
+            </div>
           </div>
 
           {/* Quick Links */}
@@ -24,9 +38,10 @@ export const Footer = () => {
             <h4 className="font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2 text-sm">
               <li><Link to="/jobs" className="text-muted-foreground hover:text-primary transition-colors">Browse Jobs</Link></li>
-              <li><Link to="/companies" className="text-muted-foreground hover:text-primary transition-colors">Companies</Link></li>
-              <li><Link to="/employers" className="text-muted-foreground hover:text-primary transition-colors">For Employers</Link></li>
+              <li><Link to="/stem-careers" className="text-muted-foreground hover:text-primary transition-colors">STEM Careers</Link></li>
+              <li><Link to="/bursaries" className="text-muted-foreground hover:text-primary transition-colors">Bursaries</Link></li>
               <li><Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">About Us</Link></li>
+              <li><Link to="/donate" className="text-muted-foreground hover:text-primary transition-colors">Donate</Link></li>
             </ul>
           </div>
 
@@ -35,7 +50,7 @@ export const Footer = () => {
             <h4 className="font-semibold mb-4">Resources</h4>
             <ul className="space-y-2 text-sm">
               <li><Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link></li>
-              <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors">Privacy Policy</a></li>
+              <li><Link to="/privacy" className="text-muted-foreground hover:text-primary transition-colors">Privacy Policy</Link></li>
               <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors">Terms of Service</a></li>
               <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors">FAQ</a></li>
             </ul>
@@ -63,6 +78,7 @@ export const Footer = () => {
 
         <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
           <p>&copy; {new Date().getFullYear()} JobFinder SA. All rights reserved.</p>
+          <p className="mt-2">Made with ❤️ in South Africa for South Africans</p>
         </div>
       </div>
     </footer>

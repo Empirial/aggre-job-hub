@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Briefcase, Menu, X } from "lucide-react";
+import { Briefcase, Menu, X, Heart } from "lucide-react";
 import { useState } from "react";
 
 export const Navigation = () => {
@@ -9,8 +9,8 @@ export const Navigation = () => {
 
   const navLinks = [
     { name: "Jobs", path: "/jobs" },
-    { name: "Companies", path: "/companies" },
-    { name: "For Employers", path: "/employers" },
+    { name: "STEM Careers", path: "/stem-careers" },
+    { name: "Bursaries", path: "/bursaries" },
     { name: "About", path: "/about" },
     { name: "Contact", path: "/contact" },
   ];
@@ -42,7 +42,12 @@ export const Navigation = () => {
                 {link.name}
               </Link>
             ))}
-            <Button size="sm">Post a Job</Button>
+            <Link to="/donate">
+              <Button size="sm" className="gap-2">
+                <Heart className="w-4 h-4" />
+                Donate
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -70,7 +75,12 @@ export const Navigation = () => {
                 {link.name}
               </Link>
             ))}
-            <Button size="sm" className="w-full">Post a Job</Button>
+            <Link to="/donate" onClick={() => setMobileMenuOpen(false)}>
+              <Button size="sm" className="w-full gap-2">
+                <Heart className="w-4 h-4" />
+                Donate
+              </Button>
+            </Link>
           </div>
         )}
       </div>
