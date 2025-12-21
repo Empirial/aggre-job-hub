@@ -51,7 +51,7 @@ const Index = () => {
       role: "Software Developer",
       company: "Takealot",
       image: "TM",
-      quote: "After 6 months of searching on multiple platforms, I found my dream job through JobFinder SA within 2 weeks. The STEM career guides helped me understand what skills to highlight.",
+      quote: "After 6 months of searching on multiple platforms, I found my dream job through CareerGate within 2 weeks. The STEM career guides helped me understand what skills to highlight.",
       rating: 5,
     },
     {
@@ -67,7 +67,7 @@ const Index = () => {
       role: "Data Analyst",
       company: "Standard Bank",
       image: "AD",
-      quote: "Coming from a rural area, I had no idea what career paths existed. JobFinder SA opened my eyes to opportunities I never knew about. Highly recommend!",
+      quote: "Coming from a rural area, I had no idea what career paths existed. CareerGate opened my eyes to opportunities I never knew about. Highly recommend!",
       rating: 5,
     },
   ];

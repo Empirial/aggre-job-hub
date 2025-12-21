@@ -32,8 +32,8 @@ const Contact = () => {
               <Card className="p-6">
                 <Mail className="w-8 h-8 text-primary mb-4" />
                 <h3 className="font-semibold mb-2">Email Us</h3>
-                <p className="text-sm text-muted-foreground">info@jobfinder.co.za</p>
-                <p className="text-sm text-muted-foreground">support@jobfinder.co.za</p>
+                <p className="text-sm text-muted-foreground">info@careergate.co.za</p>
+                <p className="text-sm text-muted-foreground">support@careergate.co.za</p>
               </Card>
 
               <Card className="p-6">

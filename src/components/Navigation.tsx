@@ -25,7 +25,7 @@ export const Navigation = () => {
           <Link to="/" className="flex items-center gap-2 font-bold text-xl">
             <Briefcase className="w-6 h-6 text-primary" />
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              JobFinder SA
+              CareerGate
             </span>
           </Link>
 
