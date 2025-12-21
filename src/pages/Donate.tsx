@@ -91,7 +91,7 @@ const Donate = () => {
               Support Our Mission
             </h1>
             <p className="text-lg md:text-xl text-white/90 max-w-3xl mx-auto">
-              Your donation helps us keep JobFinder SA free for all South Africans. Every rand goes directly towards connecting job seekers with opportunities and students with bursaries.
+              Your donation helps us keep CareerGate free for all South Africans. Every rand goes directly towards connecting job seekers with opportunities and students with bursaries.
             </p>
           </div>
         </section>
@@ -257,7 +257,7 @@ const Donate = () => {
                   ))}
                 </div>
                 <p className="text-muted-foreground mb-4">
-                  "I found my first job through JobFinder SA after months of searching. The platform is easy to use and completely free. Thank you to everyone who supports this mission!"
+                  "I found my first job through CareerGate after months of searching. The platform is easy to use and completely free. Thank you to everyone who supports this mission!"
                 </p>
                 <div className="font-medium">— Themba M., Soweto</div>
               </Card>
@@ -268,7 +268,7 @@ const Donate = () => {
                   ))}
                 </div>
                 <p className="text-muted-foreground mb-4">
-                  "The bursary information helped me find funding for my engineering degree. Without JobFinder SA, I might never have known about the Sasol bursary."
+                  "The bursary information helped me find funding for my engineering degree. Without CareerGate, I might never have known about the Sasol bursary."
                 </p>
                 <div className="font-medium">— Naledi K., Pretoria</div>
               </Card>
@@ -295,7 +295,7 @@ const Donate = () => {
               <CheckCircle className="w-12 h-12 mx-auto mb-4 text-primary" />
               <h3 className="font-semibold mb-2">Share Our Platform</h3>
               <p className="text-sm text-muted-foreground">
-                Tell friends, family, and colleagues about JobFinder SA. Every share helps someone find an opportunity.
+                Tell friends, family, and colleagues about CareerGate. Every share helps someone find an opportunity.
               </p>
             </Card>
             <Card className="p-6 text-center">
@@ -319,7 +319,7 @@ const Donate = () => {
         <section className="bg-gradient-hero py-12">
           <div className="container mx-auto px-4 text-center">
             <p className="text-white/90 max-w-2xl mx-auto">
-              <strong className="text-white">Note:</strong> JobFinder SA is registered as a non-profit organization. Donations may be tax-deductible. A receipt will be provided for all donations over R100.
+              <strong className="text-white">Note:</strong> CareerGate is registered as a non-profit organization. Donations may be tax-deductible. A receipt will be provided for all donations over R100.
             </p>
           </div>
         </section>

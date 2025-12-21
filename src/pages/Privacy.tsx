@@ -40,7 +40,7 @@ const Privacy = () => {
             <Card className="p-6">
               <h2 className="text-2xl font-bold mb-4">Introduction</h2>
               <p className="text-muted-foreground mb-4">
-                JobFinder SA ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and use our services.
+                CareerGate ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and use our services.
               </p>
               <p className="text-muted-foreground">
                 We comply with the Protection of Personal Information Act (POPIA) and are committed to ensuring that your privacy is protected. By using our website, you consent to the data practices described in this policy.
@@ -229,7 +229,7 @@ const Privacy = () => {
               <ul className="list-disc list-inside text-muted-foreground space-y-2">
                 <li><strong>Service Providers:</strong> Third-party services that help us operate our website (hosting, analytics, payment processing)</li>
                 <li><strong>Legal Requirements:</strong> When required by law, court order, or government regulation</li>
-                <li><strong>Protection of Rights:</strong> To protect the rights, property, or safety of JobFinder SA, our users, or the public</li>
+                <li><strong>Protection of Rights:</strong> To protect the rights, property, or safety of CareerGate, our users, or the public</li>
                 <li><strong>Consent:</strong> With your explicit consent for any other purpose</li>
               </ul>
             </Card>
@@ -307,7 +307,7 @@ const Privacy = () => {
                 If you have any questions about this Privacy Policy or wish to exercise your rights, please contact us:
               </p>
               <div className="space-y-2 text-muted-foreground">
-                <p><strong>Email:</strong> privacy@jobfinder.co.za</p>
+                <p><strong>Email:</strong> privacy@careergate.co.za</p>
                 <p><strong>Phone:</strong> +27 11 123 4567</p>
                 <p><strong>Address:</strong> 123 Business Street, Sandton, Johannesburg, 2196, South Africa</p>
               </div>

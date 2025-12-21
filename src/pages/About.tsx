@@ -37,31 +37,8 @@ const About = () => {
     },
   ];
 
-  const team = [
-    {
-      name: "Thabo Mokoena",
-      role: "Founder & CEO",
-      bio: "Former HR director with 15 years of experience in talent acquisition. Passionate about youth empowerment.",
-    },
-    {
-      name: "Naledi Khumalo",
-      role: "Head of Partnerships",
-      bio: "Built relationships with 200+ companies and educational institutions across South Africa.",
-    },
-    {
-      name: "Sipho Ndlovu",
-      role: "Technology Lead",
-      bio: "Software engineer dedicated to building accessible technology for underserved communities.",
-    },
-    {
-      name: "Ayanda Zulu",
-      role: "Content Director",
-      bio: "Career counselor and educator with expertise in STEM education and bursary applications.",
-    },
-  ];
-
   const milestones = [
-    { year: "2019", event: "JobFinder SA founded in Johannesburg with a vision to simplify job searching" },
+    { year: "2019", event: "CareerGate founded in Johannesburg with a vision to simplify job searching" },
     { year: "2020", event: "Launched bursary aggregation service, helping 5,000+ students find funding" },
     { year: "2021", event: "Partnered with DPSA to provide government job listings" },
     { year: "2022", event: "Reached 100,000 monthly active users across South Africa" },
@@ -87,7 +64,7 @@ const About = () => {
         <section className="bg-gradient-hero py-20">
           <div className="container mx-auto px-4 text-center">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              About JobFinder SA
+              About CareerGate
             </h1>
             <p className="text-lg md:text-xl text-white/90 max-w-3xl mx-auto">
               Empowering South African youth since 2019. We're more than a job board — we're a movement dedicated to unlocking opportunities and building futures for millions of South Africans.
@@ -104,13 +81,13 @@ const About = () => {
             </div>
             <div className="space-y-6 text-muted-foreground leading-relaxed">
               <p className="text-lg">
-                JobFinder SA was born from a simple frustration: finding a job in South Africa shouldn't require visiting dozens of websites, and accessing bursary information shouldn't be a privilege reserved for those with connections.
+                CareerGate was born from a simple frustration: finding a job in South Africa shouldn't require visiting dozens of websites, and accessing bursary information shouldn't be a privilege reserved for those with connections.
               </p>
               <p>
-                In 2019, our founder Thabo Mokoena — after spending 15 years in corporate HR watching talented candidates slip through the cracks — decided enough was enough. He assembled a team of passionate individuals who shared his vision: to create a single platform where every South African, regardless of their postal code or background, could access the same opportunities.
+                In 2019, we assembled a team of passionate individuals who shared a vision: to create a single platform where every South African, regardless of their postal code or background, could access the same opportunities.
               </p>
               <p>
-                We started in a small office in Braamfontein with just three people and a lot of coffee. Today, we're a team of 25 dedicated individuals serving over 100,000 users monthly across all nine provinces. But our mission remains the same: to level the playing field and ensure that talent, not privilege, determines success.
+                We started small with just a few people and a lot of determination. Today, we serve over 100,000 users monthly across all nine provinces. But our mission remains the same: to level the playing field and ensure that talent, not privilege, determines success.
               </p>
               <p>
                 What sets us apart is our commitment to the communities we serve. We don't just list jobs — we provide career guidance, bursary information, and STEM resources because we understand that finding a job is just one part of the journey. True empowerment comes from education, skills development, and access to information.
@@ -161,32 +138,6 @@ const About = () => {
                 <p className="text-sm text-muted-foreground">{value.description}</p>
               </Card>
             ))}
-          </div>
-        </section>
-
-        {/* Team Section */}
-        <section className="bg-muted/30 py-16">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Meet Our Team</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Passionate individuals working tirelessly to connect South Africans with opportunities.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-              {team.map((member) => (
-                <Card key={member.name} className="p-6 text-center hover:shadow-lg transition-shadow">
-                  <div className="w-20 h-20 bg-gradient-hero rounded-full mx-auto mb-4 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-white">
-                      {member.name.split(' ').map(n => n[0]).join('')}
-                    </span>
-                  </div>
-                  <h3 className="font-semibold text-lg">{member.name}</h3>
-                  <p className="text-sm text-primary mb-2">{member.role}</p>
-                  <p className="text-sm text-muted-foreground">{member.bio}</p>
-                </Card>
-              ))}
-            </div>
           </div>
         </section>
 

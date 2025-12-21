@@ -11,7 +11,7 @@ export const Footer = () => {
             <Link to="/" className="flex items-center gap-2 font-bold text-xl mb-4">
               <Briefcase className="w-6 h-6 text-primary" />
               <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                JobFinder SA
+                CareerGate
               </span>
             </Link>
             <p className="text-sm text-muted-foreground mb-4">
@@ -62,7 +62,7 @@ export const Footer = () => {
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
-                <span>info@jobfinder.co.za</span>
+                <span>info@careergate.co.za</span>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="w-4 h-4" />
@@ -77,7 +77,7 @@ export const Footer = () => {
         </div>
 
         <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} JobFinder SA. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} CareerGate. All rights reserved.</p>
           <p className="mt-2">Made with ❤️ in South Africa for South Africans</p>
         </div>
       </div>
