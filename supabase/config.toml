@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.scrape-dpsa-jobs]
 verify_jwt = false
+
+[functions.fetch-google-sheets]
+verify_jwt = false

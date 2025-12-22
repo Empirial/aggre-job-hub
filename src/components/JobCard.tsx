@@ -15,6 +15,7 @@ interface JobCardProps {
   description: string;
   tags: string[];
   logo?: string;
+  link?: string;
 }
 
 export const JobCard = ({
@@ -28,7 +29,10 @@ export const JobCard = ({
   description,
   tags,
   logo,
+  link,
 }: JobCardProps) => {
+  // Use external link if provided, otherwise use internal job detail page
+  const jobLink = link || `/job/${id}`;
   return (
     <Card className="p-6 hover:shadow-lg transition-all duration-300 border-border bg-card group">
       <div className="flex gap-4">
@@ -47,11 +51,19 @@ export const JobCard = ({
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-4 mb-2">
             <div className="flex-1">
-              <Link to={`/job/${id}`}>
-                <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors mb-1">
-                  {title}
-                </h3>
-              </Link>
+              {link ? (
+                <a href={link} target="_blank" rel="noopener noreferrer">
+                  <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors mb-1">
+                    {title}
+                  </h3>
+                </a>
+              ) : (
+                <Link to={jobLink}>
+                  <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors mb-1">
+                    {title}
+                  </h3>
+                </Link>
+              )}
               <p className="text-muted-foreground font-medium">{company}</p>
             </div>
             <Button variant="ghost" size="icon" className="flex-shrink-0">
@@ -90,11 +102,19 @@ export const JobCard = ({
                 </Badge>
               ))}
             </div>
-            <Link to={`/job/${id}`}>
-              <Button size="sm" className="flex-shrink-0">
-                View Details
-              </Button>
-            </Link>
+            {link ? (
+              <a href={link} target="_blank" rel="noopener noreferrer">
+                <Button size="sm" className="flex-shrink-0">
+                  Apply Now
+                </Button>
+              </a>
+            ) : (
+              <Link to={jobLink}>
+                <Button size="sm" className="flex-shrink-0">
+                  View Details
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>
