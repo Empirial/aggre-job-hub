@@ -16,12 +16,15 @@ import {
   Lightbulb,
   AlertCircle,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Loader2
 } from "lucide-react";
 import { useState } from "react";
+import { useGoogleSheets, SheetBursary } from "@/hooks/useGoogleSheets";
 
 const Bursaries = () => {
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
+  const { data: sheetBursaries, loading, error } = useGoogleSheets<SheetBursary>('bursaries');
 
   const bursaryCategories = [
     {
@@ -56,8 +59,10 @@ const Bursaries = () => {
     },
   ];
 
-  const featuredBursaries = [
+  // Fallback bursaries if Google Sheets data is not available
+  const fallbackBursaries = [
     {
+      id: "1",
       name: "National Student Financial Aid Scheme (NSFAS)",
       provider: "Department of Higher Education",
       type: "Government",
@@ -69,6 +74,7 @@ const Bursaries = () => {
       tips: "Apply early as funding is limited. Ensure SASSA details are linked if applicable.",
     },
     {
+      id: "2",
       name: "Funza Lushaka Bursary Programme",
       provider: "Department of Basic Education",
       type: "Government",
@@ -80,6 +86,7 @@ const Bursaries = () => {
       tips: "Priority given to maths, science, and African language specializations.",
     },
     {
+      id: "3",
       name: "Sasol Bursary Programme",
       provider: "Sasol Limited",
       type: "Corporate",
@@ -90,62 +97,10 @@ const Bursaries = () => {
       link: "https://www.sasol.com/careers/bursaries",
       tips: "Strong academic record and leadership potential are key selection criteria.",
     },
-    {
-      name: "Anglo American Bursary",
-      provider: "Anglo American South Africa",
-      type: "Corporate",
-      eligibility: "Grade 12 learners or current university students with strong academics",
-      covers: ["Full tuition", "Accommodation", "Monthly allowance", "Mentorship programme", "Holiday employment"],
-      deadline: "February to April",
-      fields: "Mining Engineering, Metallurgy, Geology, Environmental Science, Mechanical Engineering",
-      link: "https://www.angloamerican.com",
-      tips: "Candidates from mining communities given preference. Apply through university bursary offices.",
-    },
-    {
-      name: "Eskom Bursary Scheme",
-      provider: "Eskom Holdings",
-      type: "Corporate",
-      eligibility: "South African citizens with strong maths and physical science results",
-      covers: ["Tuition fees", "Accommodation", "Books", "Monthly stipend", "Practical training"],
-      deadline: "July to September",
-      fields: "Electrical Engineering, Mechanical Engineering, Civil Engineering, Finance, IT",
-      link: "https://www.eskom.co.za/careers",
-      tips: "Eskom prioritizes candidates from disadvantaged backgrounds. Good interpersonal skills valued.",
-    },
-    {
-      name: "Allan Gray Orbis Foundation Fellowship",
-      provider: "Allan Gray Orbis Foundation",
-      type: "Private",
-      eligibility: "Exceptional Grade 12 learners who demonstrate entrepreneurial potential",
-      covers: ["Full tuition", "Accommodation", "Living expenses", "Entrepreneurship training", "Mentorship", "Startup funding opportunity"],
-      deadline: "February annually",
-      fields: "Any field at partner universities (UCT, Wits, Rhodes, Stellenbosch)",
-      link: "https://www.allangrayorbis.org",
-      tips: "This is highly competitive - focus on demonstrating entrepreneurial mindset and leadership.",
-    },
-    {
-      name: "Standard Bank Derek Cooper Scholarship",
-      provider: "Standard Bank",
-      type: "Corporate",
-      eligibility: "Academically excellent students with leadership potential",
-      covers: ["Full tuition", "Accommodation", "Living allowance", "Laptop", "Internship opportunities"],
-      deadline: "March to June",
-      fields: "Commerce, Finance, IT, Data Science, Actuarial Science",
-      link: "https://www.standardbank.com",
-      tips: "Strong emphasis on extracurricular leadership activities.",
-    },
-    {
-      name: "Mastercard Foundation Scholars Program",
-      provider: "Mastercard Foundation",
-      type: "International",
-      eligibility: "Academically talented young Africans from economically disadvantaged backgrounds",
-      covers: ["Full tuition", "Accommodation", "Stipend", "Travel costs", "Mentorship", "Career support"],
-      deadline: "Varies by university",
-      fields: "Various fields at partner universities (UCT, University of Pretoria)",
-      link: "https://mastercardfdn.org/scholars",
-      tips: "Strong commitment to giving back to community is essential.",
-    },
   ];
+
+  // Use sheet data if available, otherwise use fallback
+  const featuredBursaries = sheetBursaries.length > 0 ? sheetBursaries : fallbackBursaries;
 
   const applicationTips = [
     {
@@ -261,10 +216,27 @@ const Bursaries = () => {
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 Detailed information on top bursaries to help you make informed decisions.
               </p>
+              {sheetBursaries.length > 0 && (
+                <Badge variant="outline" className="mt-2">
+                  Live data from Google Sheets
+                </Badge>
+              )}
             </div>
+            
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <span className="ml-2 text-muted-foreground">Loading bursaries...</span>
+              </div>
+            ) : error ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground mb-2">Using cached bursary data</p>
+              </div>
+            ) : null}
+            
             <div className="space-y-6 max-w-5xl mx-auto">
               {featuredBursaries.map((bursary) => (
-                <Card key={bursary.name} className="p-6 hover:shadow-lg transition-shadow">
+                <Card key={bursary.id || bursary.name} className="p-6 hover:shadow-lg transition-shadow">
                   <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                     <div>
                       <h3 className="text-xl font-semibold mb-1">{bursary.name}</h3>
@@ -308,20 +280,24 @@ const Bursaries = () => {
                     <p className="text-sm text-muted-foreground">{bursary.fields}</p>
                   </div>
 
-                  <div className="bg-primary/5 p-4 rounded-lg mb-4">
-                    <h4 className="font-medium mb-1 flex items-center gap-2">
-                      <Lightbulb className="w-4 h-4 text-primary" />
-                      Pro Tip
-                    </h4>
-                    <p className="text-sm text-muted-foreground">{bursary.tips}</p>
-                  </div>
+                  {bursary.tips && (
+                    <div className="bg-primary/5 p-4 rounded-lg mb-4">
+                      <h4 className="font-medium mb-1 flex items-center gap-2">
+                        <Lightbulb className="w-4 h-4 text-primary" />
+                        Pro Tip
+                      </h4>
+                      <p className="text-sm text-muted-foreground">{bursary.tips}</p>
+                    </div>
+                  )}
 
-                  <Button variant="outline" className="w-full sm:w-auto" asChild>
-                    <a href={bursary.link} target="_blank" rel="noopener noreferrer">
-                      Visit Official Website
-                      <ExternalLink className="w-4 h-4 ml-2" />
-                    </a>
-                  </Button>
+                  {bursary.link && (
+                    <Button variant="outline" className="w-full sm:w-auto" asChild>
+                      <a href={bursary.link} target="_blank" rel="noopener noreferrer">
+                        Visit Official Website
+                        <ExternalLink className="w-4 h-4 ml-2" />
+                      </a>
+                    </Button>
+                  )}
                 </Card>
               ))}
             </div>
@@ -381,18 +357,18 @@ const Bursaries = () => {
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold mb-4">Frequently Asked Questions</h2>
               <p className="text-muted-foreground">
-                Common questions about bursaries and scholarships in South Africa.
+                Common questions about bursary applications
               </p>
             </div>
             <div className="space-y-4">
               {faqs.map((faq, index) => (
                 <Card 
                   key={index} 
-                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  className="overflow-hidden cursor-pointer"
                   onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
                 >
-                  <div className="p-4 flex items-center justify-between gap-4">
-                    <h3 className="font-medium">{faq.question}</h3>
+                  <div className="p-4 flex items-center justify-between">
+                    <h3 className="font-medium pr-4">{faq.question}</h3>
                     {expandedFaq === index ? (
                       <ChevronUp className="w-5 h-5 text-muted-foreground flex-shrink-0" />
                     ) : (
@@ -401,7 +377,7 @@ const Bursaries = () => {
                   </div>
                   {expandedFaq === index && (
                     <div className="px-4 pb-4">
-                      <p className="text-muted-foreground">{faq.answer}</p>
+                      <p className="text-sm text-muted-foreground">{faq.answer}</p>
                     </div>
                   )}
                 </Card>
@@ -413,14 +389,12 @@ const Bursaries = () => {
         {/* CTA Section */}
         <section className="bg-gradient-hero py-16">
           <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl font-bold text-white mb-4">
-              Can't Find What You're Looking For?
-            </h2>
-            <p className="text-white/90 max-w-2xl mx-auto mb-8">
-              Reach out to us and we'll help you find bursaries that match your profile and aspirations.
+            <h2 className="text-3xl font-bold text-white mb-4">Need More Help?</h2>
+            <p className="text-white/90 mb-8 max-w-2xl mx-auto">
+              Contact us if you need assistance finding the right bursary or have questions about the application process.
             </p>
-            <Button size="lg" variant="secondary" asChild>
-              <a href="/contact">Contact Us for Help</a>
+            <Button variant="secondary" size="lg" asChild>
+              <a href="/contact">Get in Touch</a>
             </Button>
           </div>
         </section>

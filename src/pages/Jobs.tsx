@@ -5,13 +5,15 @@ import { SearchBar } from "@/components/SearchBar";
 import { FilterSidebar } from "@/components/FilterSidebar";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { SlidersHorizontal } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { SlidersHorizontal, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "react-router-dom";
+import { useGoogleSheets, SheetJob } from "@/hooks/useGoogleSheets";
 
-// Mock data
+// Mock data as fallback
 const mockJobs = [
   {
     id: "1",
@@ -46,36 +48,27 @@ const mockJobs = [
     description: "Create beautiful and intuitive user experiences for our clients. Work with Figma, conduct user research, and collaborate with developers.",
     tags: ["Figma", "UI Design", "User Research"],
   },
-  {
-    id: "4",
-    title: "DevOps Engineer",
-    company: "CloudSystems Africa",
-    location: "Pretoria, Gauteng",
-    type: "Full-time",
-    salary: "R660k - R960k",
-    postedDate: "5 days ago",
-    description: "Maintain and improve our cloud infrastructure. Experience with AWS, Kubernetes, and CI/CD pipelines required.",
-    tags: ["AWS", "Kubernetes", "Docker"],
-  },
-  {
-    id: "5",
-    title: "Data Scientist",
-    company: "Analytics Pro SA",
-    location: "Umhlanga, Durban",
-    type: "Full-time",
-    salary: "R690k - R1.02M",
-    postedDate: "1 day ago",
-    description: "Apply machine learning and statistical analysis to solve complex business problems. Python and SQL expertise required.",
-    tags: ["Python", "ML", "SQL"],
-  },
 ];
 
 const Jobs = () => {
   const [jobs, setJobs] = useState<any[]>(mockJobs);
   const [loading, setLoading] = useState(false);
   const [totalJobs, setTotalJobs] = useState(mockJobs.length);
+  const [dataSource, setDataSource] = useState<'api' | 'sheet' | 'mock'>('mock');
   const { toast } = useToast();
   const location = useLocation();
+  
+  // Fetch jobs from Google Sheets
+  const { data: sheetJobs, loading: sheetLoading } = useGoogleSheets<SheetJob>('jobs');
+
+  // Load sheet jobs on mount if available
+  useEffect(() => {
+    if (sheetJobs.length > 0 && dataSource === 'mock') {
+      setJobs(sheetJobs);
+      setTotalJobs(sheetJobs.length);
+      setDataSource('sheet');
+    }
+  }, [sheetJobs]);
 
   // Handle search from home page navigation
   useEffect(() => {
@@ -84,13 +77,13 @@ const Jobs = () => {
     }
   }, [location.state]);
 
-  const handleSearch = async (keywords: string, location: string) => {
+  const handleSearch = async (keywords: string, searchLocation: string) => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('search-jobs', {
         body: {
           keywords,
-          location,
+          location: searchLocation,
           page: 1,
           pageSize: 20,
         },
@@ -112,6 +105,7 @@ const Jobs = () => {
       if (data.type === 'JOBS') {
         setJobs(data.jobs || []);
         setTotalJobs(data.hits || 0);
+        setDataSource('api');
         toast({
           title: "Search Complete",
           description: `Found ${data.hits || 0} matching jobs`,
@@ -128,6 +122,16 @@ const Jobs = () => {
       setLoading(false);
     }
   };
+
+  const showSheetJobs = () => {
+    if (sheetJobs.length > 0) {
+      setJobs(sheetJobs);
+      setTotalJobs(sheetJobs.length);
+      setDataSource('sheet');
+    }
+  };
+
+  const isLoading = loading || sheetLoading;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -146,11 +150,24 @@ const Jobs = () => {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold mb-1">
-              {loading ? "Searching..." : `Found ${totalJobs} jobs`}
+              {isLoading ? "Searching..." : `Found ${totalJobs} jobs`}
             </h1>
-            <p className="text-muted-foreground">Browse through the latest opportunities</p>
+            <div className="flex items-center gap-2">
+              <p className="text-muted-foreground">Browse through the latest opportunities</p>
+              {dataSource === 'sheet' && (
+                <Badge variant="outline" className="text-xs">From your spreadsheet</Badge>
+              )}
+              {dataSource === 'api' && (
+                <Badge variant="secondary" className="text-xs">Live search results</Badge>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-3">
+            {sheetJobs.length > 0 && dataSource !== 'sheet' && (
+              <Button variant="outline" size="sm" onClick={showSheetJobs}>
+                Show My Jobs
+              </Button>
+            )}
             <Select defaultValue="recent">
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Sort by" />
@@ -177,9 +194,10 @@ const Jobs = () => {
 
           {/* Job Listings */}
           <div className="lg:col-span-3 space-y-4">
-            {loading ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">Searching for jobs...</p>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <span className="ml-2 text-muted-foreground">Loading jobs...</span>
               </div>
             ) : jobs.length === 0 ? (
               <div className="text-center py-12">
@@ -188,26 +206,29 @@ const Jobs = () => {
             ) : (
               jobs.map((job, index) => (
                 <JobCard 
-                  key={job.url || index} 
-                  id={index.toString()}
+                  key={job.url || job.id || index} 
+                  id={job.id || index.toString()}
                   title={job.title}
                   company={job.company}
-                  location={job.locations}
-                  type={job.salary_type === 'Y' ? 'Full-time' : 'Part-time'}
+                  location={job.locations || job.location}
+                  type={job.type || (job.salary_type === 'Y' ? 'Full-time' : 'Part-time')}
                   salary={job.salary || 'Not specified'}
-                  postedDate={job.date}
+                  postedDate={job.postedDate || job.date || 'Recently'}
                   description={job.description}
-                  tags={[]}
+                  tags={job.tags || []}
+                  link={job.link}
                 />
               ))
             )}
 
             {/* Load More */}
-            <div className="flex justify-center pt-8">
-              <Button variant="outline" size="lg">
-                Load More Jobs
-              </Button>
-            </div>
+            {jobs.length > 0 && (
+              <div className="flex justify-center pt-8">
+                <Button variant="outline" size="lg">
+                  Load More Jobs
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
