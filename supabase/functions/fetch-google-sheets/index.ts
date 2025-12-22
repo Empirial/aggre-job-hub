@@ -6,6 +6,15 @@ const corsHeaders = {
 };
 
 const SPREADSHEET_ID = '1qpnl2rLv-kTOub23aB5LVBCpDNCfQcfm3IY9zBtnRNs';
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache
+
+// In-memory cache
+interface CacheEntry {
+  data: any[];
+  timestamp: number;
+}
+
+const cache: Map<string, CacheEntry> = new Map();
 
 // Parse CSV string into array of objects
 function parseCSV(csvText: string): Record<string, string>[] {
@@ -57,6 +66,28 @@ function parseCSVLine(line: string): string[] {
   return values;
 }
 
+// Check if cache is valid
+function getCachedData(sheetName: string): any[] | null {
+  const entry = cache.get(sheetName);
+  if (!entry) return null;
+  
+  const now = Date.now();
+  if (now - entry.timestamp > CACHE_TTL_MS) {
+    cache.delete(sheetName);
+    return null;
+  }
+  
+  return entry.data;
+}
+
+// Set cache data
+function setCacheData(sheetName: string, data: any[]): void {
+  cache.set(sheetName, {
+    data,
+    timestamp: Date.now(),
+  });
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -64,13 +95,31 @@ serve(async (req) => {
   }
 
   try {
-    const { sheet } = await req.json();
+    const { sheet, forceRefresh } = await req.json();
     
     if (!sheet) {
       throw new Error('Sheet name is required (jobs or bursaries)');
     }
 
-    console.log(`Fetching data from sheet: ${sheet}`);
+    const sheetName = sheet.toLowerCase();
+    
+    // Check cache first (unless force refresh is requested)
+    if (!forceRefresh) {
+      const cachedData = getCachedData(sheetName);
+      if (cachedData) {
+        console.log(`Returning cached data for ${sheetName} (${cachedData.length} items)`);
+        return new Response(JSON.stringify({ 
+          success: true, 
+          data: cachedData,
+          count: cachedData.length,
+          cached: true
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    console.log(`Fetching fresh data from sheet: ${sheetName}`);
 
     // Fetch the published Google Sheet as CSV
     const sheetUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheet)}`;
@@ -88,12 +137,12 @@ serve(async (req) => {
     console.log(`Received CSV data (first 500 chars): ${csvText.substring(0, 500)}`);
     
     const data = parseCSV(csvText);
-    console.log(`Parsed ${data.length} rows from ${sheet} sheet`);
+    console.log(`Parsed ${data.length} rows from ${sheetName} sheet`);
 
     // Transform data based on sheet type
     let transformedData;
     
-    if (sheet.toLowerCase() === 'jobs') {
+    if (sheetName === 'jobs') {
       transformedData = data.map((row, index) => ({
         id: (index + 1).toString(),
         title: row.title || '',
@@ -106,7 +155,7 @@ serve(async (req) => {
         postedDate: row.posteddate || row.posted_date || row.date || 'Recently',
         link: row.link || '',
       }));
-    } else if (sheet.toLowerCase() === 'bursaries') {
+    } else if (sheetName === 'bursaries') {
       transformedData = data.map((row, index) => ({
         id: (index + 1).toString(),
         name: row.name || '',
@@ -123,12 +172,15 @@ serve(async (req) => {
       transformedData = data;
     }
 
-    console.log(`Returning ${transformedData.length} items`);
+    // Cache the transformed data
+    setCacheData(sheetName, transformedData);
+    console.log(`Cached ${transformedData.length} items for ${sheetName}`);
 
     return new Response(JSON.stringify({ 
       success: true, 
       data: transformedData,
-      count: transformedData.length 
+      count: transformedData.length,
+      cached: false
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
