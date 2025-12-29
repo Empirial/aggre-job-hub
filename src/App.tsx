@@ -12,6 +12,9 @@ import Bursaries from "./pages/Bursaries";
 import StemCareers from "./pages/StemCareers";
 import Donate from "./pages/Donate";
 import Privacy from "./pages/Privacy";
+import Disclaimer from "./pages/Disclaimer";
+import Terms from "./pages/Terms";
+import CookiePolicy from "./pages/CookiePolicy";
 import NotFound from "./pages/NotFound";
 import { CookieConsent } from "./components/CookieConsent";
 
@@ -33,6 +36,9 @@ const App = () => (
           <Route path="/stem-careers" element={<StemCareers />} />
           <Route path="/donate" element={<Donate />} />
           <Route path="/privacy" element={<Privacy />} />
+          <Route path="/disclaimer" element={<Disclaimer />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/cookie-policy" element={<CookiePolicy />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
