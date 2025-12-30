@@ -12,43 +12,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "react-router-dom";
 import { useGoogleSheets, SheetJob } from "@/hooks/useGoogleSheets";
+import { comprehensiveJobListings } from "@/data/jobListings";
 
-// Mock data as fallback
-const mockJobs = [
-  {
-    id: "1",
-    title: "Senior Frontend Developer",
-    company: "Digital Solutions SA",
-    location: "Sandton, Johannesburg",
-    type: "Full-time",
-    salary: "R720k - R1.08M",
-    postedDate: "2 days ago",
-    description: "We're looking for an experienced frontend developer to join our growing team. You'll work on cutting-edge web applications using React, TypeScript, and modern tooling.",
-    tags: ["React", "TypeScript", "CSS"],
-  },
-  {
-    id: "2",
-    title: "Full Stack Engineer",
-    company: "Cape Tech Innovations",
-    location: "Remote (South Africa)",
-    type: "Full-time",
-    salary: "R600k - R900k",
-    postedDate: "1 week ago",
-    description: "Join our fast-paced startup as a full stack engineer. Build scalable applications from front to back using Node.js, React, and PostgreSQL.",
-    tags: ["Node.js", "React", "PostgreSQL"],
-  },
-  {
-    id: "3",
-    title: "UI/UX Designer",
-    company: "Creative Studio CT",
-    location: "Cape Town CBD",
-    type: "Full-time",
-    salary: "R540k - R780k",
-    postedDate: "3 days ago",
-    description: "Create beautiful and intuitive user experiences for our clients. Work with Figma, conduct user research, and collaborate with developers.",
-    tags: ["Figma", "UI Design", "User Research"],
-  },
-];
+// Use comprehensive job listings as fallback (35+ jobs)
+const mockJobs = comprehensiveJobListings;
 
 const Jobs = () => {
   const [jobs, setJobs] = useState<any[]>(mockJobs);

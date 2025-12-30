@@ -6,7 +6,7 @@ const corsHeaders = {
 };
 
 const SPREADSHEET_ID = '1qpnl2rLv-kTOub23aB5LVBCpDNCfQcfm3IY9zBtnRNs';
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes cache
 
 // In-memory cache
 interface CacheEntry {
