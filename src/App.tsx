@@ -11,6 +11,8 @@ import Contact from "./pages/Contact";
 import Bursaries from "./pages/Bursaries";
 import StemCareers from "./pages/StemCareers";
 import SassaUpdates from "./pages/SassaUpdates";
+import Universities from "./pages/Universities";
+import Nsfas from "./pages/Nsfas";
 import Donate from "./pages/Donate";
 import Privacy from "./pages/Privacy";
 import Disclaimer from "./pages/Disclaimer";
@@ -36,6 +38,8 @@ const App = () => (
           <Route path="/bursaries" element={<Bursaries />} />
           <Route path="/stem-careers" element={<StemCareers />} />
           <Route path="/sassa-updates" element={<SassaUpdates />} />
+          <Route path="/universities" element={<Universities />} />
+          <Route path="/nsfas" element={<Nsfas />} />
           <Route path="/donate" element={<Donate />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/disclaimer" element={<Disclaimer />} />
