@@ -172,19 +172,27 @@ const Jobs = () => {
               </div>
             ) : (
               jobs.map((job, index) => (
-                <JobCard 
-                  key={job.url || job.id || index} 
-                  id={job.id || index.toString()}
-                  title={job.title}
-                  company={job.company}
-                  location={job.locations || job.location}
-                  type={job.type || (job.salary_type === 'Y' ? 'Full-time' : 'Part-time')}
-                  salary={job.salary || 'Not specified'}
-                  postedDate={job.postedDate || job.date || 'Recently'}
-                  description={job.description}
-                  tags={job.tags || []}
-                  link={job.link}
-                />
+                <>
+                  <JobCard 
+                    key={job.url || job.id || index} 
+                    id={job.id || index.toString()}
+                    title={job.title}
+                    company={job.company}
+                    location={job.locations || job.location}
+                    type={job.type || (job.salary_type === 'Y' ? 'Full-time' : 'Part-time')}
+                    salary={job.salary || 'Not specified'}
+                    postedDate={job.postedDate || job.date || 'Recently'}
+                    description={job.description}
+                    tags={job.tags || []}
+                    link={job.link}
+                  />
+                  {/* Ad placeholder every 5 jobs */}
+                  {(index + 1) % 5 === 0 && index !== jobs.length - 1 && (
+                    <div className="bg-muted/50 border border-dashed border-muted-foreground/30 rounded-lg p-6 text-center">
+                      <span className="text-xs text-muted-foreground uppercase tracking-wide">Advertisement</span>
+                    </div>
+                  )}
+                </>
               ))
             )}
 

@@ -8,11 +8,11 @@ export const Navigation = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { name: "Jobs", path: "/jobs" },
-    { name: "STEM Careers", path: "/stem-careers" },
+    { name: "Government Jobs", path: "/jobs?category=government" },
+    { name: "Learnerships", path: "/jobs?category=learnerships" },
+    { name: "Internships", path: "/jobs?category=internships" },
+    { name: "SASSA Updates", path: "/sassa-updates" },
     { name: "Bursaries", path: "/bursaries" },
-    { name: "About", path: "/about" },
-    { name: "Contact", path: "/contact" },
   ];
 
   const isActive = (path: string) => location.pathname === path;

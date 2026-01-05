@@ -67,39 +67,22 @@ const Index = () => {
     { city: "Port Elizabeth", jobs: "2,400+", province: "Eastern Cape", highlight: "Automotive and manufacturing sector" },
   ];
 
-  const testimonials = [
-    {
-      name: "Thandi Molefe",
-      role: "Software Developer",
-      company: "Takealot",
-      image: "TM",
-      quote: "After 6 months of searching on multiple platforms, I found my dream job through CareerGate within 2 weeks. The STEM career guides helped me understand what skills to highlight. The job descriptions were accurate and the application process was straightforward. I went from earning R25,000 to R55,000 per month. CareerGate literally changed my life trajectory.",
-      rating: 5,
-    },
-    {
-      name: "Sipho Nkosi",
-      role: "Civil Engineering Graduate",
-      company: "AECOM",
-      image: "SN",
-      quote: "The bursary section connected me with the Sasol bursary which funded my entire degree. Now I'm working as a graduate engineer earning six figures. Coming from Limpopo, I never thought I'd have these opportunities. CareerGate showed me bursaries I never knew existed and the application tips helped me stand out. I'm now helping my siblings apply too!",
-      rating: 5,
-    },
-    {
-      name: "Ayanda Dlamini",
-      role: "Data Analyst",
-      company: "Standard Bank",
-      image: "AD",
-      quote: "Coming from a rural area in KZN, I had no idea what career paths existed or how to get there. CareerGate's STEM section opened my eyes to data science as a career. The salary information was transparent and helped me negotiate. I now earn enough to support my entire family and I've bought my parents a house. Never stop dreaming!",
-      rating: 5,
-    },
-    {
-      name: "Lerato Khumalo",
-      role: "Registered Nurse",
-      company: "Netcare",
-      image: "LK",
-      quote: "I was stuck in a government clinic earning very little. CareerGate helped me find a position at a private hospital with better pay and working conditions. The job alerts feature meant I never missed an opportunity. Within 3 months of applying, I had started my new job with a 40% salary increase.",
-      rating: 5,
-    },
+  const urgentUpdates = [
+    { title: "SASSA SRD R350 Payment Dates for January 2026", type: "Grant" },
+    { title: "DPSA Circular 01 of 2026: New Government Vacancies", type: "Government" },
+    { title: "Transnet Graduate Programme 2026 Now Open", type: "Learnership" },
+  ];
+
+  const jobsByProvince = [
+    { province: "Gauteng", jobs: "18,500+", cities: "Johannesburg, Pretoria, Soweto" },
+    { province: "Western Cape", jobs: "12,800+", cities: "Cape Town, Stellenbosch, Paarl" },
+    { province: "KwaZulu-Natal", jobs: "6,200+", cities: "Durban, Pietermaritzburg, Richards Bay" },
+    { province: "Eastern Cape", jobs: "3,400+", cities: "Port Elizabeth, East London, Mthatha" },
+    { province: "Free State", jobs: "2,100+", cities: "Bloemfontein, Welkom, Kroonstad" },
+    { province: "Limpopo", jobs: "2,800+", cities: "Polokwane, Tzaneen, Mokopane" },
+    { province: "Mpumalanga", jobs: "2,300+", cities: "Nelspruit, Witbank, Secunda" },
+    { province: "North West", jobs: "1,900+", cities: "Rustenburg, Mahikeng, Klerksdorp" },
+    { province: "Northern Cape", jobs: "1,200+", cities: "Kimberley, Upington, Springbok" },
   ];
 
   const featuredBursaries = [
@@ -239,6 +222,24 @@ const Index = () => {
               <Badge variant="outline" className="border-white/40 text-white hover:bg-white/10">Graduate Programs</Badge>
               <Badge variant="outline" className="border-white/40 text-white hover:bg-white/10">Part-time</Badge>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Urgent Opportunities Feed */}
+      <section className="py-8 bg-yellow-50 border-y border-yellow-200">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center gap-2 mb-6">
+            <TrendingUp className="text-red-600 animate-pulse" />
+            <h2 className="text-xl font-bold uppercase tracking-tight">Urgent Opportunities</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {urgentUpdates.map((update, i) => (
+              <Card key={i} className="p-4 border-l-4 border-l-red-600 hover:shadow-md cursor-pointer transition-all">
+                <Badge variant="outline" className="mb-2 text-red-600 border-red-200">{update.type}</Badge>
+                <h3 className="font-bold text-gray-900 leading-snug">{update.title}</h3>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
@@ -422,39 +423,26 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Success Stories / Testimonials - Enhanced */}
+      {/* Jobs by Province - Replaces Testimonials */}
       <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Real Success Stories</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Jobs by Province</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              These are real South Africans whose lives changed through opportunities found on CareerGate. Your success story could be next.
+              Find opportunities in every corner of South Africa. Click on your province to see available jobs.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {testimonials.map((testimonial) => (
-              <Card key={testimonial.name} className="p-6 relative">
-                <Quote className="w-12 h-12 text-primary/10 absolute top-4 right-4" />
-                <div className="flex gap-1 mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-primary text-primary" />
-                  ))}
-                </div>
-                <p className="text-muted-foreground mb-6 relative z-10 leading-relaxed">
-                  "{testimonial.quote}"
-                </p>
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-gradient-hero rounded-full flex items-center justify-center text-white font-bold text-lg">
-                    {testimonial.image}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {jobsByProvince.map((item) => (
+              <Link to={`/jobs?province=${item.province.toLowerCase().replace(' ', '-')}`} key={item.province}>
+                <Card className="p-5 hover:shadow-lg transition-all cursor-pointer group border-l-4 border-l-primary">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">{item.province}</h3>
+                    <Badge variant="secondary" className="font-bold">{item.jobs}</Badge>
                   </div>
-                  <div>
-                    <div className="font-semibold text-lg">{testimonial.name}</div>
-                    <div className="text-muted-foreground">
-                      {testimonial.role} at {testimonial.company}
-                    </div>
-                  </div>
-                </div>
-              </Card>
+                  <p className="text-sm text-muted-foreground">{item.cities}</p>
+                </Card>
+              </Link>
             ))}
           </div>
         </div>

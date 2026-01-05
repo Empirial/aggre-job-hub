@@ -10,6 +10,7 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Bursaries from "./pages/Bursaries";
 import StemCareers from "./pages/StemCareers";
+import SassaUpdates from "./pages/SassaUpdates";
 import Donate from "./pages/Donate";
 import Privacy from "./pages/Privacy";
 import Disclaimer from "./pages/Disclaimer";
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/contact" element={<Contact />} />
           <Route path="/bursaries" element={<Bursaries />} />
           <Route path="/stem-careers" element={<StemCareers />} />
+          <Route path="/sassa-updates" element={<SassaUpdates />} />
           <Route path="/donate" element={<Donate />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/disclaimer" element={<Disclaimer />} />
