@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Building2, Clock, DollarSign, Bookmark } from "lucide-react";
+import { MapPin, Building2, Clock, DollarSign, Bookmark, Share2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface JobCardProps {
@@ -72,17 +72,17 @@ export const JobCard = ({
           </div>
 
           {/* Job Info */}
-          <div className="flex flex-wrap gap-4 mb-3 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
+          <div className="flex flex-wrap gap-4 mb-3 text-sm">
+            <div className="flex items-center gap-1 text-red-600 font-bold bg-red-50 px-2 py-0.5 rounded">
+              <Clock className="w-4 h-4" />
+              Closing: {postedDate}
+            </div>
+            <div className="flex items-center gap-1 text-muted-foreground">
               <MapPin className="w-4 h-4" />
               {location}
             </div>
-            <div className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
-              {postedDate}
-            </div>
             {salary && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 text-muted-foreground">
                 <DollarSign className="w-4 h-4" />
                 {salary}
               </div>
@@ -102,19 +102,30 @@ export const JobCard = ({
                 </Badge>
               ))}
             </div>
-            {link ? (
-              <a href={link} target="_blank" rel="noopener noreferrer">
-                <Button size="sm" className="flex-shrink-0">
-                  Apply Now
-                </Button>
-              </a>
-            ) : (
-              <Link to={jobLink}>
-                <Button size="sm" className="flex-shrink-0">
-                  View Details
-                </Button>
-              </Link>
-            )}
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => window.open(`https://wa.me/?text=Check out this job: ${title} at ${company} - ${window.location.origin}/job/${id}`)}
+                className="border-green-500 text-green-600 hover:bg-green-50"
+              >
+                <Share2 className="w-4 h-4 mr-1" />
+                Share
+              </Button>
+              {link ? (
+                <a href={link} target="_blank" rel="noopener noreferrer">
+                  <Button size="sm" className="flex-shrink-0">
+                    Apply Now
+                  </Button>
+                </a>
+              ) : (
+                <Link to={jobLink}>
+                  <Button size="sm" className="flex-shrink-0">
+                    View Details
+                  </Button>
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       </div>
