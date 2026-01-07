@@ -14,8 +14,138 @@ import {
   Building2
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Calendar, AlertCircle } from "lucide-react";
 
 const Universities = () => {
+  // Late Registration 2026 - Updated for current period
+  const lateRegistrationOpen = [
+    {
+      name: "University of Cape Town (UCT)",
+      lateRegOpen: "6 January 2026",
+      lateRegClose: "31 January 2026",
+      status: "Open",
+      website: "https://www.uct.ac.za",
+      notes: "Limited courses available for late registration",
+    },
+    {
+      name: "University of the Witwatersrand (Wits)",
+      lateRegOpen: "8 January 2026",
+      lateRegClose: "7 February 2026",
+      status: "Open",
+      website: "https://www.wits.ac.za",
+      notes: "Online applications only",
+    },
+    {
+      name: "University of Johannesburg (UJ)",
+      lateRegOpen: "6 January 2026",
+      lateRegClose: "14 February 2026",
+      status: "Open",
+      website: "https://www.uj.ac.za",
+      notes: "Walk-in and online applications accepted",
+    },
+    {
+      name: "University of Pretoria (UP)",
+      lateRegOpen: "13 January 2026",
+      lateRegClose: "31 January 2026",
+      status: "Open",
+      website: "https://www.up.ac.za",
+      notes: "Subject to availability",
+    },
+    {
+      name: "Stellenbosch University",
+      lateRegOpen: "7 January 2026",
+      lateRegClose: "28 January 2026",
+      status: "Open",
+      website: "https://www.sun.ac.za",
+      notes: "Limited programmes accepting late applications",
+    },
+    {
+      name: "University of KwaZulu-Natal (UKZN)",
+      lateRegOpen: "6 January 2026",
+      lateRegClose: "21 February 2026",
+      status: "Open",
+      website: "https://www.ukzn.ac.za",
+      notes: "All campuses accepting applications",
+    },
+    {
+      name: "University of the Free State (UFS)",
+      lateRegOpen: "10 January 2026",
+      lateRegClose: "15 February 2026",
+      status: "Open",
+      website: "https://www.ufs.ac.za",
+      notes: "Bloemfontein and Qwaqwa campuses",
+    },
+    {
+      name: "Nelson Mandela University (NMU)",
+      lateRegOpen: "8 January 2026",
+      lateRegClose: "28 February 2026",
+      status: "Open",
+      website: "https://www.mandela.ac.za",
+      notes: "Extended deadline for selected programmes",
+    },
+    {
+      name: "Tshwane University of Technology (TUT)",
+      lateRegOpen: "6 January 2026",
+      lateRegClose: "31 January 2026",
+      status: "Open",
+      website: "https://www.tut.ac.za",
+      notes: "All campuses - first come first served",
+    },
+    {
+      name: "Cape Peninsula University of Technology (CPUT)",
+      lateRegOpen: "7 January 2026",
+      lateRegClose: "14 February 2026",
+      status: "Open",
+      website: "https://www.cput.ac.za",
+      notes: "Limited spaces in engineering programmes",
+    },
+  ];
+
+  const tvetLateRegistration = [
+    {
+      name: "Ekurhuleni East TVET College",
+      province: "Gauteng",
+      lateRegClose: "28 February 2026",
+      status: "Open",
+      programmes: ["N1-N6 Engineering", "NCV", "Occupational Programmes"],
+    },
+    {
+      name: "College of Cape Town",
+      province: "Western Cape",
+      lateRegClose: "21 February 2026",
+      status: "Open",
+      programmes: ["Business Studies", "Engineering", "Hospitality"],
+    },
+    {
+      name: "Tshwane South TVET College",
+      province: "Gauteng",
+      lateRegClose: "28 February 2026",
+      status: "Open",
+      programmes: ["N1-N6", "NCV Level 2-4", "Learnerships"],
+    },
+    {
+      name: "Majuba TVET College",
+      province: "KwaZulu-Natal",
+      lateRegClose: "14 February 2026",
+      status: "Open",
+      programmes: ["Engineering", "Business", "IT"],
+    },
+    {
+      name: "False Bay TVET College",
+      province: "Western Cape",
+      lateRegClose: "21 February 2026",
+      status: "Open",
+      programmes: ["NCV", "Engineering", "Business Studies"],
+    },
+    {
+      name: "Central Johannesburg TVET College",
+      province: "Gauteng",
+      lateRegClose: "28 February 2026",
+      status: "Open",
+      programmes: ["Business", "IT", "Engineering"],
+    },
+  ];
+
   const publicUniversities = [
     {
       name: "University of Cape Town (UCT)",
@@ -126,10 +256,86 @@ const Universities = () => {
         </div>
       </section>
 
-      {/* Application Timeline */}
+      {/* URGENT: Late Registration Now Open */}
+      <section className="py-8 bg-yellow-50 border-y border-yellow-200">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center gap-2 mb-6">
+            <AlertCircle className="w-6 h-6 text-red-600 animate-pulse" />
+            <h2 className="text-2xl font-bold text-red-700">🚨 Late Registration Now Open - January 2026</h2>
+          </div>
+          <p className="text-muted-foreground mb-6">
+            Several South African universities and TVET colleges are accepting late applications for the 2026 academic year. Apply now before spaces fill up!
+          </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {lateRegistrationOpen.map((uni, index) => (
+              <Card key={index} className="p-5 border-l-4 border-l-green-500 hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-semibold text-lg">{uni.name}</h3>
+                  <Badge className="bg-green-100 text-green-700 border-green-300">{uni.status}</Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-green-600" />
+                    <span><strong>Opens:</strong> {uni.lateRegOpen}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-red-600" />
+                    <span><strong>Closes:</strong> {uni.lateRegClose}</span>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">{uni.notes}</p>
+                <Button size="sm" variant="outline" asChild>
+                  <a href={uni.website} target="_blank" rel="noopener noreferrer">
+                    Apply Now <ExternalLink className="w-3 h-3 ml-1" />
+                  </a>
+                </Button>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TVET Late Registration */}
+      <section className="py-8 bg-blue-50 border-b border-blue-200">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center gap-2 mb-6">
+            <GraduationCap className="w-6 h-6 text-blue-600" />
+            <h2 className="text-2xl font-bold text-blue-800">TVET Colleges - Late Registration 2026</h2>
+          </div>
+          <p className="text-muted-foreground mb-6">
+            TVET colleges offer practical, career-focused qualifications. Many are still accepting late registrations for January 2026 intake.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {tvetLateRegistration.map((college, index) => (
+              <Card key={index} className="p-5 border-l-4 border-l-blue-500">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-semibold">{college.name}</h3>
+                  <Badge className="bg-green-100 text-green-700 border-green-300">{college.status}</Badge>
+                </div>
+                <div className="flex items-center gap-2 text-sm mb-2">
+                  <MapPin className="w-4 h-4 text-muted-foreground" />
+                  <span>{college.province}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-red-600 font-medium mb-3">
+                  <Calendar className="w-4 h-4" />
+                  <span>Closes: {college.lateRegClose}</span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {college.programmes.map((prog) => (
+                    <Badge key={prog} variant="secondary" className="text-xs">{prog}</Badge>
+                  ))}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Application Timeline for 2027 */}
       <section className="py-12 bg-muted/30">
         <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold mb-6">2026 Application Timeline</h2>
+          <h2 className="text-2xl font-bold mb-2">2027 Application Timeline</h2>
+          <p className="text-muted-foreground mb-6">Planning ahead? Here are the key dates for 2027 applications.</p>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {applicationDates.map((item, index) => (
               <Card key={index} className="p-5 text-center">
