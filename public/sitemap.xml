@@ -66,6 +66,36 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://careergate.co.za/resources</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://careergate.co.za/resources/sa-job-market-guide-2026</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://careergate.co.za/resources/nsfas-application-mistakes</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://careergate.co.za/resources/johannesburg-cv-tips</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://careergate.co.za/resources/sassa-srd-guide</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://careergate.co.za/resources/western-cape-stem-bursaries</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://careergate.co.za/privacy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
