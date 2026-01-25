@@ -10,9 +10,8 @@ export const Navigation = () => {
   const navLinks = [
     { name: "Government Jobs", path: "/jobs?category=government" },
     { name: "Learnerships", path: "/jobs?category=learnerships" },
-    { name: "Internships", path: "/jobs?category=internships" },
-    { name: "SASSA Updates", path: "/sassa-updates" },
     { name: "Bursaries", path: "/bursaries" },
+    { name: "Career Resources", path: "/resources" },
   ];
 
   const isActive = (path: string) => location.pathname === path;

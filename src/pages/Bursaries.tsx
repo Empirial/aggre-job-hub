@@ -188,6 +188,15 @@ const Bursaries = () => {
           </div>
         </section>
 
+        {/* Editorial Introduction */}
+        <section className="container mx-auto px-4 py-12">
+          <div className="max-w-4xl mx-auto">
+            <p className="text-lg text-muted-foreground leading-relaxed">
+              Education is the cornerstone of a successful future, and CareerGate is committed to ensuring that financial barriers do not stand in your way. Our comprehensive bursary and scholarship database is meticulously curated to bring you the most relevant funding opportunities across South Africa. We go beyond simple listings, providing detailed eligibility criteria, application deadlines, and pro-tips for securing funding from government schemes like NSFAS, major corporate sponsors like Sasol, and prestigious private foundations. Whether you are a matriculant seeking your first funding or a postgraduate student looking for specialized support, use our resources to navigate the complex landscape of educational finance and invest in your future today. We believe in empowering every South African student to achieve their academic dreams.
+            </p>
+          </div>
+        </section>
+
         {/* Categories Section */}
         <section className="container mx-auto px-4 py-16">
           <div className="text-center mb-12">

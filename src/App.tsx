@@ -18,6 +18,12 @@ import Privacy from "./pages/Privacy";
 import Disclaimer from "./pages/Disclaimer";
 import Terms from "./pages/Terms";
 import CookiePolicy from "./pages/CookiePolicy";
+import Resources from "./pages/Resources";
+import SAJobMarketGuide2026 from "./pages/resources/SAJobMarketGuide2026";
+import NsfasApplicationMistakes from "./pages/resources/NsfasApplicationMistakes";
+import JohannesburgCVTips from "./pages/resources/JohannesburgCVTips";
+import SassaSrdGuide from "./pages/resources/SassaSrdGuide";
+import WesternCapeStemBursaries from "./pages/resources/WesternCapeStemBursaries";
 import NotFound from "./pages/NotFound";
 import { CookieConsent } from "./components/CookieConsent";
 
@@ -45,6 +51,12 @@ const App = () => (
           <Route path="/disclaimer" element={<Disclaimer />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/cookie-policy" element={<CookiePolicy />} />
+          <Route path="/resources" element={<Resources />} />
+          <Route path="/resources/sa-job-market-guide-2026" element={<SAJobMarketGuide2026 />} />
+          <Route path="/resources/nsfas-application-mistakes" element={<NsfasApplicationMistakes />} />
+          <Route path="/resources/johannesburg-cv-tips" element={<JohannesburgCVTips />} />
+          <Route path="/resources/sassa-srd-guide" element={<SassaSrdGuide />} />
+          <Route path="/resources/western-cape-stem-bursaries" element={<WesternCapeStemBursaries />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
