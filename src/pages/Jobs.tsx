@@ -7,15 +7,35 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { SlidersHorizontal, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useGoogleSheets, SheetJob } from "@/hooks/useGoogleSheets";
 import { comprehensiveJobListings } from "@/data/jobListings";
 
 // Use comprehensive job listings as fallback (35+ jobs)
 const mockJobs = comprehensiveJobListings;
+
+// Category editorial descriptions for SEO
+const categoryDescriptions: Record<string, { title: string; description: string }> = {
+  technology: {
+    title: "Technology & IT Jobs",
+    description: "The South African Technology and IT sector is booming, driving demand for skilled professionals in software development, data science, and cybersecurity. This category features the latest vacancies from leading tech hubs in Cape Town, Johannesburg, and remote-first companies across the country. We list roles from entry-level support to senior architecture positions, with transparent salary ranges to help you benchmark your career. Explore opportunities in FinTech, EdTech, and enterprise solutions, and find your next challenge in one of South Africa's fastest-growing industries."
+  },
+  government: {
+    title: "Government Jobs",
+    description: "South Africa's public sector offers stable employment opportunities with competitive benefits packages across all nine provinces. From municipal positions to national department roles, government jobs provide job security, pension contributions, and opportunities for career advancement. Browse the latest vacancies from DPSA, provincial governments, and state-owned enterprises, including administrative roles, healthcare positions, and technical specialists."
+  },
+  learnerships: {
+    title: "Learnerships",
+    description: "Learnerships combine practical workplace experience with theoretical learning, providing a pathway to nationally recognised qualifications. These programmes are ideal for school leavers and young professionals looking to gain skills while earning a stipend. Explore opportunities across sectors including banking, retail, manufacturing, and IT, with programmes ranging from 12 to 24 months in duration."
+  },
+  internships: {
+    title: "Internships",
+    description: "Kickstart your career with internship opportunities from leading South African companies and government departments. Internships provide valuable work experience, mentorship, and networking opportunities that can lead to permanent employment. We list graduate internships, vacation work programmes, and structured development programmes across various industries."
+  }
+};
 
 const Jobs = () => {
   const [jobs, setJobs] = useState<any[]>(mockJobs);
@@ -24,6 +44,20 @@ const Jobs = () => {
   const [dataSource, setDataSource] = useState<'api' | 'sheet' | 'mock'>('mock');
   const { toast } = useToast();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  
+  // Get current category from URL
+  const currentCategory = useMemo(() => {
+    return searchParams.get('category')?.toLowerCase() || null;
+  }, [searchParams]);
+  
+  // Get category description if available
+  const categoryInfo = useMemo(() => {
+    if (currentCategory && categoryDescriptions[currentCategory]) {
+      return categoryDescriptions[currentCategory];
+    }
+    return null;
+  }, [currentCategory]);
   
   // Fetch jobs from Google Sheets
   const { data: sheetJobs, loading: sheetLoading } = useGoogleSheets<SheetJob>('jobs');
@@ -110,6 +144,18 @@ const Jobs = () => {
           <SearchBar onSearch={handleSearch} />
         </div>
       </section>
+
+      {/* Category Editorial Description */}
+      {categoryInfo && (
+        <section className="bg-muted/30 border-b border-border">
+          <div className="container mx-auto px-4 py-6">
+            <h2 className="text-xl font-semibold mb-3 text-foreground">{categoryInfo.title}</h2>
+            <p className="text-muted-foreground leading-relaxed max-w-4xl">
+              {categoryInfo.description}
+            </p>
+          </div>
+        </section>
+      )}
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
