@@ -130,6 +130,15 @@ const SassaUpdates = () => {
         </div>
       </section>
 
+      {/* Editorial Introduction */}
+      <section className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl">
+          <p className="text-muted-foreground leading-relaxed">
+            Staying informed about social grants is vital, and our SASSA Updates section is your trusted source for timely and accurate information. We monitor official South African Social Security Agency announcements daily to provide you with the latest payment dates, grant value changes, and critical application information. Our editorial team breaks down complex government circulars into clear, easy-to-understand guides, focusing on grants such as the Old Age Pension, Child Support Grant, and the Social Relief of Distress (SRD) grant. Rely on CareerGate to help you navigate the system, check your application status, and ensure you receive the support you are entitled to.
+          </p>
+        </div>
+      </section>
+
       {/* Latest Updates */}
       <section className="py-12">
         <div className="container mx-auto px-4">
