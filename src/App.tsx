@@ -26,6 +26,7 @@ import SassaSrdGuide from "./pages/resources/SassaSrdGuide";
 import WesternCapeStemBursaries from "./pages/resources/WesternCapeStemBursaries";
 import NotFound from "./pages/NotFound";
 import { CookieConsent } from "./components/CookieConsent";
+import { AdSenseScript } from "./components/AdSenseScript";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <AdSenseScript />
         <CookieConsent />
       </BrowserRouter>
     </TooltipProvider>
