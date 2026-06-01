@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm:*)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(cmd /c \"cd /d \\\\\"C:\\\\Users\\\\Lufuno Mphela\\\\Documents\\\\From Desktop\\\\Code&Workflows\\\\2026 Projects\\\\aggre-job-hub\\\\\" && node_modules\\\\.bin\\\\tsc --noEmit 2>&1\")",
+      "WebSearch",
+      "Bash(mkdir -p \"/c/Users/Lufuno Mphela/Documents/From Desktop/Code&Workflows/2026 Projects/job-applier/backend\")",
+      "Bash(mkdir -p \"/c/Users/Lufuno Mphela/Documents/From Desktop/Code&Workflows/2026 Projects/job-applier/templates\")",
+      "Bash(mkdir -p \"/c/Users/Lufuno Mphela/Documents/From Desktop/Code&Workflows/2026 Projects/job-applier/frontend/src\")",
+      "Bash(npm run:*)",
+      "Bash(node ./node_modules/vite/bin/vite.js build)"
+    ]
+  }
+}
