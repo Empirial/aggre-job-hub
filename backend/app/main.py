@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -8,8 +9,17 @@ from app.ai.deepseek_client import DeepSeekClient
 from app.cv.ats_mirror import ATSMirror
 from app.cv.docx_generator import generate_cv_docx
 from app.models import CVTailorRequest, CVTailorResponse, JobAnalysisRequest, JobAnalysisResponse
+from app import firebase_client
+from app.routes import jobs as jobs_router
 
-app = FastAPI(title="JobApplier Backend", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    firebase_client.init_firebase()
+    yield
+
+
+app = FastAPI(title="JobApplier Backend", version="0.2.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -17,6 +27,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(jobs_router.router)
 
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 DEEPSEEK_API_URL = os.getenv("DEEPSEEK_API_URL", "https://api.deepseek.com/v1/chat/completions")
@@ -29,7 +41,7 @@ deepseek = DeepSeekClient(api_key=DEEPSEEK_API_KEY, api_url=DEEPSEEK_API_URL)
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "phase": "phase-1"}
+    return {"status": "ok", "phase": "phase-2"}
 
 
 @app.post("/analyze", response_model=JobAnalysisResponse)
@@ -83,7 +95,6 @@ async def tailor_cv(request: CVTailorRequest):
 
 @app.get("/download/{filename}")
 def download_cv(filename: str):
-    # Prevent path traversal
     safe_filename = Path(filename).name
     file_path = OUTPUT_DIR / safe_filename
     if not file_path.exists():
