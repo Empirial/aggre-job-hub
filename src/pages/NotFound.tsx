@@ -4,7 +4,7 @@ import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Home, Search, Briefcase, GraduationCap, Cpu } from "lucide-react";
+import { Home, Search, Briefcase, Cpu, BookOpen } from "lucide-react";
 
 const NotFound = () => {
   const location = useLocation();
@@ -16,8 +16,8 @@ const NotFound = () => {
   const helpfulLinks = [
     { icon: Home, label: "Homepage", path: "/", description: "Start fresh from our homepage" },
     { icon: Briefcase, label: "Browse Jobs", path: "/jobs", description: "Explore government job opportunities" },
-    { icon: GraduationCap, label: "Bursaries", path: "/bursaries", description: "Find funding for your education" },
     { icon: Cpu, label: "STEM Careers", path: "/stem-careers", description: "Discover high-demand career paths" },
+    { icon: BookOpen, label: "Career Resources", path: "/resources", description: "Guides and tips for job seekers" },
   ];
 
   return (
@@ -53,7 +53,7 @@ const NotFound = () => {
             <Search className="w-8 h-8 mx-auto mb-3 text-muted-foreground" />
             <h3 className="font-semibold mb-2">Looking for something specific?</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              CareerGate helps South Africans find government jobs, bursaries, and STEM career information. 
+              CareerGate helps South Africans find government jobs and STEM career information.
               Use the navigation above or visit our homepage to explore all our resources.
             </p>
             <Button asChild size="lg">

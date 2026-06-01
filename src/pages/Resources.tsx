@@ -3,12 +3,10 @@ import { Footer } from "@/components/Footer";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
-  BookOpen, 
-  TrendingUp, 
-  GraduationCap, 
-  FileText, 
-  Briefcase,
+import {
+  BookOpen,
+  TrendingUp,
+  FileText,
   ArrowRight,
   Calendar,
   Clock
@@ -28,16 +26,6 @@ const Resources = () => {
       featured: true,
     },
     {
-      slug: "nsfas-application-mistakes",
-      title: "5 Common Mistakes to Avoid on Your NSFAS Application",
-      excerpt: "Don't let simple errors cost you your funding. Learn about the most common pitfalls that cause NSFAS applications to be rejected and how to avoid them.",
-      category: "Education",
-      readTime: "8 min read",
-      date: "January 2026",
-      icon: GraduationCap,
-      featured: true,
-    },
-    {
       slug: "johannesburg-cv-tips",
       title: "How to Write a CV That Lands an Interview in Johannesburg",
       excerpt: "Tailored advice for job seekers in Gauteng. Understand what Johannesburg employers are looking for and how to format your CV for maximum impact.",
@@ -47,33 +35,11 @@ const Resources = () => {
       icon: FileText,
       featured: true,
     },
-    {
-      slug: "sassa-srd-guide",
-      title: "Navigating the SASSA SRD R370 Grant: Eligibility and Appeals Process",
-      excerpt: "A clear, step-by-step guide to understanding the SRD grant, checking your eligibility, and appealing if your application was declined.",
-      category: "Social Grants",
-      readTime: "9 min read",
-      date: "January 2026",
-      icon: Briefcase,
-      featured: false,
-    },
-    {
-      slug: "western-cape-stem-bursaries",
-      title: "The Best Bursaries for STEM Students in the Western Cape",
-      excerpt: "A curated list of bursary opportunities specifically for students pursuing Science, Technology, Engineering, and Mathematics in the Western Cape.",
-      category: "Bursaries",
-      readTime: "7 min read",
-      date: "January 2026",
-      icon: GraduationCap,
-      featured: false,
-    },
   ];
 
   const categories = [
     { name: "Career Guides", count: 8, icon: TrendingUp },
-    { name: "Education & Bursaries", count: 12, icon: GraduationCap },
     { name: "Job Search Tips", count: 6, icon: FileText },
-    { name: "Social Grants", count: 5, icon: Briefcase },
   ];
 
   return (
@@ -205,7 +171,7 @@ const Resources = () => {
               Stay Informed with CareerGate
             </h2>
             <p className="text-white/90 mb-6 max-w-2xl mx-auto">
-              Our team publishes new articles weekly, covering the latest job market trends, funding opportunities, and career advice specifically for South Africans.
+              Our team publishes new articles weekly, covering the latest job market trends and career advice specifically for South Africans.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Link to="/jobs">
@@ -213,9 +179,9 @@ const Resources = () => {
                   Browse Jobs
                 </Button>
               </Link>
-              <Link to="/bursaries">
+              <Link to="/stem-careers">
                 <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
-                  Find Bursaries
+                  Explore STEM Careers
                 </Button>
               </Link>
             </div>

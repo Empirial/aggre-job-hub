@@ -183,8 +183,8 @@ const About = () => {
                 <div className="text-white/80">Jobs Listed Monthly</div>
               </div>
               <div>
-                <div className="text-4xl md:text-5xl font-bold text-white mb-2">200+</div>
-                <div className="text-white/80">Bursaries Tracked</div>
+                <div className="text-4xl md:text-5xl font-bold text-white mb-2">8</div>
+                <div className="text-white/80">Industries Covered</div>
               </div>
               <div>
                 <div className="text-4xl md:text-5xl font-bold text-white mb-2">100K+</div>
@@ -227,7 +227,7 @@ const About = () => {
                 <div>
                   <h3 className="font-semibold text-lg mb-3">Verified Listings</h3>
                   <p className="text-muted-foreground mb-6">
-                    Every job listing and bursary opportunity goes through our verification process. We actively remove scam listings and work with authorities to protect job seekers from fraud.
+                    Every job listing goes through our verification process. We actively remove scam listings and work with authorities to protect job seekers from fraud.
                   </p>
                   <h3 className="font-semibold text-lg mb-3">Data Protection</h3>
                   <p className="text-muted-foreground">
@@ -241,7 +241,7 @@ const About = () => {
                   </p>
                   <h3 className="font-semibold text-lg mb-3">Transparent Operations</h3>
                   <p className="text-muted-foreground">
-                    We're funded through partnerships and donations — never by selling job seeker data. Our bursary and job information is always free to access.
+                    We're funded through partnerships — never by selling job seeker data. Our job information is always free to access.
                   </p>
                 </div>
               </div>
@@ -253,17 +253,14 @@ const About = () => {
         <section className="container mx-auto px-4 py-16 text-center">
           <h2 className="text-3xl font-bold mb-4">Join Our Mission</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
-            Whether you're looking for a job, applying for bursaries, or want to support our cause, there's a place for you in our community.
+            Whether you're looking for a job or exploring STEM career paths, there's a place for you in our community.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <a href="/jobs" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6">
               Find Jobs
             </a>
-            <a href="/bursaries" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-6">
-              Explore Bursaries
-            </a>
-            <a href="/donate" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-secondary text-secondary-foreground hover:bg-secondary/90 h-10 px-6">
-              Support Us
+            <a href="/stem-careers" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-6">
+              Explore STEM Careers
             </a>
           </div>
         </section>

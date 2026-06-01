@@ -3,7 +3,7 @@ import { Briefcase, Mail, MapPin, Phone, Facebook, Twitter, Linkedin, Instagram 
 
 export const Footer = () => {
   return (
-    <footer className="border-t bg-card/50 backdrop-blur-sm mt-20">
+    <footer className="border-t border-border bg-white mt-20">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
@@ -15,7 +15,7 @@ export const Footer = () => {
               </span>
             </Link>
             <p className="text-sm text-muted-foreground mb-4">
-              Empowering South African youth with career opportunities, bursaries, and STEM resources. Your future starts here.
+              Empowering South African youth with career opportunities and STEM resources. Your future starts here.
             </p>
             <div className="flex gap-3">
               <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
@@ -38,11 +38,10 @@ export const Footer = () => {
             <h4 className="font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2 text-sm">
               <li><Link to="/jobs" className="text-muted-foreground hover:text-primary transition-colors">Browse Jobs</Link></li>
-              <li><Link to="/bursaries" className="text-muted-foreground hover:text-primary transition-colors">Bursaries</Link></li>
-              <li><Link to="/nsfas" className="text-muted-foreground hover:text-primary transition-colors">NSFAS</Link></li>
-              <li><Link to="/universities" className="text-muted-foreground hover:text-primary transition-colors">Universities</Link></li>
-              <li><Link to="/sassa-updates" className="text-muted-foreground hover:text-primary transition-colors">SASSA Updates</Link></li>
-              <li><Link to="/donate" className="text-muted-foreground hover:text-primary transition-colors">Donate</Link></li>
+              <li><Link to="/stem-careers" className="text-muted-foreground hover:text-primary transition-colors">STEM Careers</Link></li>
+              <li><Link to="/resources" className="text-muted-foreground hover:text-primary transition-colors">Career Resources</Link></li>
+              <li><Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">About</Link></li>
+              <li><Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link></li>
             </ul>
           </div>
 

@@ -547,8 +547,8 @@ const StemCareers = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   Platforms like Coursera, edX, and Khan Academy offer free STEM courses.
                 </p>
-                <a href="/bursaries" className="text-primary text-sm font-medium hover:underline">
-                  Find Bursaries →
+                <a href="/resources" className="text-primary text-sm font-medium hover:underline">
+                  Career Resources →
                 </a>
               </Card>
               <Card className="p-6 text-center hover:shadow-lg transition-shadow">
@@ -582,14 +582,14 @@ const StemCareers = () => {
               Ready to Start Your STEM Career?
             </h2>
             <p className="text-white/90 max-w-2xl mx-auto mb-8">
-              Browse our latest job listings and bursary opportunities in STEM fields.
+              Browse our latest job listings and career resources in STEM fields.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <a href="/jobs" className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-white text-primary hover:bg-white/90 h-10 px-6">
                 Browse STEM Jobs
               </a>
-              <a href="/bursaries" className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-white text-white hover:bg-white/10 h-10 px-6">
-                STEM Bursaries
+              <a href="/resources" className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-white text-white hover:bg-white/10 h-10 px-6">
+                Career Resources
               </a>
             </div>
           </div>
