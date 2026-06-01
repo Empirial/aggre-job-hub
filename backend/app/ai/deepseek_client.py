@@ -6,7 +6,7 @@ from app.models import JobAnalysisRequest, JobAnalysisResponse, CVProfile
 
 
 class DeepSeekClient:
-    def __init__(self, api_key: str, api_url: str = "https://api.deepseek.ai/v1/chat/completions"):
+    def __init__(self, api_key: str, api_url: str = "https://api.deepseek.com/v1/chat/completions"):
         self.api_key = api_key
         self.api_url = api_url
 
