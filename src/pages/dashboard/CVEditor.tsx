@@ -1,253 +1,334 @@
 import { useState } from "react";
-import { Download, Send, ChevronDown, ChevronUp } from "lucide-react";
+import { Download, Wand2, ChevronDown, ChevronUp, Loader2, AlertCircle, Settings } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { useProfile } from "@/hooks/useProfile";
+import { cvApi } from "@/lib/api";
+import { useNavigate } from "react-router-dom";
 
-const baseCV = {
-  summary:
-    "Full-stack software developer with 4 years of experience building scalable web applications. Proficient in React, TypeScript, Node.js, and Python. Strong background in API design and cloud infrastructure.",
-  skills: "React, TypeScript, Node.js, Python, PostgreSQL, Redis, Docker, AWS, Git, REST APIs",
-  experience: [
-    {
-      role: "Software Developer",
-      company: "Mphela Industries",
-      period: "2023 – Present",
-      bullets: [
-        "Built internal tools using React and Node.js to streamline procurement workflows",
-        "Designed RESTful APIs consumed by mobile and web clients",
-        "Managed PostgreSQL database schema and wrote complex queries",
-      ],
-    },
-    {
-      role: "Junior Developer",
-      company: "Freelance",
-      period: "2022 – 2023",
-      bullets: [
-        "Developed client websites using React and Tailwind CSS",
-        "Integrated third-party APIs including payment gateways and mapping services",
-        "Delivered 8 projects on time across retail and services industries",
-      ],
-    },
-  ],
-  education: "BSc Computer Science — UNISA (In Progress, 2026)",
-};
-
-const tailoredCV = {
-  summary:
-    "Senior-level full-stack engineer with 4+ years delivering scalable microservices and banking-grade APIs. Deep expertise in Java, Python, REST API design, Docker, and Kubernetes. Proven track record deploying to AWS in CI/CD-driven environments. Collaborative communicator who mentors junior engineers and leads technical reviews.",
-  skills:
-    "Java, Python, Microservices, REST APIs, Docker, Kubernetes, CI/CD, AWS, Kafka, PostgreSQL, Redis, TypeScript, React, Git",
-  experience: [
-    {
-      role: "Software Developer",
-      company: "Mphela Industries",
-      period: "2023 – Present",
-      bullets: [
-        "Architected and deployed event-driven microservices using Python and Docker, reducing system latency by 40%",
-        "Designed scalable REST APIs with robust authentication and rate limiting, serving 10k+ daily requests",
-        "Implemented CI/CD pipelines on AWS, cutting release cycles from weekly to daily deployments",
-      ],
-    },
-    {
-      role: "Junior Developer",
-      company: "Freelance",
-      period: "2022 – 2023",
-      bullets: [
-        "Built backend services in Python and Node.js with PostgreSQL and Redis caching layers",
-        "Integrated Kafka-based messaging for async processing in high-throughput client applications",
-        "Delivered 8 production-grade projects with full test coverage and documentation",
-      ],
-    },
-  ],
-  education: "BSc Computer Science — UNISA (In Progress, 2026)",
-};
-
-type Section = "summary" | "skills" | "education";
+interface TailoredCV {
+  summary: string;
+  skills: string[];
+  experience: string[];
+  education?: string;
+  docx_path?: string;
+}
 
 export default function CVEditor() {
-  const [editedTailored, setEditedTailored] = useState(tailoredCV);
+  const navigate = useNavigate();
+  const { data: profile, isLoading: profileLoading } = useProfile();
+
+  const [jobTitle, setJobTitle] = useState("");
+  const [jobCompany, setJobCompany] = useState("");
+  const [jobDescription, setJobDescription] = useState("");
+  const [jdOpen, setJdOpen] = useState(true);
+
+  const [tailored, setTailored] = useState<TailoredCV | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<number, boolean>>({ 0: true, 1: true });
 
   const toggleExp = (i: number) =>
     setExpanded((prev) => ({ ...prev, [i]: !prev[i] }));
 
-  const updateBullet = (expIdx: number, bulletIdx: number, value: string) => {
-    setEditedTailored((prev) => {
-      const updated = { ...prev };
-      updated.experience = prev.experience.map((exp, i) =>
-        i === expIdx
-          ? { ...exp, bullets: exp.bullets.map((b, j) => (j === bulletIdx ? value : b)) }
-          : exp
-      );
-      return updated;
+  const updateBullet = (idx: number, value: string) => {
+    if (!tailored) return;
+    setTailored((prev) => {
+      if (!prev) return prev;
+      const exp = [...prev.experience];
+      exp[idx] = value;
+      return { ...prev, experience: exp };
     });
   };
 
-  const updateField = (field: Section, value: string) => {
-    setEditedTailored((prev) => ({ ...prev, [field]: value }));
+  const handleTailor = async () => {
+    if (!profile || !jobDescription.trim()) return;
+    setError(null);
+    setLoading(true);
+    try {
+      const result = await cvApi.tailor({
+        profile: {
+          name: profile.name || "Job Seeker",
+          email: profile.email || "",
+          phone: profile.phone || "",
+          linkedin: profile.linkedin || "",
+          summary: profile.summary || "",
+          skills: profile.skills || [],
+          experience: profile.experience || [],
+          education: profile.education || "",
+        },
+        job: {
+          title: jobTitle || "Position",
+          company: jobCompany || undefined,
+          description: jobDescription,
+        },
+      });
+      setTailored(result as TailoredCV);
+      setJdOpen(false);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Tailoring failed. Check backend connection.");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const profileEmpty = !profile?.summary && (!profile?.skills || profile.skills.length === 0);
+
+  const downloadDocx = () => {
+    if (!tailored?.docx_path) return;
+    const filename = tailored.docx_path.split(/[\\/]/).pop();
+    if (filename) window.open(cvApi.downloadUrl(filename), "_blank");
+  };
+
+  if (profileLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-5">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">CV Editor</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Tailored for: Senior Software Engineer — FNB</p>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {tailored
+              ? `Tailored for: ${jobTitle || "Position"}${jobCompany ? ` — ${jobCompany}` : ""}`
+              : "Paste a job description to generate a tailored CV"}
+          </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" /> Download .docx
-          </Button>
-          <Button size="sm" className="bg-brand-600 hover:bg-brand-700 text-white">
-            <Send className="w-4 h-4 mr-2" /> Approve & Send
-          </Button>
-        </div>
+        {tailored && (
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={downloadDocx} disabled={!tailored.docx_path}>
+              <Download className="w-4 h-4 mr-2" />Download .docx
+            </Button>
+          </div>
+        )}
       </div>
 
-      <div className="grid grid-cols-2 gap-5">
-        {/* Base CV */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <h2 className="text-sm font-medium text-gray-700">Base CV</h2>
-            <Badge className="bg-gray-100 text-gray-500 border-0 text-xs">Original</Badge>
+      {profileEmpty && (
+        <div className="flex items-start gap-3 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
+          <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+          <div className="flex-1 text-sm text-amber-700">
+            Your profile is empty. Add your summary, skills, and experience first so the AI has something to work with.
           </div>
-
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="pb-1 pt-4 px-5">
-              <CardTitle className="text-xs font-medium text-gray-400 uppercase tracking-wide">Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="px-5 pb-4">
-              <p className="text-sm text-gray-600 leading-relaxed">{baseCV.summary}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="pb-1 pt-4 px-5">
-              <CardTitle className="text-xs font-medium text-gray-400 uppercase tracking-wide">Skills</CardTitle>
-            </CardHeader>
-            <CardContent className="px-5 pb-4">
-              <p className="text-sm text-gray-600">{baseCV.skills}</p>
-            </CardContent>
-          </Card>
-
-          {baseCV.experience.map((exp, i) => (
-            <Card key={i} className="border-0 shadow-sm">
-              <CardHeader className="pb-1 pt-4 px-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">{exp.role}</p>
-                    <p className="text-xs text-gray-400">{exp.company} · {exp.period}</p>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="px-5 pb-4">
-                <ul className="space-y-1">
-                  {exp.bullets.map((b, j) => (
-                    <li key={j} className="text-sm text-gray-600 flex gap-2">
-                      <span className="text-gray-300 mt-0.5">•</span>
-                      <span>{b}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          ))}
-
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="pb-1 pt-4 px-5">
-              <CardTitle className="text-xs font-medium text-gray-400 uppercase tracking-wide">Education</CardTitle>
-            </CardHeader>
-            <CardContent className="px-5 pb-4">
-              <p className="text-sm text-gray-600">{baseCV.education}</p>
-            </CardContent>
-          </Card>
+          <Button size="sm" variant="outline" className="shrink-0 text-xs" onClick={() => navigate("/settings")}>
+            <Settings className="w-3.5 h-3.5 mr-1.5" />Setup Profile
+          </Button>
         </div>
+      )}
 
-        {/* Tailored CV */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <h2 className="text-sm font-medium text-gray-700">Tailored CV</h2>
-            <Badge className="bg-brand-50 text-brand-600 border-0 text-xs">ATS Optimized</Badge>
+      {error && (
+        <div className="flex items-center gap-2 text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg">
+          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />{error}
+        </div>
+      )}
+
+      {/* Job description input */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader
+          className="pb-2 pt-4 px-5 cursor-pointer select-none"
+          onClick={() => setJdOpen((v) => !v)}
+        >
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-medium text-gray-700">Job Description</CardTitle>
+            {jdOpen
+              ? <ChevronUp className="w-4 h-4 text-gray-400" />
+              : <ChevronDown className="w-4 h-4 text-gray-400" />}
           </div>
-
-          <Card className="border-0 shadow-sm ring-1 ring-brand-100">
-            <CardHeader className="pb-1 pt-4 px-5">
-              <CardTitle className="text-xs font-medium text-gray-400 uppercase tracking-wide">Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="px-5 pb-4">
-              <Textarea
-                value={editedTailored.summary}
-                onChange={(e) => updateField("summary", e.target.value)}
-                className="text-sm text-gray-700 border-0 p-0 focus-visible:ring-0 resize-none bg-transparent"
-                rows={4}
+        </CardHeader>
+        {jdOpen && (
+          <CardContent className="px-5 pb-5 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                placeholder="Job title (e.g. Senior Developer)"
+                value={jobTitle}
+                onChange={(e) => setJobTitle(e.target.value)}
+                className="text-sm border-gray-200"
               />
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-sm ring-1 ring-brand-100">
-            <CardHeader className="pb-1 pt-4 px-5">
-              <CardTitle className="text-xs font-medium text-gray-400 uppercase tracking-wide">Skills</CardTitle>
-            </CardHeader>
-            <CardContent className="px-5 pb-4">
-              <Textarea
-                value={editedTailored.skills}
-                onChange={(e) => updateField("skills", e.target.value)}
-                className="text-sm text-gray-700 border-0 p-0 focus-visible:ring-0 resize-none bg-transparent"
-                rows={2}
+              <Input
+                placeholder="Company (optional)"
+                value={jobCompany}
+                onChange={(e) => setJobCompany(e.target.value)}
+                className="text-sm border-gray-200"
               />
-            </CardContent>
-          </Card>
+            </div>
+            <Textarea
+              placeholder="Paste the full job description here..."
+              value={jobDescription}
+              onChange={(e) => setJobDescription(e.target.value)}
+              rows={8}
+              className="text-sm border-gray-200 resize-none"
+            />
+            <Button
+              className="bg-[#F7941D] hover:bg-[#E08518] text-white"
+              size="sm"
+              onClick={handleTailor}
+              disabled={loading || !jobDescription.trim() || profileEmpty}
+            >
+              {loading
+                ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Tailoring...</>
+                : <><Wand2 className="w-3.5 h-3.5 mr-1.5" />Tailor with AI</>}
+            </Button>
+          </CardContent>
+        )}
+      </Card>
 
-          {editedTailored.experience.map((exp, i) => (
-            <Card key={i} className="border-0 shadow-sm ring-1 ring-brand-100">
-              <CardHeader className="pb-1 pt-4 px-5 cursor-pointer" onClick={() => toggleExp(i)}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">{exp.role}</p>
-                    <p className="text-xs text-gray-400">{exp.company} · {exp.period}</p>
-                  </div>
-                  {expanded[i] ? (
-                    <ChevronUp className="w-4 h-4 text-gray-400" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-gray-400" />
-                  )}
-                </div>
-              </CardHeader>
-              {expanded[i] && (
-                <CardContent className="px-5 pb-4 space-y-2">
-                  {exp.bullets.map((b, j) => (
-                    <div key={j} className="flex gap-2">
-                      <span className="text-gray-300 mt-2 text-xs">•</span>
-                      <Textarea
-                        value={b}
-                        onChange={(e) => updateBullet(i, j, e.target.value)}
-                        className="text-sm text-gray-700 border-0 p-0 focus-visible:ring-0 resize-none bg-transparent flex-1"
-                        rows={2}
-                      />
-                    </div>
+      {/* Side-by-side CV comparison */}
+      {(tailored || profile?.summary) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {/* Base CV */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-medium text-gray-700">Your Profile</h2>
+              <Badge className="bg-gray-100 text-gray-500 border-0 text-xs">Original</Badge>
+            </div>
+
+            {profile?.summary && (
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="pb-1 pt-4 px-5">
+                  <CardTitle className="text-xs font-medium text-gray-500 uppercase tracking-wide">Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="px-5 pb-4">
+                  <p className="text-sm text-gray-600 leading-relaxed">{profile.summary}</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {profile?.skills && profile.skills.length > 0 && (
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="pb-1 pt-4 px-5">
+                  <CardTitle className="text-xs font-medium text-gray-500 uppercase tracking-wide">Skills</CardTitle>
+                </CardHeader>
+                <CardContent className="px-5 pb-4">
+                  <p className="text-sm text-gray-600">{profile.skills.join(", ")}</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {profile?.experience && profile.experience.length > 0 && (
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="pb-1 pt-4 px-5">
+                  <CardTitle className="text-xs font-medium text-gray-500 uppercase tracking-wide">Experience</CardTitle>
+                </CardHeader>
+                <CardContent className="px-5 pb-4 space-y-1">
+                  {profile.experience.map((line, i) => (
+                    <p key={i} className="text-sm text-gray-600 leading-relaxed">{line}</p>
                   ))}
                 </CardContent>
-              )}
-            </Card>
-          ))}
+              </Card>
+            )}
 
-          <Card className="border-0 shadow-sm ring-1 ring-brand-100">
-            <CardHeader className="pb-1 pt-4 px-5">
-              <CardTitle className="text-xs font-medium text-gray-400 uppercase tracking-wide">Education</CardTitle>
-            </CardHeader>
-            <CardContent className="px-5 pb-4">
-              <Textarea
-                value={editedTailored.education}
-                onChange={(e) => updateField("education", e.target.value)}
-                className="text-sm text-gray-700 border-0 p-0 focus-visible:ring-0 resize-none bg-transparent"
-                rows={1}
-              />
-            </CardContent>
-          </Card>
+            {profile?.education && (
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="pb-1 pt-4 px-5">
+                  <CardTitle className="text-xs font-medium text-gray-500 uppercase tracking-wide">Education</CardTitle>
+                </CardHeader>
+                <CardContent className="px-5 pb-4">
+                  <p className="text-sm text-gray-600">{profile.education}</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Tailored CV */}
+          {tailored ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-medium text-gray-700">Tailored CV</h2>
+                <Badge className="bg-brand-50 text-brand-600 border-0 text-xs">ATS Optimised</Badge>
+              </div>
+
+              <Card className="border-0 shadow-sm ring-1 ring-brand-100">
+                <CardHeader className="pb-1 pt-4 px-5">
+                  <CardTitle className="text-xs font-medium text-gray-500 uppercase tracking-wide">Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="px-5 pb-4">
+                  <Textarea
+                    value={tailored.summary}
+                    onChange={(e) => setTailored((prev) => prev ? { ...prev, summary: e.target.value } : prev)}
+                    className="text-sm text-gray-700 border-0 p-0 focus-visible:ring-0 resize-none bg-transparent"
+                    rows={4}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card className="border-0 shadow-sm ring-1 ring-brand-100">
+                <CardHeader className="pb-1 pt-4 px-5">
+                  <CardTitle className="text-xs font-medium text-gray-500 uppercase tracking-wide">Skills</CardTitle>
+                </CardHeader>
+                <CardContent className="px-5 pb-4">
+                  <Textarea
+                    value={tailored.skills.join(", ")}
+                    onChange={(e) =>
+                      setTailored((prev) =>
+                        prev ? { ...prev, skills: e.target.value.split(",").map((s) => s.trim()) } : prev
+                      )
+                    }
+                    className="text-sm text-gray-700 border-0 p-0 focus-visible:ring-0 resize-none bg-transparent"
+                    rows={2}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card className="border-0 shadow-sm ring-1 ring-brand-100">
+                <CardHeader
+                  className="pb-1 pt-4 px-5 cursor-pointer"
+                  onClick={() => toggleExp(0)}
+                >
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-xs font-medium text-gray-500 uppercase tracking-wide">Experience</CardTitle>
+                    {expanded[0]
+                      ? <ChevronUp className="w-4 h-4 text-gray-400" />
+                      : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                  </div>
+                </CardHeader>
+                {expanded[0] && (
+                  <CardContent className="px-5 pb-4 space-y-2">
+                    {tailored.experience.map((line, i) => (
+                      <div key={i} className="flex gap-2">
+                        <span className="text-gray-300 mt-2 text-xs">•</span>
+                        <Textarea
+                          value={line}
+                          onChange={(e) => updateBullet(i, e.target.value)}
+                          className="text-sm text-gray-700 border-0 p-0 focus-visible:ring-0 resize-none bg-transparent flex-1"
+                          rows={2}
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                )}
+              </Card>
+
+              {tailored.education && (
+                <Card className="border-0 shadow-sm ring-1 ring-brand-100">
+                  <CardHeader className="pb-1 pt-4 px-5">
+                    <CardTitle className="text-xs font-medium text-gray-500 uppercase tracking-wide">Education</CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-5 pb-4">
+                    <Textarea
+                      value={tailored.education}
+                      onChange={(e) => setTailored((prev) => prev ? { ...prev, education: e.target.value } : prev)}
+                      className="text-sm text-gray-700 border-0 p-0 focus-visible:ring-0 resize-none bg-transparent"
+                      rows={1}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center gap-3 h-48 rounded-xl border border-dashed border-gray-200">
+              <Wand2 className="w-6 h-6 text-gray-300" />
+              <p className="text-sm text-gray-400">Paste a job description and click Tailor with AI</p>
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </div>
   );
 }

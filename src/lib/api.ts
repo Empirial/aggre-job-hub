@@ -23,6 +23,11 @@ export const jobsApi = {
     post<ScrapeResponse>("/jobs/scrape", { keywords, location, max_per_source: 10 }),
 };
 
+export const chatApi = {
+  send: (messages: { role: "user" | "assistant"; content: string }[]) =>
+    post<{ reply: string }>("/chat", { messages }),
+};
+
 export const cvApi = {
   analyze: (job: { title: string; company?: string; description: string }) =>
     post("/analyze", job),

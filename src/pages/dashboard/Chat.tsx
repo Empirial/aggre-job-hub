@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Sparkles, RotateCcw } from "lucide-react";
+import { Send, Sparkles, RotateCcw, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { chatApi } from "@/lib/api";
 
 type Role = "user" | "assistant";
 
@@ -22,71 +23,6 @@ const SUGGESTED_PROMPTS = [
   "Review my summary and make it more ATS-friendly",
 ];
 
-const MOCK_RESPONSES: Record<string, string> = {
-  default: `I can help you with that. Here's what I recommend based on your job search context:
-
-When optimizing your CV for ATS systems, focus on these key principles:
-
-1. **Mirror the job description language** — Use exact phrases from the posting. If they say "REST APIs", don't write "RESTful services".
-
-2. **Quantify everything** — Replace "improved performance" with "reduced API response time by 40%".
-
-3. **Lead with a strong summary** — 3–4 sentences max. Include your seniority level, core stack, and years of experience.
-
-4. **Skills section placement** — Put it near the top, not the bottom. ATS scores the first 60% of your CV higher.
-
-5. **Avoid tables and columns** — Many ATS parsers can't read multi-column layouts. Use a single-column format.
-
-Would you like me to rewrite a specific section of your CV?`,
-
-  banking: `For banking and financial services roles in South Africa, here are the most important ATS keywords to include:
-
-**Technical:**
-- Java, Python, Spring Boot, Microservices
-- REST APIs, SOAP, MQ (IBM MQ or RabbitMQ)
-- Oracle, DB2, SQL Server
-- Docker, Kubernetes, OpenShift
-- CI/CD, Jenkins, GitLab
-
-**Domain:**
-- Core Banking, SWIFT, ISO 20022
-- Payment processing, Reconciliation
-- Regulatory compliance, POPIA, FICA
-- Agile, Scrum, SAFe
-
-**Soft skills (still ATS-scanned):**
-- Stakeholder management
-- Cross-functional collaboration
-- Risk management
-
-FNB, Standard Bank, and Absa all use Taleo or SAP SuccessFactors as their ATS — both heavily weight keyword density in the top third of your CV.`,
-
-  salary: `Here are current 2026 salary benchmarks for tech roles in Johannesburg (gross, per month):
-
-| Role | Junior | Mid | Senior |
-|---|---|---|---|
-| Python Developer | R28k–R38k | R42k–R58k | R65k–R90k |
-| Full Stack (React/Node) | R30k–R42k | R45k–R62k | R68k–R95k |
-| DevOps / Cloud Engineer | R35k–R48k | R52k–R72k | R78k–R110k |
-| Data Engineer | R32k–R45k | R50k–R68k | R72k–R100k |
-| Software Architect | — | R70k–R90k | R95k–R140k |
-
-Remote roles typically pay 10–20% more. Contract rates are roughly 1.4–1.6x the permanent equivalent.
-
-For banking (FNB, Standard Bank, Absa), add 15–25% to mid/senior figures — they pay above market for experienced engineers.`,
-};
-
-function getResponse(input: string): string {
-  const lower = input.toLowerCase();
-  if (lower.includes("bank") || lower.includes("fnb") || lower.includes("ats") || lower.includes("keyword")) {
-    return MOCK_RESPONSES.banking;
-  }
-  if (lower.includes("salary") || lower.includes("pay") || lower.includes("rate") || lower.includes("earn")) {
-    return MOCK_RESPONSES.salary;
-  }
-  return MOCK_RESPONSES.default;
-}
-
 function useTypewriter(text: string, active: boolean, onDone: () => void) {
   const [displayed, setDisplayed] = useState("");
   const indexRef = useRef(0);
@@ -97,13 +33,13 @@ function useTypewriter(text: string, active: boolean, onDone: () => void) {
     indexRef.current = 0;
 
     const interval = setInterval(() => {
-      indexRef.current += 3;
+      indexRef.current += 4;
       setDisplayed(text.slice(0, indexRef.current));
       if (indexRef.current >= text.length) {
         clearInterval(interval);
         onDone();
       }
-    }, 16);
+    }, 12);
 
     return () => clearInterval(interval);
   }, [text, active]);
@@ -117,7 +53,7 @@ function AssistantBubble({ message, onDone }: { message: Message; onDone: () => 
 
   return (
     <div className="flex gap-3 max-w-2xl">
-      <div className="w-7 h-7 bg-brand-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+      <div className="w-7 h-7 bg-[#F7941D] rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
         <Sparkles className="w-3.5 h-3.5 text-white" />
       </div>
       <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm flex-1">
@@ -146,58 +82,60 @@ function AssistantBubble({ message, onDone }: { message: Message; onDone: () => 
   );
 }
 
+const WELCOME: Message = {
+  id: "welcome",
+  role: "assistant",
+  content: "Hi, I'm your CareerGate AI assistant. I can help you tailor your CV, extract ATS keywords, write cover letters, and prepare for interviews in the South African job market. What do you need?",
+};
+
 export default function Chat() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content: "Hi, I'm your AI job search assistant. I can help you tailor your CV, extract ATS keywords, write cover letters, and prepare for interviews. What do you need?",
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([WELCOME]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const send = (text: string) => {
+  const send = async (text: string) => {
     if (!text.trim() || loading) return;
+    setError(null);
 
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: text.trim() };
-    const responseText = getResponse(text);
     const assistantId = (Date.now() + 1).toString();
 
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setLoading(true);
 
-    setTimeout(() => {
+    const history = [...messages, userMsg]
+      .filter((m) => m.id !== "welcome" || m.role === "assistant")
+      .map(({ role, content }) => ({ role, content }));
+
+    try {
+      const { reply } = await chatApi.send(history);
       setMessages((prev) => [
         ...prev,
-        { id: assistantId, role: "assistant", content: responseText, streaming: true },
+        { id: assistantId, role: "assistant", content: reply, streaming: true },
       ]);
-    }, 600);
+    } catch {
+      setError("Failed to reach AI. Check your connection or try again.");
+      setLoading(false);
+    }
   };
 
   const markDone = (id: string) => {
-    setMessages((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, streaming: false } : m))
-    );
+    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, streaming: false } : m)));
     setLoading(false);
   };
 
   const reset = () => {
-    setMessages([
-      {
-        id: "welcome",
-        role: "assistant",
-        content: "Hi, I'm your AI job search assistant. I can help you tailor your CV, extract ATS keywords, write cover letters, and prepare for interviews. What do you need?",
-      },
-    ]);
+    setMessages([WELCOME]);
     setLoading(false);
     setInput("");
+    setError(null);
   };
 
   const showSuggestions = messages.length === 1;
@@ -207,7 +145,7 @@ export default function Chat() {
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 bg-brand-600 rounded-lg flex items-center justify-center">
+          <div className="w-7 h-7 bg-[#F7941D] rounded-lg flex items-center justify-center">
             <Sparkles className="w-3.5 h-3.5 text-white" />
           </div>
           <div>
@@ -225,18 +163,41 @@ export default function Chat() {
         {messages.map((msg) =>
           msg.role === "user" ? (
             <div key={msg.id} className="flex justify-end">
-              <div className="bg-brand-600 text-white rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-md text-sm leading-relaxed">
+              <div className="bg-[#F7941D] text-white rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-md text-sm leading-relaxed">
                 {msg.content}
               </div>
             </div>
           ) : (
-            <AssistantBubble
-              key={msg.id}
-              message={msg}
-              onDone={() => markDone(msg.id)}
-            />
+            <AssistantBubble key={msg.id} message={msg} onDone={() => markDone(msg.id)} />
           )
         )}
+
+        {loading && !messages.find((m) => m.streaming) && (
+          <div className="flex gap-3 max-w-2xl">
+            <div className="w-7 h-7 bg-[#F7941D] rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Sparkles className="w-3.5 h-3.5 text-white" />
+            </div>
+            <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
+              <div className="flex gap-1 items-center h-5">
+                {[0, 1, 2].map((i) => (
+                  <span
+                    key={i}
+                    className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-pulse"
+                    style={{ animationDelay: `${i * 200}ms` }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="flex items-center gap-2 text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg max-w-sm">
+            <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+            {error}
+          </div>
+        )}
+
         <div ref={bottomRef} />
       </div>
 
@@ -280,7 +241,7 @@ export default function Chat() {
             className={cn(
               "w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 self-end transition-colors",
               input.trim() && !loading
-                ? "bg-brand-600 text-white hover:bg-brand-700"
+                ? "bg-[#F7941D] text-white hover:bg-[#E08518]"
                 : "bg-gray-100 text-gray-300 cursor-not-allowed"
             )}
           >
