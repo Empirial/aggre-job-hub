@@ -7,6 +7,7 @@ import {
   SendHorizontal,
   Settings,
   MessageSquare,
+  ScanText,
   Menu,
   X,
 } from "lucide-react";
@@ -18,6 +19,7 @@ const navItems = [
   { to: "/cv-editor", label: "CV Editor", icon: FileText },
   { to: "/applications", label: "Applications", icon: SendHorizontal },
   { to: "/chat", label: "AI Chat", icon: MessageSquare },
+  { to: "/preview", label: "Document AI", icon: ScanText },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 

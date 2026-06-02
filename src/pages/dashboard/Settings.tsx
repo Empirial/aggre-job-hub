@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Save, Eye, EyeOff, Plus, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,15 +6,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { useProfile, useSaveProfile } from "@/hooks/useProfile";
 
 export default function Settings() {
+  const { data: savedProfile } = useProfile();
+  const saveProfile = useSaveProfile();
   const [showKey, setShowKey] = useState(false);
   const [profile, setProfile] = useState({
-    name: "Lufuno Mphela",
-    email: "lufuno@mphelaindustries.co.za",
-    phone: "+27 73 000 0000",
-    linkedin: "linkedin.com/in/lufunomphela",
+    name: "",
+    email: "",
+    phone: "",
+    linkedin: "",
   });
+
+  useEffect(() => {
+    if (savedProfile) {
+      setProfile({
+        name: savedProfile.name,
+        email: savedProfile.email,
+        phone: savedProfile.phone,
+        linkedin: savedProfile.linkedin,
+      });
+    }
+  }, [savedProfile]);
   const [keywords, setKeywords] = useState(["React", "Python", "Full Stack", "Software Engineer"]);
   const [locations, setLocations] = useState(["Johannesburg", "Remote", "Pretoria"]);
   const [jobTypes, setJobTypes] = useState({ fullTime: true, remote: true, contract: false });
@@ -88,8 +102,19 @@ export default function Settings() {
             </div>
           </div>
           <div className="flex justify-end">
-            <Button size="sm" variant="outline">
-              <Save className="w-3.5 h-3.5 mr-1.5" /> Save Profile
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={saveProfile.isPending}
+              onClick={() =>
+                saveProfile.mutate({
+                  ...savedProfile!,
+                  ...profile,
+                })
+              }
+            >
+              <Save className="w-3.5 h-3.5 mr-1.5" />
+              {saveProfile.isPending ? "Saving..." : saveProfile.isSuccess ? "Saved" : "Save Profile"}
             </Button>
           </div>
         </CardContent>

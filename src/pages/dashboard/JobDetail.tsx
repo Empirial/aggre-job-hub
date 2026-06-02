@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useJob } from "@/hooks/useJobs";
+import { useProfile } from "@/hooks/useProfile";
 import { cvApi } from "@/lib/api";
 
 type GenerateState = "idle" | "generating" | "done";
@@ -13,27 +14,15 @@ export default function JobDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: job, isLoading, isError } = useJob(id!);
+  const { data: profile } = useProfile();
   const [genState, setGenState] = useState<GenerateState>("idle");
 
   const handleGenerate = async () => {
-    if (!job) return;
+    if (!job || !profile) return;
     setGenState("generating");
     try {
       await cvApi.tailor({
-        profile: {
-          name: "Lufuno Mphela",
-          email: "lufuno@mphelaindustries.co.za",
-          phone: "+27 73 000 0000",
-          linkedin: "linkedin.com/in/lufunomphela",
-          summary: "Full-stack developer with 4 years experience in React, Python, Node.js.",
-          skills: ["React", "TypeScript", "Python", "Node.js", "PostgreSQL", "Docker", "AWS"],
-          experience: [
-            "Built internal tools using React and Node.js to streamline procurement workflows",
-            "Designed RESTful APIs consumed by mobile and web clients",
-            "Managed PostgreSQL database schema and wrote complex queries",
-          ],
-          education: "BSc Computer Science — UNISA (In Progress, 2026)",
-        },
+        profile,
         job: {
           title: job.title,
           company: job.company,

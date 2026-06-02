@@ -10,6 +10,7 @@ import JobDetail from "./pages/dashboard/JobDetail";
 import CVEditor from "./pages/dashboard/CVEditor";
 import Applications from "./pages/dashboard/Applications";
 import Chat from "./pages/dashboard/Chat";
+import Preview from "./pages/dashboard/Preview";
 import Settings from "./pages/dashboard/Settings";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="cv-editor" element={<CVEditor />} />
             <Route path="applications" element={<Applications />} />
             <Route path="chat" element={<Chat />} />
+            <Route path="preview" element={<Preview />} />
             <Route path="settings" element={<Settings />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

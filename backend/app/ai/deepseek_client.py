@@ -47,7 +47,10 @@ class DeepSeekClient:
             data = response.json()
 
         content = self._extract_json_content(data)
-        parsed = json.loads(content)
+        try:
+            parsed = json.loads(content)
+        except json.JSONDecodeError:
+            return self._fallback_analysis(job)
         return JobAnalysisResponse(
             keywords=parsed.get("keywords", []),
             required_skills=parsed.get("required_skills", []),
