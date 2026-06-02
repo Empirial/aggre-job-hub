@@ -243,12 +243,13 @@ export default function Chat() {
       {/* Suggested prompts */}
       {showSuggestions && (
         <div className="px-6 pb-3">
+          <p className="text-xs text-gray-400 mb-2">Suggested</p>
           <div className="flex flex-wrap gap-2">
             {SUGGESTED_PROMPTS.map((p) => (
               <button
                 key={p}
                 onClick={() => send(p)}
-                className="text-xs text-gray-500 bg-white border border-gray-200 rounded-full px-3 py-1.5 hover:border-brand-300 hover:text-brand-600 transition-colors"
+                className="text-xs text-gray-700 bg-white border border-gray-200 rounded-lg px-3 py-2 hover:bg-brand-50 hover:border-brand-300 hover:text-brand-700 transition-colors font-medium"
               >
                 {p}
               </button>

@@ -119,12 +119,12 @@ export default function JobsBoard() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100">
-                  <th className="text-left text-xs font-medium text-gray-400 px-5 py-3">Job Title</th>
-                  <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">Company</th>
-                  <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">Location</th>
-                  <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">Date Posted</th>
-                  <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">Source</th>
-                  <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">ATS Score</th>
+                  <th className="text-left text-xs font-medium text-gray-600 px-5 py-3">Job Title</th>
+                  <th className="text-left text-xs font-medium text-gray-600 px-4 py-3">Company</th>
+                  <th className="text-left text-xs font-medium text-gray-600 px-4 py-3">Location</th>
+                  <th className="text-left text-xs font-medium text-gray-600 px-4 py-3">Date Posted</th>
+                  <th className="text-left text-xs font-medium text-gray-600 px-4 py-3">Source</th>
+                  <th className="text-left text-xs font-medium text-gray-600 px-4 py-3">ATS Score</th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -166,10 +166,20 @@ export default function JobsBoard() {
             </table>
           )}
           {!isLoading && !isError && filtered.length === 0 && (
-            <div className="text-center py-12 text-sm text-gray-400">
-              {jobs.length === 0
-                ? "No jobs yet — click Run Scraper to fetch listings."
-                : "No jobs match your filters."}
+            <div className="flex flex-col items-center gap-3 py-14">
+              <p className="text-sm text-gray-500">
+                {jobs.length === 0 ? "No jobs scraped yet." : "No jobs match your filters."}
+              </p>
+              {jobs.length === 0 && (
+                <Button
+                  size="sm"
+                  className="bg-[#F7941D] hover:bg-[#E08518] text-white"
+                  onClick={() => scrape.mutate({ keywords: ["software engineer", "developer", "python", "react"], location: "South Africa" })}
+                  disabled={scrape.isPending}
+                >
+                  {scrape.isPending ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Scraping...</> : <><RefreshCw className="w-3.5 h-3.5 mr-1.5" />Run Scraper</>}
+                </Button>
+              )}
             </div>
           )}
         </CardContent>

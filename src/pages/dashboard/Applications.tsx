@@ -36,6 +36,7 @@ export default function Applications() {
   );
 
   return (
+
     <div className="p-6 space-y-5">
       <div className="flex items-center justify-between">
         <div>
@@ -46,33 +47,26 @@ export default function Applications() {
         </div>
       </div>
 
-      {!isLoading && applications.length > 0 && (
-        <div className="flex gap-3">
-          {(["interview", "sent", "pending", "rejected"] as Status[]).map((s) => (
-            <div
-              key={s}
-              onClick={() => setFilter(s)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium cursor-pointer transition-colors ${statusConfig[s].className}`}
-            >
-              <span className="capitalize">{s}</span>
-              <span className="font-semibold">{summaryCounts[s] || 0}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
       <div className="flex gap-1">
-        {statusFilters.map(({ value, label }) => (
-          <button
-            key={value}
-            onClick={() => setFilter(value)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              filter === value ? "bg-brand-600 text-white" : "text-gray-500 hover:bg-gray-100"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
+        {statusFilters.map(({ value, label }) => {
+          const count = value === "all" ? applications.length : (summaryCounts[value as Status] || 0);
+          return (
+            <button
+              key={value}
+              onClick={() => setFilter(value)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                filter === value ? "bg-brand-600 text-white" : "text-gray-500 hover:bg-gray-100"
+              }`}
+            >
+              {label}
+              {count > 0 && (
+                <span className={`text-xs rounded-full px-1.5 py-0.5 leading-none font-semibold ${
+                  filter === value ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"
+                }`}>{count}</span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       <Card className="border-0 shadow-sm">
@@ -89,11 +83,11 @@ export default function Applications() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100">
-                  <th className="text-left text-xs font-medium text-gray-400 px-5 py-3">Job Title</th>
-                  <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">Company</th>
-                  <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">Date Applied</th>
-                  <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">Status</th>
-                  <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">CV</th>
+                  <th className="text-left text-xs font-medium text-gray-600 px-5 py-3">Job Title</th>
+                  <th className="text-left text-xs font-medium text-gray-600 px-4 py-3">Company</th>
+                  <th className="text-left text-xs font-medium text-gray-600 px-4 py-3">Date Applied</th>
+                  <th className="text-left text-xs font-medium text-gray-600 px-4 py-3">Status</th>
+                  <th className="text-left text-xs font-medium text-gray-600 px-4 py-3">CV</th>
                 </tr>
               </thead>
               <tbody>
@@ -133,10 +127,17 @@ export default function Applications() {
             </table>
           )}
           {!isLoading && !isError && filtered.length === 0 && (
-            <div className="text-center py-12 text-sm text-gray-400">
-              {applications.length === 0
-                ? "No applications yet — send your first one from Job Detail."
-                : "No applications match this filter."}
+            <div className="flex flex-col items-center gap-3 py-14">
+              <p className="text-sm text-gray-500">
+                {applications.length === 0 ? "No applications tracked yet." : "No applications match this filter."}
+              </p>
+              {applications.length === 0 && (
+                <a href="/jobs">
+                  <Button size="sm" className="bg-[#F7941D] hover:bg-[#E08518] text-white">
+                    Browse Jobs
+                  </Button>
+                </a>
+              )}
             </div>
           )}
         </CardContent>

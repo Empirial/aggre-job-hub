@@ -1,4 +1,4 @@
-import { Briefcase, FileText, SendHorizontal, Trophy, RefreshCw, Loader2 } from "lucide-react";
+import { Briefcase, FileText, SendHorizontal, Trophy, RefreshCw, Loader2, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,8 +16,6 @@ export default function Overview() {
   const cvGenerated = jobs.filter((j) => j.cv_generated).length;
   const sent = applications.filter((a) => a.status === "sent" || a.status === "interview").length;
   const interviews = applications.filter((a) => a.status === "interview").length;
-  const interviewRate = sent > 0 ? Math.round((interviews / sent) * 100) : 0;
-
   const today = new Date().toLocaleDateString("en-ZA", {
     weekday: "long", year: "numeric", month: "long", day: "numeric",
   });
@@ -35,11 +33,11 @@ export default function Overview() {
     return { day: label, scraped, sent: appsOnDay };
   });
 
-  const stats = [
-    { label: "Jobs Scraped", value: loading ? "—" : String(jobs.length), icon: Briefcase, color: "text-brand-600", bg: "bg-brand-50" },
-    { label: "CVs Generated", value: loading ? "—" : String(cvGenerated), icon: FileText, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { label: "Applications Sent", value: loading ? "—" : String(sent), icon: SendHorizontal, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Interview Rate", value: loading ? "—" : `${interviewRate}%`, icon: Trophy, color: "text-amber-600", bg: "bg-amber-50" },
+  const pipeline = [
+    { label: "Scraped", value: loading ? "—" : String(jobs.length), icon: Briefcase },
+    { label: "CVs Ready", value: loading ? "—" : String(cvGenerated), icon: FileText },
+    { label: "Applied", value: loading ? "—" : String(sent), icon: SendHorizontal },
+    { label: "Interviews", value: loading ? "—" : String(interviews), icon: Trophy },
   ];
 
   return (
@@ -49,18 +47,16 @@ export default function Overview() {
           <h1 className="text-xl font-semibold text-gray-900">Overview</h1>
           <p className="text-sm text-gray-500 mt-0.5">{today}</p>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => scrape.mutate({ keywords: ["software engineer", "developer", "python", "react"], location: "South Africa" })}
-            disabled={scrape.isPending}
-          >
-            {scrape.isPending
-              ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Scraping...</>
-              : <><RefreshCw className="w-3.5 h-3.5 mr-1.5" />Run Scraper</>}
-          </Button>
-        </div>
+        <Button
+          size="sm"
+          className="bg-[#F7941D] hover:bg-[#E08518] text-white"
+          onClick={() => scrape.mutate({ keywords: ["software engineer", "developer", "python", "react"], location: "South Africa" })}
+          disabled={scrape.isPending}
+        >
+          {scrape.isPending
+            ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Scraping...</>
+            : <><RefreshCw className="w-3.5 h-3.5 mr-1.5" />Run Scraper</>}
+        </Button>
       </div>
 
       {scrape.isSuccess && (
@@ -69,22 +65,19 @@ export default function Overview() {
         </div>
       )}
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((s) => (
-          <Card key={s.label} className="border-0 shadow-sm">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">{s.label}</p>
-                  <p className="text-2xl font-semibold text-gray-900">{s.value}</p>
-                </div>
-                <div className={`w-9 h-9 ${s.bg} rounded-lg flex items-center justify-center`}>
-                  <s.icon className={`w-4 h-4 ${s.color}`} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Pipeline strip */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex divide-x divide-gray-100">
+        {pipeline.map((stage, i) => (
+          <div key={stage.label} className="flex-1 flex items-center gap-3 px-5 py-4">
+            <stage.icon className={`w-4 h-4 flex-shrink-0 ${i === 0 ? "text-brand-600" : i === pipeline.length - 1 ? "text-emerald-600" : "text-gray-400"}`} />
+            <div>
+              <p className="text-xl font-semibold text-gray-900">{stage.value}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{stage.label}</p>
+            </div>
+            {i < pipeline.length - 1 && (
+              <ChevronRight className="w-3.5 h-3.5 text-gray-300 ml-auto hidden sm:block" />
+            )}
+          </div>
         ))}
       </div>
 

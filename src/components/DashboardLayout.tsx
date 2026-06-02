@@ -53,7 +53,7 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
               cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
                 isActive
-                  ? "bg-brand-50 text-brand-600 font-medium"
+                  ? "bg-[#F7941D] text-white font-medium"
                   : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
               )
             }
