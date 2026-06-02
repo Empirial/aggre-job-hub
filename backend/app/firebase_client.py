@@ -14,18 +14,25 @@ _memory_store: Dict[str, Dict[str, Any]] = {"jobs": {}, "applications": {}, "use
 def init_firebase() -> None:
     global _db, _use_memory
 
+    # Support credentials as inline JSON env var (fly.io free tier)
+    creds_json = os.getenv("FIREBASE_CREDENTIALS_JSON", "")
     creds_path = os.getenv("FIREBASE_CREDENTIALS_PATH", "")
-    if not creds_path or not os.path.exists(creds_path):
+
+    if not creds_json and (not creds_path or not os.path.exists(creds_path)):
         print("[Firebase] No credentials found — using in-memory store (dev mode).")
         _use_memory = True
         return
 
     try:
+        import json
         import firebase_admin
         from firebase_admin import credentials, firestore
 
         if not firebase_admin._apps:
-            cred = credentials.Certificate(creds_path)
+            if creds_json:
+                cred = credentials.Certificate(json.loads(creds_json))
+            else:
+                cred = credentials.Certificate(creds_path)
             firebase_admin.initialize_app(cred, {
                 "storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET", ""),
             })
