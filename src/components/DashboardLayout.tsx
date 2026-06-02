@@ -11,6 +11,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
+// Briefcase kept for Jobs Board nav icon
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -27,15 +28,12 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
   return (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="h-16 flex items-center justify-between px-5 border-b border-gray-100 shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-[#3D3D3D] rounded-lg flex items-center justify-center">
-            <Briefcase className="w-4 h-4 text-[#F7941D]" />
-          </div>
-          <span className="text-sm font-bold">
-            <span className="text-[#3D3D3D]">Career</span><span className="text-[#F7941D]">Gate</span>
-          </span>
-        </div>
+      <div className="h-16 flex items-center justify-between px-4 border-b border-gray-100 shrink-0">
+        <img
+          src="/CareergateLogo.png"
+          alt="CareerGate"
+          className="h-9 w-auto object-contain"
+        />
         {onClose && (
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 lg:hidden">
             <X className="w-5 h-5" />
@@ -120,14 +118,11 @@ export default function DashboardLayout() {
           >
             <Menu className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-[#3D3D3D] rounded-md flex items-center justify-center">
-              <Briefcase className="w-3.5 h-3.5 text-[#F7941D]" />
-            </div>
-            <span className="text-sm font-bold">
-              <span className="text-[#3D3D3D]">Career</span><span className="text-[#F7941D]">Gate</span>
-            </span>
-          </div>
+          <img
+            src="/CareergateLogo.png"
+            alt="CareerGate"
+            className="h-7 w-auto object-contain"
+          />
         </header>
 
         <main className="flex-1 overflow-auto">
