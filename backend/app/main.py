@@ -25,7 +25,12 @@ app = FastAPI(title="JobApplier Backend", version="0.2.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:4173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:4173",
+        "http://localhost:8080",
+        "http://localhost:8081",
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )

@@ -14,7 +14,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 224 30% 15%;
 
-    --primary: 244 76% 60%;           /* #4F46E5 indigo */
+    --primary: 33 93% 54%;             /* #F7941D CareerGate orange */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 158 64% 52%;         /* #34D399 emerald */
@@ -23,8 +23,8 @@
     --muted: 220 20% 92%;
     --muted-foreground: 220 12% 50%;
 
-    --accent: 244 76% 95%;            /* indigo tint */
-    --accent-foreground: 244 76% 40%;
+    --accent: 33 93% 95%;              /* brand tint */
+    --accent-foreground: 33 93% 35%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -34,12 +34,12 @@
 
     --border: 220 20% 88%;
     --input: 220 20% 92%;
-    --ring: 244 76% 60%;
+    --ring: 33 93% 54%;
 
     --radius: 1rem;
 
-    --gradient-hero: linear-gradient(135deg, hsl(244 76% 58%) 0%, hsl(262 80% 65%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(244 76% 98%) 0%, hsl(262 60% 98%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(33 93% 54%) 0%, hsl(25 90% 48%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(33 93% 98%) 0%, hsl(25 80% 97%) 100%);
 
     --shadow-sm: 0 1px 3px 0 hsl(224 30% 15% / 0.04), 0 1px 2px -1px hsl(224 30% 15% / 0.04);
     --shadow-md: 0 4px 12px -2px hsl(224 30% 15% / 0.06), 0 2px 6px -2px hsl(224 30% 15% / 0.04);

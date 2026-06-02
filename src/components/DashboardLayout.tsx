@@ -29,10 +29,12 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
       {/* Logo */}
       <div className="h-16 flex items-center justify-between px-5 border-b border-gray-100 shrink-0">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
-            <Briefcase className="w-4 h-4 text-white" />
+          <div className="w-7 h-7 bg-[#3D3D3D] rounded-lg flex items-center justify-center">
+            <Briefcase className="w-4 h-4 text-[#F7941D]" />
           </div>
-          <span className="font-semibold text-gray-900 text-sm">JobApplier</span>
+          <span className="text-sm font-bold">
+            <span className="text-[#3D3D3D]">Career</span><span className="text-[#F7941D]">Gate</span>
+          </span>
         </div>
         {onClose && (
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 lg:hidden">
@@ -53,7 +55,7 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
               cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
                 isActive
-                  ? "bg-indigo-50 text-indigo-600 font-medium"
+                  ? "bg-brand-50 text-brand-600 font-medium"
                   : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
               )
             }
@@ -119,10 +121,12 @@ export default function DashboardLayout() {
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-indigo-600 rounded-md flex items-center justify-center">
-              <Briefcase className="w-3.5 h-3.5 text-white" />
+            <div className="w-6 h-6 bg-[#3D3D3D] rounded-md flex items-center justify-center">
+              <Briefcase className="w-3.5 h-3.5 text-[#F7941D]" />
             </div>
-            <span className="font-semibold text-gray-900 text-sm">JobApplier</span>
+            <span className="text-sm font-bold">
+              <span className="text-[#3D3D3D]">Career</span><span className="text-[#F7941D]">Gate</span>
+            </span>
           </div>
         </header>
 

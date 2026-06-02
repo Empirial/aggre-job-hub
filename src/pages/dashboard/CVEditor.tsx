@@ -100,7 +100,7 @@ export default function CVEditor() {
           <Button variant="outline" size="sm">
             <Download className="w-4 h-4 mr-2" /> Download .docx
           </Button>
-          <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white">
+          <Button size="sm" className="bg-brand-600 hover:bg-brand-700 text-white">
             <Send className="w-4 h-4 mr-2" /> Approve & Send
           </Button>
         </div>
@@ -169,10 +169,10 @@ export default function CVEditor() {
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-medium text-gray-700">Tailored CV</h2>
-            <Badge className="bg-indigo-50 text-indigo-600 border-0 text-xs">ATS Optimized</Badge>
+            <Badge className="bg-brand-50 text-brand-600 border-0 text-xs">ATS Optimized</Badge>
           </div>
 
-          <Card className="border-0 shadow-sm ring-1 ring-indigo-100">
+          <Card className="border-0 shadow-sm ring-1 ring-brand-100">
             <CardHeader className="pb-1 pt-4 px-5">
               <CardTitle className="text-xs font-medium text-gray-400 uppercase tracking-wide">Summary</CardTitle>
             </CardHeader>
@@ -186,7 +186,7 @@ export default function CVEditor() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-sm ring-1 ring-indigo-100">
+          <Card className="border-0 shadow-sm ring-1 ring-brand-100">
             <CardHeader className="pb-1 pt-4 px-5">
               <CardTitle className="text-xs font-medium text-gray-400 uppercase tracking-wide">Skills</CardTitle>
             </CardHeader>
@@ -201,7 +201,7 @@ export default function CVEditor() {
           </Card>
 
           {editedTailored.experience.map((exp, i) => (
-            <Card key={i} className="border-0 shadow-sm ring-1 ring-indigo-100">
+            <Card key={i} className="border-0 shadow-sm ring-1 ring-brand-100">
               <CardHeader className="pb-1 pt-4 px-5 cursor-pointer" onClick={() => toggleExp(i)}>
                 <div className="flex items-center justify-between">
                   <div>
@@ -233,7 +233,7 @@ export default function CVEditor() {
             </Card>
           ))}
 
-          <Card className="border-0 shadow-sm ring-1 ring-indigo-100">
+          <Card className="border-0 shadow-sm ring-1 ring-brand-100">
             <CardHeader className="pb-1 pt-4 px-5">
               <CardTitle className="text-xs font-medium text-gray-400 uppercase tracking-wide">Education</CardTitle>
             </CardHeader>

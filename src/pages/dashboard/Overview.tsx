@@ -36,7 +36,7 @@ export default function Overview() {
   });
 
   const stats = [
-    { label: "Jobs Scraped", value: loading ? "—" : String(jobs.length), icon: Briefcase, color: "text-indigo-600", bg: "bg-indigo-50" },
+    { label: "Jobs Scraped", value: loading ? "—" : String(jobs.length), icon: Briefcase, color: "text-brand-600", bg: "bg-brand-50" },
     { label: "CVs Generated", value: loading ? "—" : String(cvGenerated), icon: FileText, color: "text-emerald-600", bg: "bg-emerald-50" },
     { label: "Applications Sent", value: loading ? "—" : String(sent), icon: SendHorizontal, color: "text-blue-600", bg: "bg-blue-50" },
     { label: "Interview Rate", value: loading ? "—" : `${interviewRate}%`, icon: Trophy, color: "text-amber-600", bg: "bg-amber-50" },
@@ -100,8 +100,8 @@ export default function Overview() {
                 <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }} />
-                <Bar dataKey="scraped" fill="#E0E7FF" radius={[4, 4, 0, 0]} name="Scraped" />
-                <Bar dataKey="sent" fill="#4F46E5" radius={[4, 4, 0, 0]} name="Sent" />
+                <Bar dataKey="scraped" fill="#FEF3E2" radius={[4, 4, 0, 0]} name="Scraped" />
+                <Bar dataKey="sent" fill="#F7941D" radius={[4, 4, 0, 0]} name="Sent" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -126,7 +126,7 @@ export default function Overview() {
                     <p className="text-xs text-gray-400">{job.company} · {job.location}</p>
                   </div>
                   {job.ats_score && (
-                    <Badge className="text-xs shrink-0 bg-indigo-50 text-indigo-600 border-0">
+                    <Badge className="text-xs shrink-0 bg-brand-50 text-brand-600 border-0">
                       {job.ats_score}%
                     </Badge>
                   )}

@@ -8,4 +8,5 @@ python-dotenv
 beautifulsoup4
 firebase-admin
 pdfplumber
+pypdf
 python-multipart

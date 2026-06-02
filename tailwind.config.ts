@@ -14,6 +14,19 @@ export default {
     },
     extend: {
       colors: {
+        brand: {
+          50:  "#FEF3E2",
+          100: "#FDE8C5",
+          200: "#FBCE9A",
+          300: "#F9B56B",
+          400: "#F8A63D",
+          500: "#F79A2A",
+          600: "#F7941D",
+          700: "#E08518",
+          800: "#C07014",
+          900: "#9E5C10",
+        },
+        charcoal: "#3D3D3D",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

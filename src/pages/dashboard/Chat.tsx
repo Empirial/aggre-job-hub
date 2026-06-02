@@ -117,14 +117,14 @@ function AssistantBubble({ message, onDone }: { message: Message; onDone: () => 
 
   return (
     <div className="flex gap-3 max-w-2xl">
-      <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+      <div className="w-7 h-7 bg-brand-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
         <Sparkles className="w-3.5 h-3.5 text-white" />
       </div>
       <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm flex-1">
         <div
           className="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none
             prose-headings:text-gray-900 prose-strong:text-gray-900
-            prose-code:text-indigo-600 prose-code:bg-indigo-50 prose-code:px-1 prose-code:rounded"
+            prose-code:text-brand-600 prose-code:bg-brand-50 prose-code:px-1 prose-code:rounded"
           dangerouslySetInnerHTML={{
             __html: content
               .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
@@ -139,7 +139,7 @@ function AssistantBubble({ message, onDone }: { message: Message; onDone: () => 
           }}
         />
         {message.streaming && text.length < message.content.length && (
-          <span className="inline-block w-1.5 h-4 bg-indigo-400 ml-0.5 animate-pulse rounded-sm" />
+          <span className="inline-block w-1.5 h-4 bg-brand-400 ml-0.5 animate-pulse rounded-sm" />
         )}
       </div>
     </div>
@@ -207,7 +207,7 @@ export default function Chat() {
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
+          <div className="w-7 h-7 bg-brand-600 rounded-lg flex items-center justify-center">
             <Sparkles className="w-3.5 h-3.5 text-white" />
           </div>
           <div>
@@ -225,7 +225,7 @@ export default function Chat() {
         {messages.map((msg) =>
           msg.role === "user" ? (
             <div key={msg.id} className="flex justify-end">
-              <div className="bg-indigo-600 text-white rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-md text-sm leading-relaxed">
+              <div className="bg-brand-600 text-white rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-md text-sm leading-relaxed">
                 {msg.content}
               </div>
             </div>
@@ -248,7 +248,7 @@ export default function Chat() {
               <button
                 key={p}
                 onClick={() => send(p)}
-                className="text-xs text-gray-500 bg-white border border-gray-200 rounded-full px-3 py-1.5 hover:border-indigo-300 hover:text-indigo-600 transition-colors"
+                className="text-xs text-gray-500 bg-white border border-gray-200 rounded-full px-3 py-1.5 hover:border-brand-300 hover:text-brand-600 transition-colors"
               >
                 {p}
               </button>
@@ -259,7 +259,7 @@ export default function Chat() {
 
       {/* Input */}
       <div className="px-6 pb-5 pt-2">
-        <div className="flex gap-2 bg-white border border-gray-200 rounded-2xl px-4 py-2.5 shadow-sm focus-within:border-indigo-300 transition-colors">
+        <div className="flex gap-2 bg-white border border-gray-200 rounded-2xl px-4 py-2.5 shadow-sm focus-within:border-brand-300 transition-colors">
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -279,7 +279,7 @@ export default function Chat() {
             className={cn(
               "w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 self-end transition-colors",
               input.trim() && !loading
-                ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                ? "bg-brand-600 text-white hover:bg-brand-700"
                 : "bg-gray-100 text-gray-300 cursor-not-allowed"
             )}
           >

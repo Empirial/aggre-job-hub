@@ -67,7 +67,7 @@ export default function Applications() {
             key={value}
             onClick={() => setFilter(value)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              filter === value ? "bg-indigo-600 text-white" : "text-gray-500 hover:bg-gray-100"
+              filter === value ? "bg-brand-600 text-white" : "text-gray-500 hover:bg-gray-100"
             }`}
           >
             {label}
@@ -118,7 +118,7 @@ export default function Applications() {
                       <td className="px-4 py-3.5">
                         {app.cvUrl ? (
                           <a href={app.cvUrl} target="_blank" rel="noopener noreferrer">
-                            <Button variant="ghost" size="sm" className="h-7 text-xs text-indigo-600 px-2">
+                            <Button variant="ghost" size="sm" className="h-7 text-xs text-brand-600 px-2">
                               <FileText className="w-3.5 h-3.5 mr-1" />View
                             </Button>
                           </a>

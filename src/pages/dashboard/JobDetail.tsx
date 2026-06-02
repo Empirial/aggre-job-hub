@@ -75,7 +75,7 @@ export default function JobDetail() {
             {job.date_posted && <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{job.date_posted}</span>}
             <span className="flex items-center gap-1 capitalize"><Globe className="w-3.5 h-3.5" />{job.source}</span>
             {job.url && (
-              <a href={job.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-indigo-500 hover:underline">
+              <a href={job.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-brand-500 hover:underline">
                 <ExternalLink className="w-3.5 h-3.5" /> View original
               </a>
             )}
@@ -83,17 +83,17 @@ export default function JobDetail() {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {job.ats_score && (
-            <Badge className="bg-indigo-50 text-indigo-600 border-0 text-sm px-3 py-1">
+            <Badge className="bg-brand-50 text-brand-600 border-0 text-sm px-3 py-1">
               {job.ats_score}% ATS
             </Badge>
           )}
           {genState === "idle" && (
-            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={handleGenerate}>
+            <Button size="sm" className="bg-brand-600 hover:bg-brand-700 text-white" onClick={handleGenerate}>
               Generate Tailored CV
             </Button>
           )}
           {genState === "generating" && (
-            <Button size="sm" disabled className="bg-indigo-400 text-white">
+            <Button size="sm" disabled className="bg-brand-400 text-white">
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating...
             </Button>
           )}
@@ -128,7 +128,7 @@ export default function JobDetail() {
               <CardContent>
                 <div className="flex flex-wrap gap-1.5">
                   {job.keywords.map((kw) => (
-                    <Badge key={kw} className="bg-indigo-50 text-indigo-700 border-0 text-xs">{kw}</Badge>
+                    <Badge key={kw} className="bg-brand-50 text-brand-700 border-0 text-xs">{kw}</Badge>
                   ))}
                 </div>
               </CardContent>
@@ -153,7 +153,7 @@ export default function JobDetail() {
               {job.ats_score && (
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">ATS Score</span>
-                  <span className="text-indigo-600 font-medium">{job.ats_score}%</span>
+                  <span className="text-brand-600 font-medium">{job.ats_score}%</span>
                 </div>
               )}
             </CardContent>

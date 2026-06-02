@@ -57,7 +57,7 @@ export default function JobsBoard() {
         </div>
         <Button
           size="sm"
-          className="bg-indigo-600 hover:bg-indigo-700 text-white"
+          className="bg-brand-600 hover:bg-brand-700 text-white"
           onClick={() => scrape.mutate({ keywords: ["software engineer", "developer", "python", "react"], location: "South Africa" })}
           disabled={scrape.isPending}
         >

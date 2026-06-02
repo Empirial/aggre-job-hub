@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Save, Eye, EyeOff, Plus, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Save, Eye, EyeOff, Plus, X, Upload, FileText, Trash2, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -130,7 +130,7 @@ export default function Settings() {
             <Label className="text-xs text-gray-500">Keywords</Label>
             <div className="flex flex-wrap gap-1.5 mb-2">
               {keywords.map((kw) => (
-                <Badge key={kw} className="bg-indigo-50 text-indigo-600 border-0 text-xs pr-1.5 flex items-center gap-1">
+                <Badge key={kw} className="bg-brand-50 text-brand-600 border-0 text-xs pr-1.5 flex items-center gap-1">
                   {kw}
                   <button onClick={() => removeTag(keywords, setKeywords, kw)}>
                     <X className="w-3 h-3" />
@@ -255,6 +255,174 @@ export default function Settings() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Documents */}
+      <DocumentsSection />
     </div>
+  );
+}
+
+// ── Documents upload section ──────────────────────────────────────────────────
+
+const API_BASE = "http://localhost:8000";
+
+interface UploadedDoc {
+  name: string;
+  type: "cv" | "supporting";
+  size: string;
+  uploadedAt: string;
+}
+
+function DocumentsSection() {
+  const cvRef = useRef<HTMLInputElement>(null);
+  const docsRef = useRef<HTMLInputElement>(null);
+  const [docs, setDocs] = useState<UploadedDoc[]>([]);
+  const [uploading, setUploading] = useState<"cv" | "supporting" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const upload = async (file: File, type: "cv" | "supporting") => {
+    setUploading(type);
+    setError(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("doc_type", type);
+      const res = await fetch(`${API_BASE}/documents/upload-profile`, { method: "POST", body: form });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: "Upload failed" }));
+        throw new Error(err.detail);
+      }
+      const newDoc: UploadedDoc = {
+        name: file.name,
+        type,
+        size: formatSize(file.size),
+        uploadedAt: new Date().toLocaleDateString("en-ZA"),
+      };
+      if (type === "cv") {
+        setDocs((d) => [newDoc, ...d.filter((x) => x.type !== "cv")]);
+      } else {
+        setDocs((d) => [newDoc, ...d]);
+      }
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploading(null);
+    }
+  };
+
+  const remove = (name: string) => setDocs((d) => d.filter((x) => x.name !== name));
+
+  const cv = docs.find((d) => d.type === "cv");
+  const supporting = docs.filter((d) => d.type === "supporting");
+
+  return (
+    <Card className="border-0 shadow-sm">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-medium text-gray-700">Documents</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-5">
+
+        {/* Base CV */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-gray-500">Base CV</Label>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs"
+              disabled={uploading === "cv"}
+              onClick={() => cvRef.current?.click()}
+            >
+              {uploading === "cv"
+                ? <><Loader2 className="w-3 h-3 mr-1.5 animate-spin" />Uploading…</>
+                : <><Upload className="w-3 h-3 mr-1.5" />{cv ? "Replace" : "Upload CV"}</>}
+            </Button>
+            <input
+              ref={cvRef}
+              type="file"
+              accept=".pdf,.docx,.doc"
+              className="hidden"
+              onChange={(e) => e.target.files?.[0] && upload(e.target.files[0], "cv")}
+            />
+          </div>
+          {cv ? (
+            <div className="flex items-center gap-3 px-3 py-2 bg-brand-50 rounded-lg">
+              <FileText className="w-4 h-4 text-brand-600 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-gray-800 truncate">{cv.name}</p>
+                <p className="text-[10px] text-gray-400">{cv.size} · {cv.uploadedAt}</p>
+              </div>
+              <button onClick={() => remove(cv.name)} className="text-gray-300 hover:text-red-400">
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div
+              className="border border-dashed border-gray-200 rounded-lg px-4 py-5 text-center cursor-pointer hover:border-brand-400 transition-colors"
+              onClick={() => cvRef.current?.click()}
+            >
+              <p className="text-xs text-gray-400">PDF or DOCX · max 10 MB</p>
+            </div>
+          )}
+        </div>
+
+        {/* Supporting documents */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-gray-500">Supporting Documents</Label>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs"
+              disabled={uploading === "supporting"}
+              onClick={() => docsRef.current?.click()}
+            >
+              {uploading === "supporting"
+                ? <><Loader2 className="w-3 h-3 mr-1.5 animate-spin" />Uploading…</>
+                : <><Plus className="w-3 h-3 mr-1.5" />Add Document</>}
+            </Button>
+            <input
+              ref={docsRef}
+              type="file"
+              accept=".pdf,.docx,.doc,.jpg,.jpeg,.png"
+              className="hidden"
+              onChange={(e) => e.target.files?.[0] && upload(e.target.files[0], "supporting")}
+            />
+          </div>
+          <p className="text-[10px] text-gray-400">ID, certificates, matric results, references — PDF, DOCX, or image</p>
+          {supporting.length > 0 ? (
+            <div className="space-y-1.5">
+              {supporting.map((doc) => (
+                <div key={doc.name} className="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg">
+                  <FileText className="w-4 h-4 text-gray-400 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-gray-700 truncate">{doc.name}</p>
+                    <p className="text-[10px] text-gray-400">{doc.size} · {doc.uploadedAt}</p>
+                  </div>
+                  <button onClick={() => remove(doc.name)} className="text-gray-300 hover:text-red-400">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div
+              className="border border-dashed border-gray-200 rounded-lg px-4 py-5 text-center cursor-pointer hover:border-brand-400 transition-colors"
+              onClick={() => docsRef.current?.click()}
+            >
+              <p className="text-xs text-gray-400">Drag & drop or click to add</p>
+            </div>
+          )}
+        </div>
+
+        {error && <p className="text-xs text-red-400">{error}</p>}
+      </CardContent>
+    </Card>
   );
 }

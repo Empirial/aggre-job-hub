@@ -9,7 +9,12 @@
       "Bash(mkdir -p \"/c/Users/Lufuno Mphela/Documents/From Desktop/Code&Workflows/2026 Projects/job-applier/templates\")",
       "Bash(mkdir -p \"/c/Users/Lufuno Mphela/Documents/From Desktop/Code&Workflows/2026 Projects/job-applier/frontend/src\")",
       "Bash(npm run:*)",
-      "Bash(node ./node_modules/vite/bin/vite.js build)"
+      "Bash(node ./node_modules/vite/bin/vite.js build)",
+      "Bash(\"C:/Users/Lufuno Mphela/AppData/Local/Programs/Python/Python313/python.exe\" -m pip install -r requirements.txt -q)",
+      "Bash(\"C:/Users/Lufuno Mphela/AppData/Local/Programs/Python/Python313/python.exe\" jobs/schedule.py --dry-run)",
+      "Bash(\"C:/Users/Lufuno Mphela/AppData/Local/Programs/Python/Python313/python.exe\" jobs/pipeline_test.py)",
+      "Bash(node node_modules/typescript/bin/tsc --noEmit)",
+      "Bash(pip show:*)"
     ]
   }
 }
