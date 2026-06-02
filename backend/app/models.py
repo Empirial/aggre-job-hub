@@ -73,3 +73,24 @@ class CVTailorResponse(BaseModel):
     experience: List[str]
     education: Optional[str] = None
     docx_path: Optional[str] = None
+
+
+# ── Applications ──────────────────────────────────────────────────────────────
+
+class Application(BaseModel):
+    id: Optional[str] = None
+    job_id: str
+    job_title: str
+    company: str
+    date_applied: str = Field(default_factory=lambda: datetime.utcnow().date().isoformat())
+    status: Literal["pending", "sent", "rejected", "interview"] = "pending"
+    cv_path: Optional[str] = None
+    cv_url: Optional[str] = None
+    recipient_email: Optional[str] = None
+
+
+class SendApplicationRequest(BaseModel):
+    job_id: str
+    profile: CVProfile
+    recipient_email: str
+    cover_note: Optional[str] = None

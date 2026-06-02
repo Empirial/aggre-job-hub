@@ -11,6 +11,7 @@ from app.cv.docx_generator import generate_cv_docx
 from app.models import CVTailorRequest, CVTailorResponse, JobAnalysisRequest, JobAnalysisResponse
 from app import firebase_client
 from app.routes import jobs as jobs_router
+from app.routes import applications as applications_router
 
 
 @asynccontextmanager
@@ -29,6 +30,7 @@ app.add_middleware(
 )
 
 app.include_router(jobs_router.router)
+app.include_router(applications_router.router)
 
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 DEEPSEEK_API_URL = os.getenv("DEEPSEEK_API_URL", "https://api.deepseek.com/v1/chat/completions")
