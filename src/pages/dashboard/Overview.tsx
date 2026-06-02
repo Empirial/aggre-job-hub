@@ -1,83 +1,76 @@
-import { TrendingUp, TrendingDown, Briefcase, FileText, SendHorizontal, Trophy } from "lucide-react";
+import { Briefcase, FileText, SendHorizontal, Trophy, RefreshCw, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-
-const stats = [
-  {
-    label: "Jobs Scraped Today",
-    value: "47",
-    change: "+12.4%",
-    up: true,
-    icon: Briefcase,
-    color: "text-indigo-600",
-    bg: "bg-indigo-50",
-  },
-  {
-    label: "CVs Generated",
-    value: "23",
-    change: "+8.1%",
-    up: true,
-    icon: FileText,
-    color: "text-emerald-600",
-    bg: "bg-emerald-50",
-  },
-  {
-    label: "Applications Sent",
-    value: "18",
-    change: "+5.3%",
-    up: true,
-    icon: SendHorizontal,
-    color: "text-blue-600",
-    bg: "bg-blue-50",
-  },
-  {
-    label: "Interview Rate",
-    value: "11%",
-    change: "-2.1%",
-    up: false,
-    icon: Trophy,
-    color: "text-amber-600",
-    bg: "bg-amber-50",
-  },
-];
-
-const chartData = [
-  { day: "Mon", scraped: 38, sent: 12 },
-  { day: "Tue", scraped: 42, sent: 15 },
-  { day: "Wed", scraped: 31, sent: 9 },
-  { day: "Thu", scraped: 55, sent: 21 },
-  { day: "Fri", scraped: 47, sent: 18 },
-  { day: "Sat", scraped: 12, sent: 4 },
-  { day: "Sun", scraped: 8, sent: 2 },
-];
-
-const recentJobs = [
-  { id: "1", title: "Senior Software Engineer", company: "FNB", location: "Johannesburg", time: "2 min ago", score: 87 },
-  { id: "2", title: "Full Stack Developer", company: "Takealot", location: "Cape Town", time: "14 min ago", score: 91 },
-  { id: "3", title: "Backend Engineer", company: "Discovery", location: "Sandton", time: "31 min ago", score: 78 },
-  { id: "4", title: "React Developer", company: "Naspers", location: "Remote", time: "1 hr ago", score: 83 },
-  { id: "5", title: "Python Developer", company: "Standard Bank", location: "Johannesburg", time: "2 hr ago", score: 74 },
-];
+import { useJobs, useScrapeJobs } from "@/hooks/useJobs";
+import { useApplications } from "@/hooks/useApplications";
 
 export default function Overview() {
+  const { data: jobs = [], isLoading: jobsLoading } = useJobs();
+  const { data: applications = [], isLoading: appsLoading } = useApplications();
+  const scrape = useScrapeJobs();
+
+  const loading = jobsLoading || appsLoading;
+
+  const cvGenerated = jobs.filter((j) => j.cv_generated).length;
+  const sent = applications.filter((a) => a.status === "sent" || a.status === "interview").length;
+  const interviews = applications.filter((a) => a.status === "interview").length;
+  const interviewRate = sent > 0 ? Math.round((interviews / sent) * 100) : 0;
+
+  const today = new Date().toLocaleDateString("en-ZA", {
+    weekday: "long", year: "numeric", month: "long", day: "numeric",
+  });
+
+  const recentJobs = jobs.slice(0, 5);
+
+  // Build last-7-days chart from job created_at timestamps
+  const chartData = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    const label = d.toLocaleDateString("en-ZA", { weekday: "short" });
+    const dateStr = d.toISOString().slice(0, 10);
+    const scraped = jobs.filter((j) => j.created_at?.startsWith(dateStr)).length;
+    const appsOnDay = applications.filter((a) => a.dateApplied?.startsWith(dateStr)).length;
+    return { day: label, scraped, sent: appsOnDay };
+  });
+
+  const stats = [
+    { label: "Jobs Scraped", value: loading ? "—" : String(jobs.length), icon: Briefcase, color: "text-indigo-600", bg: "bg-indigo-50" },
+    { label: "CVs Generated", value: loading ? "—" : String(cvGenerated), icon: FileText, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { label: "Applications Sent", value: loading ? "—" : String(sent), icon: SendHorizontal, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: "Interview Rate", value: loading ? "—" : `${interviewRate}%`, icon: Trophy, color: "text-amber-600", bg: "bg-amber-50" },
+  ];
+
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Overview</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Sunday, 1 June 2026</p>
+          <p className="text-sm text-gray-500 mt-0.5">{today}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">Run Scraper Now</Button>
-          <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white">Generate CVs</Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => scrape.mutate({ keywords: ["software engineer", "developer", "python", "react"], location: "South Africa" })}
+            disabled={scrape.isPending}
+          >
+            {scrape.isPending
+              ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Scraping...</>
+              : <><RefreshCw className="w-3.5 h-3.5 mr-1.5" />Run Scraper</>}
+          </Button>
         </div>
       </div>
 
+      {scrape.isSuccess && (
+        <div className="text-xs text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">
+          Done — {scrape.data.saved} new jobs saved.
+        </div>
+      )}
+
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => (
           <Card key={s.label} className="border-0 shadow-sm">
             <CardContent className="p-5">
@@ -85,20 +78,9 @@ export default function Overview() {
                 <div>
                   <p className="text-xs text-gray-500 mb-1">{s.label}</p>
                   <p className="text-2xl font-semibold text-gray-900">{s.value}</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    {s.up ? (
-                      <TrendingUp className="w-3 h-3 text-emerald-500" />
-                    ) : (
-                      <TrendingDown className="w-3 h-3 text-red-400" />
-                    )}
-                    <span className={`text-xs font-medium ${s.up ? "text-emerald-500" : "text-red-400"}`}>
-                      {s.change}
-                    </span>
-                    <span className="text-xs text-gray-400">vs last week</span>
-                  </div>
                 </div>
                 <div className={`w-9 h-9 ${s.bg} rounded-lg flex items-center justify-center`}>
-                  <s.icon className={`w-4.5 h-4.5 ${s.color}`} />
+                  <s.icon className={`w-4 h-4 ${s.color}`} />
                 </div>
               </div>
             </CardContent>
@@ -106,21 +88,18 @@ export default function Overview() {
         ))}
       </div>
 
-      {/* Chart + Activity */}
-      <div className="grid grid-cols-3 gap-4">
-        {/* Chart */}
-        <Card className="col-span-2 border-0 shadow-sm">
+      {/* Chart + Recent */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <Card className="lg:col-span-2 border-0 shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-700">Weekly Activity</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-700">Last 7 Days</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={chartData} barGap={4}>
                 <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
-                <Tooltip
-                  contentStyle={{ fontSize: 12, borderRadius: 8, border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
-                />
+                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }} />
                 <Bar dataKey="scraped" fill="#E0E7FF" radius={[4, 4, 0, 0]} name="Scraped" />
                 <Bar dataKey="sent" fill="#4F46E5" radius={[4, 4, 0, 0]} name="Sent" />
               </BarChart>
@@ -128,27 +107,32 @@ export default function Overview() {
           </CardContent>
         </Card>
 
-        {/* Recent Jobs */}
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-700">Recent Jobs Scraped</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-700">Recent Jobs</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 px-4">
-            {recentJobs.map((job) => (
-              <div key={job.id} className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-gray-900 truncate">{job.title}</p>
-                  <p className="text-xs text-gray-400">{job.company} · {job.location}</p>
-                  <p className="text-xs text-gray-300 mt-0.5">{job.time}</p>
-                </div>
-                <Badge
-                  variant="secondary"
-                  className="text-xs shrink-0 bg-indigo-50 text-indigo-600 border-0"
-                >
-                  {job.score}%
-                </Badge>
+            {jobsLoading ? (
+              <div className="flex items-center gap-2 text-xs text-gray-400 py-4">
+                <Loader2 className="w-3 h-3 animate-spin" />Loading...
               </div>
-            ))}
+            ) : recentJobs.length === 0 ? (
+              <p className="text-xs text-gray-400 py-4">No jobs yet. Run the scraper.</p>
+            ) : (
+              recentJobs.map((job) => (
+                <div key={job.id} className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-gray-900 truncate">{job.title}</p>
+                    <p className="text-xs text-gray-400">{job.company} · {job.location}</p>
+                  </div>
+                  {job.ats_score && (
+                    <Badge className="text-xs shrink-0 bg-indigo-50 text-indigo-600 border-0">
+                      {job.ats_score}%
+                    </Badge>
+                  )}
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
       </div>
