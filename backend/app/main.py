@@ -23,14 +23,20 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="JobApplier Backend", version="0.2.0", lifespan=lifespan)
 
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:4173",
+    "http://localhost:8080",
+    "http://localhost:8081",
+    "https://careergate.co.za",
+    "https://www.careergate.co.za",
+    "https://aggre-job-hub.web.app",
+    "https://aggre-job-hub.firebaseapp.com",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:4173",
-        "http://localhost:8080",
-        "http://localhost:8081",
-    ],
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
