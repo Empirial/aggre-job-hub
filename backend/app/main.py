@@ -1,19 +1,28 @@
 import os
+import re
+import logging
 from pathlib import Path
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
 
 from app.ai.deepseek_client import DeepSeekClient
 from app.cv.ats_mirror import ATSMirror
 from app.cv.docx_generator import generate_cv_docx
 from app.models import CVTailorRequest, CVTailorResponse, JobAnalysisRequest, JobAnalysisResponse
 from app import firebase_client
+from app.auth import require_auth
+from app.limiter import limiter
 from app.routes import jobs as jobs_router
 from app.routes import applications as applications_router
 from app.routes import documents as documents_router
 from app.routes import chat as chat_router
+from app.routes import profile as profile_router
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -23,6 +32,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="JobApplier Backend", version="0.2.0", lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 ALLOWED_ORIGINS = [
     "http://localhost:5173",
@@ -33,19 +44,22 @@ ALLOWED_ORIGINS = [
     "https://www.careergate.co.za",
     "https://aggre-job-hub.web.app",
     "https://aggre-job-hub.firebaseapp.com",
+    "https://jobs-e038b.web.app",
+    "https://jobs-e038b.firebaseapp.com",
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "Accept", "X-Demo-Mode"],
 )
 
 app.include_router(jobs_router.router)
 app.include_router(applications_router.router)
 app.include_router(documents_router.router)
 app.include_router(chat_router.router)
+app.include_router(profile_router.router)
 
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 DEEPSEEK_API_URL = os.getenv("DEEPSEEK_API_URL", "https://api.deepseek.com/v1/chat/completions")
@@ -62,40 +76,43 @@ def health():
 
 
 @app.post("/analyze", response_model=JobAnalysisResponse)
-async def analyze_job(request: JobAnalysisRequest):
+@limiter.limit("20/minute")
+async def analyze_job(request: Request, body: JobAnalysisRequest, uid: str = Depends(require_auth)):
     try:
-        return await deepseek.analyze_job_description(request)
+        return await deepseek.analyze_job_description(body)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        logger.error("analyze_job failed: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred")
 
 
 @app.post("/tailor-cv", response_model=CVTailorResponse)
-async def tailor_cv(request: CVTailorRequest):
+@limiter.limit("20/minute")
+async def tailor_cv(request: Request, body: CVTailorRequest, uid: str = Depends(require_auth)):
     try:
-        if request.analysis is None:
-            request.analysis = await deepseek.analyze_job_description(request.job)
+        if body.analysis is None:
+            body.analysis = await deepseek.analyze_job_description(body.job)
 
         tailored_summary = ATSMirror.rewrite_summary(
-            request.profile.summary or "", request.job, request.analysis
+            body.profile.summary or "", body.job, body.analysis
         )
         tailored_skills = ATSMirror.rewrite_skills(
-            request.profile.skills or [], request.job, request.analysis
+            body.profile.skills or [], body.job, body.analysis
         )
         tailored_experience = ATSMirror.rewrite_experience(
-            request.profile.experience or [], request.job, request.analysis
+            body.profile.experience or [], body.job, body.analysis
         )
 
-        safe_name = request.profile.name.replace(" ", "_")
-        safe_title = request.job.title.replace(" ", "_")
+        safe_name = re.sub(r'[^\w\-]', '_', body.profile.name)
+        safe_title = re.sub(r'[^\w\-]', '_', body.job.title)
         output_filename = f"{safe_name}_{safe_title}.docx"
         output_path = OUTPUT_DIR / output_filename
 
         generate_cv_docx(
-            profile=request.profile,
+            profile=body.profile,
             summary=tailored_summary,
             skills=tailored_skills,
             experience=tailored_experience,
-            education=request.profile.education,
+            education=body.profile.education,
             output_path=output_path,
         )
 
@@ -103,15 +120,32 @@ async def tailor_cv(request: CVTailorRequest):
             summary=tailored_summary,
             skills=tailored_skills,
             experience=tailored_experience,
-            education=request.profile.education,
+            education=body.profile.education,
             docx_path=str(output_path),
         )
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        logger.error("tailor_cv failed: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred")
+
+
+@app.post("/cover-letter")
+@limiter.limit("10/minute")
+async def cover_letter(request: Request, body: CVTailorRequest):
+    try:
+        if body.analysis is None:
+            body.analysis = await deepseek.analyze_job_description(body.job)
+
+        text = await deepseek.generate_cover_letter(body.profile, body.job, body.analysis)
+        return {"cover_letter": text}
+    except Exception as exc:
+        logger.error("cover_letter failed: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred")
 
 
 @app.get("/download/{filename}")
 def download_cv(filename: str):
+    if not re.match(r'^[\w\-. ]+$', filename):
+        raise HTTPException(status_code=400, detail="Invalid filename")
     safe_filename = Path(filename).name
     file_path = (OUTPUT_DIR / safe_filename).resolve()
     if not file_path.is_relative_to(OUTPUT_DIR.resolve()):

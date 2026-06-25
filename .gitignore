@@ -30,6 +30,7 @@ service-account*.json
 google-credentials*.json
 *-credentials.json
 *-service-account.json
+*-firebase-adminsdk-*.json
 secrets/
 .secrets/
 

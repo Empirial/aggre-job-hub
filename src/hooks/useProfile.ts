@@ -1,17 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { profileApi, type UserProfile } from "@/lib/api";
 
-export interface UserProfile {
-  name: string;
-  email: string;
-  phone: string;
-  linkedin: string;
-  summary: string;
-  skills: string[];
-  experience: string[];
-  education: string;
-}
+export type { UserProfile };
 
 const DEFAULT_PROFILE: UserProfile = {
   name: "",
@@ -22,19 +12,40 @@ const DEFAULT_PROFILE: UserProfile = {
   skills: [],
   experience: [],
   education: "",
+  keywords: [],
+  locations: [],
+  jobTypes: { fullTime: true, remote: false, contract: false },
 };
+
+const LS_KEY = "cg_user_profile";
+
+function loadFromLocalStorage(): UserProfile | null {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) return { ...DEFAULT_PROFILE, ...JSON.parse(raw) } as UserProfile;
+  } catch { /* ignore */ }
+  return null;
+}
+
+function saveToLocalStorage(profile: UserProfile) {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(profile));
+  } catch { /* ignore */ }
+}
 
 export function useProfile() {
   return useQuery({
     queryKey: ["userProfile"],
     queryFn: async (): Promise<UserProfile> => {
       try {
-        const snap = await getDoc(doc(db, "userProfile", "default"));
-        if (snap.exists()) return { ...DEFAULT_PROFILE, ...snap.data() } as UserProfile;
-      } catch {
-        // Firestore unavailable — return empty profile
-      }
-      return DEFAULT_PROFILE;
+        const profile = await profileApi.get();
+        if (profile && Object.keys(profile).length > 0) {
+          const merged = { ...DEFAULT_PROFILE, ...profile };
+          saveToLocalStorage(merged);
+          return merged;
+        }
+      } catch { /* backend unavailable */ }
+      return loadFromLocalStorage() ?? DEFAULT_PROFILE;
     },
     staleTime: 60_000,
   });
@@ -44,7 +55,8 @@ export function useSaveProfile() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (profile: UserProfile) => {
-      await setDoc(doc(db, "userProfile", "default"), profile);
+      saveToLocalStorage(profile);
+      await profileApi.save(profile);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["userProfile"] }),
   });

@@ -5,6 +5,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { chatApi } from "@/lib/api";
 
+function newSessionId() {
+  return new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+}
+
 type Role = "user" | "assistant";
 
 interface Message {
@@ -47,33 +51,56 @@ function useTypewriter(text: string, active: boolean, onDone: () => void) {
   return displayed;
 }
 
+/** Parse a single line of text into React nodes, handling **bold** and `code` */
+function parseInline(line: string, lineKey: string): React.ReactNode[] {
+  // Split on **bold** and `code` tokens
+  const parts = line.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={`${lineKey}-b${i}`}>{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return (
+        <code
+          key={`${lineKey}-c${i}`}
+          className="text-brand-600 bg-brand-50 px-1 rounded text-[0.85em]"
+        >
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    return <span key={`${lineKey}-t${i}`}>{part}</span>;
+  });
+}
+
+/** Render assistant message content as safe React nodes — no dangerouslySetInnerHTML */
+function SafeMarkdown({ content }: { content: string }) {
+  const lines = content.split("\n");
+  return (
+    <div className="text-sm text-gray-700 leading-relaxed space-y-1">
+      {lines.map((line, i) => {
+        if (line.trim() === "") return <br key={i} />;
+        return (
+          <p key={i} className="m-0">
+            {parseInline(line, String(i))}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 function AssistantBubble({ message, onDone }: { message: Message; onDone: () => void }) {
   const text = useTypewriter(message.content, !!message.streaming, onDone);
   const content = message.streaming ? text : message.content;
 
   return (
     <div className="flex gap-3 max-w-2xl">
-      <div className="w-7 h-7 bg-[#F7941D] rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+      <div className="w-7 h-7 bg-brand-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
         <Sparkles className="w-3.5 h-3.5 text-white" />
       </div>
       <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm flex-1">
-        <div
-          className="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none
-            prose-headings:text-gray-900 prose-strong:text-gray-900
-            prose-code:text-brand-600 prose-code:bg-brand-50 prose-code:px-1 prose-code:rounded"
-          dangerouslySetInnerHTML={{
-            __html: content
-              .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-              .replace(/\*(.*?)\*/g, "<em>$1</em>")
-              .replace(/`(.*?)`/g, "<code>$1</code>")
-              .replace(/\n\n/g, "<br/><br/>")
-              .replace(/\n/g, "<br/>")
-              .replace(/\|(.+)\|/g, (match) => {
-                const cells = match.split("|").filter((c) => c.trim() && !c.match(/^[-\s|]+$/));
-                return `<span class="font-mono text-xs">${cells.join(" · ")}</span>`;
-              }),
-          }}
-        />
+        <SafeMarkdown content={content} />
         {message.streaming && text.length < message.content.length && (
           <span className="inline-block w-1.5 h-4 bg-brand-400 ml-0.5 animate-pulse rounded-sm" />
         )}
@@ -93,6 +120,7 @@ export default function Chat() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string>(newSessionId);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -111,11 +139,12 @@ export default function Chat() {
     setLoading(true);
 
     const history = [...messages, userMsg]
-      .filter((m) => m.id !== "welcome" || m.role === "assistant")
+      .filter((m) => m.id !== "welcome")
       .map(({ role, content }) => ({ role, content }));
 
     try {
-      const { reply } = await chatApi.send(history);
+      const { reply, session_id } = await chatApi.send(history, sessionId);
+      if (session_id) setSessionId(session_id);
       setMessages((prev) => [
         ...prev,
         { id: assistantId, role: "assistant", content: reply, streaming: true },
@@ -136,6 +165,7 @@ export default function Chat() {
     setLoading(false);
     setInput("");
     setError(null);
+    setSessionId(newSessionId());
   };
 
   const showSuggestions = messages.length === 1;
@@ -145,7 +175,7 @@ export default function Chat() {
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 bg-[#F7941D] rounded-lg flex items-center justify-center">
+          <div className="w-7 h-7 bg-brand-600 rounded-lg flex items-center justify-center">
             <Sparkles className="w-3.5 h-3.5 text-white" />
           </div>
           <div>
@@ -163,7 +193,7 @@ export default function Chat() {
         {messages.map((msg) =>
           msg.role === "user" ? (
             <div key={msg.id} className="flex justify-end">
-              <div className="bg-[#F7941D] text-white rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-md text-sm leading-relaxed">
+              <div className="bg-brand-600 text-white rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-md text-sm leading-relaxed">
                 {msg.content}
               </div>
             </div>
@@ -174,7 +204,7 @@ export default function Chat() {
 
         {loading && !messages.find((m) => m.streaming) && (
           <div className="flex gap-3 max-w-2xl">
-            <div className="w-7 h-7 bg-[#F7941D] rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div className="w-7 h-7 bg-brand-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
               <Sparkles className="w-3.5 h-3.5 text-white" />
             </div>
             <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
@@ -241,7 +271,7 @@ export default function Chat() {
             className={cn(
               "w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 self-end transition-colors",
               input.trim() && !loading
-                ? "bg-[#F7941D] text-white hover:bg-[#E08518]"
+                ? "bg-brand-600 text-white hover:bg-brand-700"
                 : "bg-gray-100 text-gray-300 cursor-not-allowed"
             )}
           >
