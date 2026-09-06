@@ -32,6 +32,7 @@ const sourceColor: Record<string, string> = {
   careerjet: "bg-indigo-50 text-indigo-600",
   reed:      "bg-rose-50 text-rose-600",
   themuse:   "bg-pink-50 text-pink-600",
+  dpsa:      "bg-emerald-50 text-emerald-700",
   manual:    "bg-emerald-50 text-emerald-600",
 };
 
@@ -124,6 +125,7 @@ export default function JobsBoard() {
             <SelectItem value="careerjet">CareerJet</SelectItem>
             <SelectItem value="reed">Reed</SelectItem>
             <SelectItem value="themuse">The Muse</SelectItem>
+            <SelectItem value="dpsa">Government (DPSA)</SelectItem>
             <SelectItem value="linkedin">LinkedIn</SelectItem>
             <SelectItem value="manual">Added by me</SelectItem>
           </SelectContent>
