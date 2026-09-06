@@ -3,19 +3,27 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
+  type Auth,
 } from "firebase/auth";
-import { app } from "./firebase";
+import { app, firebaseConfigured } from "./firebase";
 
-export const auth = getAuth(app);
+export const auth: Auth | null = firebaseConfigured && app ? getAuth(app) : null;
+
+function requireAuth(): Auth {
+  if (!auth) {
+    throw new Error("Sign-in is not configured yet. Please try again later.");
+  }
+  return auth;
+}
 
 export async function signInWithEmail(email: string, password: string) {
-  return signInWithEmailAndPassword(auth, email, password);
+  return signInWithEmailAndPassword(requireAuth(), email, password);
 }
 
 export async function signUpWithEmail(email: string, password: string) {
-  return createUserWithEmailAndPassword(auth, email, password);
+  return createUserWithEmailAndPassword(requireAuth(), email, password);
 }
 
 export async function signOut() {
-  return firebaseSignOut(auth);
+  if (auth) return firebaseSignOut(auth);
 }
