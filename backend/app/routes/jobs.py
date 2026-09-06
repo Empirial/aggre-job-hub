@@ -31,6 +31,18 @@ def list_jobs(request: Request, limit: int = Query(default=50, le=200), uid: str
         raise HTTPException(status_code=500, detail="An internal error occurred")
 
 
+@router.get("/public", response_model=List[ScrapedJob])
+@limiter.limit("60/minute")
+def list_public_jobs(request: Request, limit: int = Query(default=200, le=500)):
+    """Open feed for the landing page — no sign-in required."""
+    try:
+        raw = db.get_jobs(limit=limit)
+        return [ScrapedJob(**j) for j in raw]
+    except Exception as e:
+        logger.error("list_public_jobs failed: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred")
+
+
 @router.get("/{job_id}", response_model=ScrapedJob)
 @limiter.limit("60/minute")
 def get_job(request: Request, job_id: str, uid: str = Depends(require_auth)):
