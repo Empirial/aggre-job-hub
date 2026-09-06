@@ -84,9 +84,9 @@ export default function Settings() {
   return (
     <div className="p-4 sm:p-6 space-y-5 max-w-2xl pb-20">
       <div>
-        <h1 className="text-xl font-semibold text-gray-900">Settings</h1>
+        <h1 className="text-xl font-semibold text-gray-900">My Profile</h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          Fill in your profile so the AI can tailor your CVs accurately
+          The more you fill in, the better your tailored CVs will be
         </p>
       </div>
 
@@ -95,7 +95,7 @@ export default function Settings() {
         <CardHeader className="pb-2 pt-4">
           <div className="flex items-center gap-2">
             <User className="w-4 h-4 text-gray-400" />
-            <CardTitle className="text-sm font-medium text-gray-700">Personal Info</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-700">Your details</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -146,7 +146,7 @@ export default function Settings() {
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-gray-400" />
-              <CardTitle className="text-sm font-medium text-gray-700">Professional Summary</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-700">About you</CardTitle>
             </div>
             <ZaraTrigger
               loading={zaraField === "summary" && zara.state === "loading"}
@@ -159,7 +159,7 @@ export default function Settings() {
             />
           </div>
           <p className="text-xs text-gray-400 mt-0.5">
-            2–4 sentences about who you are and what you bring. The AI uses this as the base for CV tailoring.
+A short paragraph about who you are and what you do well.
           </p>
         </CardHeader>
         <CardContent>
@@ -204,7 +204,7 @@ export default function Settings() {
             />
           </div>
           <p className="text-xs text-gray-400 mt-0.5">
-            Add each skill separately. These are injected into the tailored CV's skills section.
+Add one skill at a time.
           </p>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -262,7 +262,7 @@ export default function Settings() {
             <CardTitle className="text-sm font-medium text-gray-700">Experience</CardTitle>
           </div>
           <p className="text-xs text-gray-400 mt-0.5">
-            Add one bullet point per entry. The AI rewrites these to match each job's requirements.
+One line per thing you've done. Zara rewrites these to match each job.
           </p>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -353,16 +353,16 @@ export default function Settings() {
       {/* ── Job Preferences ──────────────────────────────────────────── */}
       <Card className="border-0 shadow-sm">
         <CardHeader className="pb-2 pt-4">
-          <CardTitle className="text-sm font-medium text-gray-700">Job Preferences</CardTitle>
+          <CardTitle className="text-sm font-medium text-gray-700">What you're looking for</CardTitle>
           <p className="text-xs text-gray-400 mt-0.5">
-            Used when running the job scraper
+            Helps us show you the right vacancies
           </p>
         </CardHeader>
         <CardContent className="space-y-5">
           {/* Keywords */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label className="text-xs text-gray-500">Search Keywords</Label>
+              <Label className="text-xs text-gray-500">Job titles or keywords</Label>
               <ZaraTrigger
                 label="Suggest keywords"
                 loading={zaraField === "keywords" && zara.state === "loading"}
@@ -425,7 +425,7 @@ export default function Settings() {
 
           {/* Locations */}
           <div className="space-y-2">
-            <Label className="text-xs text-gray-500">Preferred Locations</Label>
+            <Label className="text-xs text-gray-500">Where you want to work</Label>
             <div className="flex flex-wrap gap-1.5">
               {form.locations.map((loc) => (
                 <Badge
@@ -465,7 +465,7 @@ export default function Settings() {
 
           {/* Job types */}
           <div className="space-y-2">
-            <Label className="text-xs text-gray-500">Job Types</Label>
+            <Label className="text-xs text-gray-500">Type of work</Label>
             <div className="flex flex-wrap gap-5">
               {([
                 { key: "fullTime", label: "Full-time" },
@@ -490,26 +490,26 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {/* ── Save all ─────────────────────────────────────────────────── */}
-      <div className="flex justify-end">
+      {/* ── Documents ────────────────────────────────────────────────── */}
+      <DocumentsSection />
+
+      {/* ── Gmail ────────────────────────────────────────────────────── */}
+      <GmailSection />
+
+      {/* ── Sticky save bar ──────────────────────────────────────────── */}
+      <div className="sticky bottom-0 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-white/90 backdrop-blur border-t border-gray-100 flex justify-end">
         <Button
-          className="bg-brand-600 hover:bg-brand-700 text-white"
+          className="bg-brand-600 hover:bg-brand-700 text-white w-full sm:w-auto"
           disabled={saveProfile.isPending}
           onClick={handleSave}
         >
           {saveProfile.isPending ? (
             <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
           ) : (
-            <><Save className="w-4 h-4 mr-2" />Save All</>
+            <><Save className="w-4 h-4 mr-2" />Save my profile</>
           )}
         </Button>
       </div>
-
-      {/* ── Documents ────────────────────────────────────────────────── */}
-      <DocumentsSection />
-
-      {/* ── Gmail ────────────────────────────────────────────────────── */}
-      <GmailSection />
     </div>
   );
 }
@@ -570,7 +570,7 @@ function DocumentsSection() {
     <Card className="border-0 shadow-sm">
       <CardHeader className="pb-2 pt-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium text-gray-700">Documents</CardTitle>
+          <CardTitle className="text-sm font-medium text-gray-700">Your documents</CardTitle>
           {docs.length > 0 && (
             <Button
               size="sm"
@@ -582,7 +582,7 @@ function DocumentsSection() {
               {reprocessing ? (
                 <><Loader2 className="w-3 h-3 mr-1.5 animate-spin" />Refreshing…</>
               ) : (
-                <><RefreshCw className="w-3 h-3 mr-1.5" />Refresh document text</>
+                <><RefreshCw className="w-3 h-3 mr-1.5" />Re-read my documents</>
               )}
             </Button>
           )}
@@ -595,7 +595,7 @@ function DocumentsSection() {
         {/* Base CV */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label className="text-xs text-gray-500">Base CV</Label>
+            <Label className="text-xs text-gray-500">Your CV</Label>
             <Button
               size="sm"
               variant="outline"
@@ -643,7 +643,7 @@ function DocumentsSection() {
         {/* Supporting docs */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label className="text-xs text-gray-500">Supporting Documents</Label>
+            <Label className="text-xs text-gray-500">Other documents</Label>
             <Button
               size="sm"
               variant="outline"
@@ -726,7 +726,7 @@ function GmailSection() {
       const { url } = await gmailApi.authUrl(GMAIL_REDIRECT_URI);
       window.location.href = url;
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not start the Gmail connection.");
+      toast.error(e instanceof Error ? e.message : "Could not open Gmail sign-in. Please try again.");
       setBusy(false);
     }
   };
@@ -735,46 +735,39 @@ function GmailSection() {
     setBusy(true);
     try {
       await gmailApi.disconnect();
-      toast.success("Gmail disconnected.");
+      toast.success("Gmail unlinked.");
       refresh();
     } catch {
-      toast.error("Could not disconnect Gmail.");
+      toast.error("Could not unlink Gmail. Please try again.");
     } finally {
       setBusy(false);
     }
   };
+
+  if (loading || !status?.configured) return null;
 
   return (
     <Card className="border-0 shadow-sm">
       <CardHeader className="pb-2 pt-4">
         <CardTitle className="text-sm font-medium text-gray-700 flex items-center gap-2">
           <Mail className="w-4 h-4 text-brand-600" />
-          Gmail
+          Email your applications
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-gray-500">
-          Connect your Gmail so Zara can write the application email for you, attach your tailored CV,
-          and leave it waiting in your Drafts. Nothing is ever sent without you pressing send.
+          Link your Gmail and Zara will write the application email, attach your tailored CV, and
+          leave it in your drafts. Nothing goes out until you press send.
         </p>
 
-        {loading ? (
-          <div className="flex items-center gap-2 text-sm text-gray-400">
-            <Loader2 className="w-4 h-4 animate-spin" /> Checking...
-          </div>
-        ) : !status?.configured ? (
-          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-md p-3">
-            Gmail isn't set up on the server yet. A Google sign-in key still needs to be added before
-            this can be switched on.
-          </p>
-        ) : status.connected ? (
+        {status.connected ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-emerald-100 bg-emerald-50 p-3">
             <span className="flex items-center gap-2 text-sm text-emerald-800">
               <CheckCircle2 className="w-4 h-4" />
-              Connected{status.email ? ` — ${status.email}` : ""}
+              Linked{status.email ? ` — ${status.email}` : ""}
             </span>
             <Button size="sm" variant="outline" disabled={busy} onClick={disconnect}>
-              Disconnect
+              Unlink
             </Button>
           </div>
         ) : (
@@ -784,7 +777,7 @@ function GmailSection() {
             onClick={connect}
           >
             {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
-            Connect your Gmail
+            Link my Gmail
           </Button>
         )}
       </CardContent>
