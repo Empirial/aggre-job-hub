@@ -19,7 +19,7 @@ const steps = [
   {
     icon: Search,
     title: "We find the jobs",
-    body: "Scrapers pull fresh listings daily from PNet, Indeed, LinkedIn, Adzuna and DPSA circulars — filtered to your keywords and provinces.",
+    body: "Every new DPSA circular is pulled daily and split per department — Sports, Arts & Culture, Agriculture, Health and the rest.",
   },
   {
     icon: ScanText,
@@ -48,7 +48,7 @@ const features = [
 ];
 
 const stats = [
-  { value: "8", label: "Job sources scraped" },
+  { value: "Gov", label: "Official DPSA circulars" },
   { value: "6am", label: "Daily pipeline run" },
   { value: "< 60s", label: "To a tailored CV" },
   { value: "100%", label: "ATS-safe exports" },
@@ -97,11 +97,11 @@ export default function Landing() {
                   Start applying <ArrowRight className="w-4 h-4 ml-1.5" />
                 </Button>
               </Link>
-              <Link to="/jobs">
+              <a href="#jobs">
                 <Button variant="outline" className="border-gray-200 text-gray-700">
-                  Browse the jobs board
+                  Browse government vacancies
                 </Button>
-              </Link>
+              </a>
             </div>
             <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-xs text-gray-500">
               {["No CV rewriting by hand", "Government & private roles", "Free to start"].map((t) => (
@@ -213,7 +213,7 @@ export default function Landing() {
             {[
               { q: "Does it apply without me?", a: "No. Applications only go out once you review the tailored CV and approve it. The automation stops at your desk." },
               { q: "Will the tailored CV be accurate?", a: "The AI rewrites wording and emphasis to mirror the job's keywords. It never invents experience — it works from the profile and CV you provide." },
-              { q: "Which jobs are covered?", a: "Private sector listings from PNet, Indeed, LinkedIn, Adzuna, Careerjet and The Muse, plus DPSA government circulars with Z83 support." },
+              { q: "Which jobs are covered?", a: "Only South African government posts, straight from the official DPSA circulars, with Z83 support. We deliberately leave private job boards out." },
               { q: "What does it cost?", a: "You can scrape jobs, tailor CVs and track applications from the dashboard at no cost while CareerGate is in early access." },
             ].map((f) => (
               <div key={f.q} className="bg-white rounded-xl border border-gray-100 p-5">
