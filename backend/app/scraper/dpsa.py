@@ -228,7 +228,7 @@ class DPSAScraper(BaseScraper):
         for line in lines:
             dept_match = _DEPT_RE.match(line)
             if dept_match and current is None and len(line) < 120:
-                department = clean_text(line).title()
+                department = _pretty_department(line)
                 continue
 
             post_match = _POST_RE.match(line)
