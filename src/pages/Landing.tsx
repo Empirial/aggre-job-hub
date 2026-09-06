@@ -62,6 +62,7 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
           <Logo />
           <nav className="hidden md:flex items-center gap-7 text-sm text-gray-600">
+            <a href="#jobs" className="hover:text-gray-900">Vacancies</a>
             <a href="#how" className="hover:text-gray-900">How it works</a>
             <a href="#features" className="hover:text-gray-900">Features</a>
             <a href="#faq" className="hover:text-gray-900">FAQ</a>
@@ -148,6 +149,9 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* Public vacancies by department */}
+      <JobsBrowse />
 
       {/* Stats */}
       <section className="max-w-6xl mx-auto px-5 py-10 grid grid-cols-2 lg:grid-cols-4 gap-4">
