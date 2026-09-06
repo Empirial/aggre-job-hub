@@ -16,6 +16,7 @@ const CVWorkspace = lazy(() => import("./pages/dashboard/CVWorkspace"));
 const Settings = lazy(() => import("./pages/dashboard/Settings"));
 const Chat = lazy(() => import("./pages/dashboard/Chat"));
 const Login = lazy(() => import("./pages/Login"));
+const Landing = lazy(() => import("./pages/Landing"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -78,17 +79,18 @@ const App = () => (
         <BrowserRouter>
           <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="w-6 h-6 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" /></div>}>
             <Routes>
+              <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route element={<ProtectedRoute />}>
-                <Route path="/" element={<DashboardLayout />}>
-                  <Route index element={<Overview />} />
-                  <Route path="jobs" element={<JobsBoard />} />
-                  <Route path="jobs/:id" element={<JobDetail />} />
-                  <Route path="cv-editor" element={<CVList />} />
-                  <Route path="cv-editor/tailor" element={<CVEditor />} />
-                  <Route path="cv-editor/:id" element={<CVWorkspace />} />
-                  <Route path="chat" element={<Chat />} />
-                  <Route path="settings" element={<Settings />} />
+                <Route element={<DashboardLayout />}>
+                  <Route path="/dashboard" element={<Overview />} />
+                  <Route path="/jobs" element={<JobsBoard />} />
+                  <Route path="/jobs/:id" element={<JobDetail />} />
+                  <Route path="/cv-editor" element={<CVList />} />
+                  <Route path="/cv-editor/tailor" element={<CVEditor />} />
+                  <Route path="/cv-editor/:id" element={<CVWorkspace />} />
+                  <Route path="/chat" element={<Chat />} />
+                  <Route path="/settings" element={<Settings />} />
                 </Route>
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />

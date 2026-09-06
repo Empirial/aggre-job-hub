@@ -1,11 +1,18 @@
-import { Briefcase, FileText, RefreshCw, Loader2, ChevronRight, AlertCircle } from "lucide-react";
+import { Briefcase, FileText, RefreshCw, Loader2, ChevronRight, AlertCircle, MessageSquare, Settings as SettingsIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useJobs, useScrapeJobs } from "@/hooks/useJobs";
 import { useProfile } from "@/hooks/useProfile";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+
+const quickActions = [
+  { to: "/jobs", label: "Browse jobs board", sub: "Filter fresh listings", icon: Briefcase },
+  { to: "/cv-editor", label: "Tailor a CV", sub: "Mirror the ATS keywords", icon: FileText },
+  { to: "/chat", label: "Ask Zara", sub: "Career advice & prep", icon: MessageSquare },
+  { to: "/settings", label: "Update profile", sub: "Keywords & locations", icon: SettingsIcon },
+];
 
 const DEFAULT_KEYWORDS = ["software engineer", "developer", "python", "react"];
 
@@ -59,15 +66,15 @@ export default function Overview() {
   ];
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-6 space-y-5 sm:space-y-6 max-w-[1400px] mx-auto">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Overview</h1>
           <p className="text-sm text-gray-500 mt-0.5">{today}</p>
         </div>
         <Button
           size="sm"
-          className="bg-brand-600 hover:bg-brand-700 text-white"
+          className="bg-brand-600 hover:bg-brand-700 text-white w-full sm:w-auto"
           onClick={() => scrape.mutate({ keywords: scrapeKeywords, location: "South Africa" })}
           disabled={scrape.isPending}
         >
@@ -106,18 +113,30 @@ export default function Overview() {
       )}
 
       {/* Pipeline strip */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex divide-x divide-gray-100">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 grid grid-cols-2 divide-x divide-gray-100">
         {pipeline.map((stage, i) => (
-          <div key={stage.label} className="flex-1 flex items-center gap-3 px-5 py-4">
+          <div key={stage.label} className="flex items-center gap-3 px-4 py-4 sm:px-5">
             <stage.icon className={`w-4 h-4 flex-shrink-0 ${i === 0 ? "text-brand-600" : i === pipeline.length - 1 ? "text-emerald-600" : "text-gray-400"}`} />
-            <div>
+            <div className="min-w-0">
               <p className="text-xl font-semibold text-gray-900">{stage.value}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{stage.label}</p>
+              <p className="text-xs text-gray-500 mt-0.5 truncate">{stage.label}</p>
             </div>
-            {i < pipeline.length - 1 && (
-              <ChevronRight className="w-3.5 h-3.5 text-gray-300 ml-auto hidden sm:block" />
-            )}
           </div>
+        ))}
+      </div>
+
+      {/* Quick actions */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {quickActions.map((a) => (
+          <Link
+            key={a.to}
+            to={a.to}
+            className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3.5 hover:border-brand-200 transition-colors"
+          >
+            <a.icon className="w-4 h-4 text-brand-600" />
+            <p className="mt-2.5 text-sm font-medium text-gray-900">{a.label}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{a.sub}</p>
+          </Link>
         ))}
       </div>
 

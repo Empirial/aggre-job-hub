@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Briefcase,
@@ -17,9 +17,10 @@ import { useProfile } from "@/hooks/useProfile";
 import { signOut } from "@/lib/auth";
 import { DEMO_MODE_KEY } from "@/hooks/useAuth";
 import ChatBot from "@/components/ChatBot";
+import Logo from "@/components/Logo";
 
 const navItems = [
-  { to: "/", label: "Overview", icon: LayoutDashboard, end: true },
+  { to: "/dashboard", label: "Overview", icon: LayoutDashboard, end: true },
   { to: "/jobs", label: "Jobs Board", icon: Briefcase },
   { to: "/cv-editor", label: "CV Editor", icon: FileText },
   { to: "/chat", label: "Chat with Zara", icon: MessageSquare },
@@ -66,18 +67,18 @@ function Sidebar({
         collapsed ? "justify-center px-2" : "justify-between px-4"
       )}>
         {!collapsed && (
-          <img
-            src="/CareergateLogo.png"
-            alt="CareerGate"
-            className="h-9 w-auto object-contain"
-          />
+          <Link to="/" aria-label="CareerGate home">
+            <Logo />
+          </Link>
         )}
         {collapsed && (
-          <img
-            src="/CareergateLogo.png"
-            alt="CareerGate"
-            className="h-7 w-7 object-contain"
-          />
+          <Link
+            to="/"
+            aria-label="CareerGate home"
+            className="w-7 h-7 rounded-lg bg-[#F7941D] text-white grid place-items-center text-xs font-bold"
+          >
+            CG
+          </Link>
         )}
         {onClose && (
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 lg:hidden">
@@ -226,11 +227,9 @@ export default function DashboardLayout() {
           >
             <Menu className="w-5 h-5" />
           </button>
-          <img
-            src="/CareergateLogo.png"
-            alt="CareerGate"
-            className="h-7 w-auto object-contain"
-          />
+          <Link to="/" aria-label="CareerGate home">
+            <Logo />
+          </Link>
         </header>
 
         <main className="flex-1 overflow-auto">

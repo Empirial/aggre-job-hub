@@ -32,7 +32,7 @@ export default function Login() {
         await signUpWithEmail(email, password);
         toast.success("Account created successfully");
       }
-      navigate("/");
+      navigate("/dashboard");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Authentication failed";
       toast.error(message);
