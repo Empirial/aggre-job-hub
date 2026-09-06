@@ -23,18 +23,11 @@ const scoreColor = (score?: number) => {
   return "bg-red-50 text-red-500";
 };
 
-const sourceColor: Record<string, string> = {
-  adzuna:    "bg-orange-50 text-orange-600",
-  indeed:    "bg-blue-50 text-blue-600",
-  pnet:      "bg-purple-50 text-purple-600",
-  linkedin:  "bg-sky-50 text-sky-600",
-  jooble:    "bg-teal-50 text-teal-600",
-  careerjet: "bg-indigo-50 text-indigo-600",
-  reed:      "bg-rose-50 text-rose-600",
-  themuse:   "bg-pink-50 text-pink-600",
-  dpsa:      "bg-emerald-50 text-emerald-700",
-  manual:    "bg-emerald-50 text-emerald-600",
-};
+const sourceLabel = (source?: string) =>
+  source === "dpsa" ? "Government" : source === "manual" ? "Added by you" : "Job board";
+
+const sourceColor = (source?: string) =>
+  source === "dpsa" ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-500";
 
 export default function JobsBoard() {
   const navigate = useNavigate();
@@ -65,9 +58,13 @@ export default function JobsBoard() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Jobs Board</h1>
+          <h1 className="text-xl font-semibold text-gray-900">Find Jobs</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            {isLoading ? "Loading..." : `${filtered.length} of ${jobs.length} listings`}
+            {isLoading
+              ? "Loading vacancies..."
+              : filtered.length === jobs.length
+                ? `${jobs.length} vacancies available`
+                : `${filtered.length} of ${jobs.length} vacancies`}
           </p>
         </div>
         <Button
@@ -82,16 +79,18 @@ export default function JobsBoard() {
           disabled={scrape.isPending}
         >
           {scrape.isPending ? (
-            <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Scraping...</>
+            <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Finding jobs...</>
           ) : (
-            <><RefreshCw className="w-4 h-4 mr-2" />Run Scraper</>
+            <><RefreshCw className="w-4 h-4 mr-2" />Refresh jobs</>
           )}
         </Button>
       </div>
 
       {scrape.isSuccess && (
         <div className="text-xs text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">
-          Scraped {scrape.data.scraped} jobs — {scrape.data.saved} new saved.
+          {scrape.data.saved > 0
+            ? `${scrape.data.saved} new vacancies added.`
+            : "You're up to date — no new vacancies right now."}
         </div>
       )}
 
@@ -117,22 +116,12 @@ export default function JobsBoard() {
             ))}
           </SelectContent>
         </Select>
-        <Select value={source} onValueChange={setSource}>
-          <SelectTrigger className="w-full sm:w-36 bg-white border-gray-200 text-sm">
-            <SelectValue placeholder="Source" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All sources</SelectItem>
-            <SelectItem value="dpsa">Government (DPSA)</SelectItem>
-            <SelectItem value="manual">Added by me</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       {departments.length > 0 && (
         <Select value={department} onValueChange={setDepartment}>
           <SelectTrigger className="w-full sm:w-72 bg-white border-gray-200 text-sm">
-            <SelectValue placeholder="Government department" />
+            <SelectValue placeholder="Department" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All government departments</SelectItem>
@@ -149,8 +138,8 @@ export default function JobsBoard() {
           <Loader2 className="w-4 h-4 mr-2 animate-spin" />Loading jobs...
         </div>
       ) : isError ? (
-        <div className="text-center py-16 text-sm text-red-400">
-          Failed to load jobs. Check the backend connection.
+        <div className="text-center py-16 text-sm text-gray-500">
+          We couldn't load vacancies right now. Please try again in a moment.
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center gap-4 py-20">
@@ -159,12 +148,12 @@ export default function JobsBoard() {
           </div>
           <div className="text-center">
             <p className="text-sm font-medium text-gray-600">
-              {jobs.length === 0 ? "No jobs scraped yet" : "No jobs match your filters"}
+              {jobs.length === 0 ? "No vacancies yet" : "Nothing matches your search"}
             </p>
             <p className="text-xs text-gray-400 mt-1">
               {jobs.length === 0
-                ? "Run the scraper to pull live listings from SA job boards"
-                : "Try clearing your filters"}
+                ? "Tap refresh to pull the latest South African vacancies"
+                : "Try a different search or clear the filters"}
             </p>
           </div>
           {jobs.length === 0 && (
@@ -180,9 +169,9 @@ export default function JobsBoard() {
               disabled={scrape.isPending}
             >
               {scrape.isPending ? (
-                <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Scraping...</>
+                <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Finding jobs...</>
               ) : (
-                <><RefreshCw className="w-3.5 h-3.5 mr-1.5" />Run Scraper</>
+                <><RefreshCw className="w-3.5 h-3.5 mr-1.5" />Refresh jobs</>
               )}
             </Button>
           )}
@@ -230,20 +219,16 @@ export default function JobsBoard() {
 
               {/* Footer row */}
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
-                <Badge
-                  className={`text-xs border-0 capitalize ${
-                    sourceColor[job.source] || "bg-gray-100 text-gray-500"
-                  }`}
-                >
-                  {job.source}
+                <Badge className={`text-xs border-0 ${sourceColor(job.source)}`}>
+                  {sourceLabel(job.source)}
                 </Badge>
                 {job.cv_generated ? (
                   <span className="text-xs text-emerald-500 font-medium flex items-center gap-1">
                     <ExternalLink className="w-3 h-3" />
-                    CV Ready
+                    CV ready
                   </span>
                 ) : (
-                  <span className="text-xs text-gray-300">Tailor CV →</span>
+                  <span className="text-xs text-gray-400">Tailor my CV →</span>
                 )}
               </div>
             </button>
