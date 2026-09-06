@@ -8,10 +8,10 @@ import { useProfile } from "@/hooks/useProfile";
 import { Link, useNavigate } from "react-router-dom";
 
 const quickActions = [
-  { to: "/jobs", label: "Browse jobs board", sub: "Filter fresh listings", icon: Briefcase },
-  { to: "/cv-editor", label: "Tailor a CV", sub: "Mirror the ATS keywords", icon: FileText },
-  { to: "/chat", label: "Ask Zara", sub: "Career advice & prep", icon: MessageSquare },
-  { to: "/settings", label: "Update profile", sub: "Keywords & locations", icon: SettingsIcon },
+  { to: "/jobs", label: "Find jobs", sub: "Fresh vacancies near you", icon: Briefcase },
+  { to: "/cv-editor", label: "Tailor a CV", sub: "Match your CV to a job", icon: FileText },
+  { to: "/chat", label: "Ask Zara", sub: "Advice and interview prep", icon: MessageSquare },
+  { to: "/settings", label: "My profile", sub: "Your details and documents", icon: SettingsIcon },
 ];
 
 const DEFAULT_KEYWORDS = ["software engineer", "developer", "python", "react"];
@@ -19,7 +19,7 @@ const DEFAULT_KEYWORDS = ["software engineer", "developer", "python", "react"];
 export default function Overview() {
   const navigate = useNavigate();
   const { data: jobs = [], isLoading: jobsLoading } = useJobs();
-  const { data: profile } = useProfile();
+  const { data: profile, isLoading: profileLoading } = useProfile();
   const scrape = useScrapeJobs();
 
   const loading = jobsLoading;
@@ -48,7 +48,7 @@ export default function Overview() {
     !!profile?.education,
   ];
   const profilePct = Math.round((profileFields.filter(Boolean).length / profileFields.length) * 100);
-  const profileIncomplete = profilePct < 100;
+  const profileIncomplete = !profileLoading && !!profile && profilePct < 100;
 
   // Build last-7-days chart from job created_at timestamps
   const chartData = Array.from({ length: 7 }, (_, i) => {
@@ -61,15 +61,17 @@ export default function Overview() {
   });
 
   const pipeline = [
-    { label: "Scraped", value: loading ? "—" : String(jobs.length), icon: Briefcase },
-    { label: "CVs Ready", value: loading ? "—" : String(cvGenerated), icon: FileText },
+    { label: "Vacancies available", value: loading ? "—" : String(jobs.length), icon: Briefcase },
+    { label: "CVs ready to send", value: loading ? "—" : String(cvGenerated), icon: FileText },
   ];
 
   return (
     <div className="p-4 sm:p-6 space-y-5 sm:space-y-6 max-w-[1400px] mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Overview</h1>
+          <h1 className="text-xl font-semibold text-gray-900">
+            {profile?.name ? `Hi, ${profile.name.split(" ")[0]}` : "Welcome"}
+          </h1>
           <p className="text-sm text-gray-500 mt-0.5">{today}</p>
         </div>
         <Button
@@ -79,14 +81,16 @@ export default function Overview() {
           disabled={scrape.isPending}
         >
           {scrape.isPending
-            ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Scraping...</>
-            : <><RefreshCw className="w-3.5 h-3.5 mr-1.5" />Run Scraper</>}
+            ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Finding jobs...</>
+            : <><RefreshCw className="w-3.5 h-3.5 mr-1.5" />Refresh jobs</>}
         </Button>
       </div>
 
       {scrape.isSuccess && (
         <div className="text-xs text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">
-          Done — {scrape.data.saved} new jobs saved.
+          {scrape.data.saved > 0
+            ? `${scrape.data.saved} new vacancies added.`
+            : "You're up to date — no new vacancies right now."}
         </div>
       )}
 
@@ -144,7 +148,7 @@ export default function Overview() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2 border-0 shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-700">Last 7 Days</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-700">New vacancies this week</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
@@ -152,7 +156,7 @@ export default function Overview() {
                 <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }} />
-                <Bar dataKey="scraped" fill="#F7941D" radius={[4, 4, 0, 0]} name="Scraped" />
+                <Bar dataKey="scraped" fill="#F7941D" radius={[4, 4, 0, 0]} name="New vacancies" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -160,7 +164,7 @@ export default function Overview() {
 
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-700">Recent Jobs</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-700">Latest for you</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 px-4">
             {jobsLoading ? (
@@ -168,7 +172,7 @@ export default function Overview() {
                 <Loader2 className="w-3 h-3 animate-spin" />Loading...
               </div>
             ) : recentJobs.length === 0 ? (
-              <p className="text-xs text-gray-400 py-4">No jobs yet. Run the scraper.</p>
+              <p className="text-xs text-gray-400 py-4">No vacancies yet — tap Refresh jobs.</p>
             ) : (
               recentJobs.map((job) => (
                 <button

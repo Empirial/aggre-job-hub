@@ -189,7 +189,7 @@ export default function CVEditor() {
       setCoverLetter(result.cover_letter);
       setCoverLetterOpen(true);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Cover letter generation failed. Check backend connection.");
+      setError(e instanceof Error ? e.message : "Could not write the cover letter. Please try again.");
     } finally {
       setCoverLetterLoading(false);
     }
@@ -226,7 +226,7 @@ export default function CVEditor() {
       });
       setTailored(result as TailoredCV);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Tailoring failed. Check backend connection.");
+      setError(e instanceof Error ? e.message : "Could not tailor your CV. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -262,11 +262,11 @@ export default function CVEditor() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">CV Editor</h1>
+          <h1 className="text-xl font-semibold text-gray-900">Tailor a CV</h1>
           <p className="text-sm text-gray-500 mt-0.5">
             {selectedJob
               ? `${selectedJob.title} — ${selectedJob.company}`
-              : "Select a scraped job to tailor your CV"}
+              : "Choose a job and we'll match your CV to it"}
           </p>
         </div>
         {tailored && (
@@ -277,7 +277,7 @@ export default function CVEditor() {
             disabled={!tailored.docx_path}
           >
             <Download className="w-4 h-4 mr-2" />
-            Download .docx
+            Download CV
           </Button>
         )}
       </div>
@@ -351,7 +351,7 @@ export default function CVEditor() {
               </div>
             ) : filteredJobs.length === 0 ? (
               <div className="text-center py-6 text-sm text-gray-400">
-                No jobs found. Run the scraper from the Jobs Board first.
+                No jobs yet — open Find Jobs and refresh the listings.
               </div>
             ) : (
               <div className="max-h-64 overflow-y-auto space-y-1 pr-1">
@@ -431,7 +431,7 @@ export default function CVEditor() {
         </div>
       )}
 
-      {/* ATS Match Score */}
+      {/* Match score */}
       {tailored && selectedJob && (() => {
         const ats = computeAtsMatch(selectedJob.description, tailored);
         const color = ats.score >= 70 ? "green" : ats.score >= 45 ? "amber" : "red";
@@ -446,7 +446,7 @@ export default function CVEditor() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm font-medium text-gray-700">ATS Match Score</span>
+                  <span className="text-sm font-medium text-gray-700">Match score</span>
                   <Badge className={`${colorMap.badge} border-0 text-xs font-semibold`}>
                     {ats.score}%
                   </Badge>
@@ -607,7 +607,7 @@ export default function CVEditor() {
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2">
                   <h2 className="text-sm font-medium text-gray-700">Tailored CV</h2>
-                  <Badge className="bg-brand-50 text-brand-600 border-0 text-xs">ATS Optimised</Badge>
+                  <Badge className="bg-brand-50 text-brand-600 border-0 text-xs">Ready to send</Badge>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
