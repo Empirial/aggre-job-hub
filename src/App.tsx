@@ -1,42 +1,103 @@
+import React, { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import DashboardLayout from "./components/DashboardLayout";
-import Overview from "./pages/dashboard/Overview";
-import JobsBoard from "./pages/dashboard/JobsBoard";
-import JobDetail from "./pages/dashboard/JobDetail";
-import CVEditor from "./pages/dashboard/CVEditor";
-import Applications from "./pages/dashboard/Applications";
-import Chat from "./pages/dashboard/Chat";
-import Preview from "./pages/dashboard/Preview";
-import Settings from "./pages/dashboard/Settings";
+import ProtectedRoute from "./components/ProtectedRoute";
 
-const queryClient = new QueryClient();
+const Overview = lazy(() => import("./pages/dashboard/Overview"));
+const JobsBoard = lazy(() => import("./pages/dashboard/JobsBoard"));
+const JobDetail = lazy(() => import("./pages/dashboard/JobDetail"));
+const CVList = lazy(() => import("./pages/dashboard/CVList"));
+const CVEditor = lazy(() => import("./pages/dashboard/CVEditor"));
+const CVWorkspace = lazy(() => import("./pages/dashboard/CVWorkspace"));
+const Settings = lazy(() => import("./pages/dashboard/Settings"));
+const Chat = lazy(() => import("./pages/dashboard/Chat"));
+const Login = lazy(() => import("./pages/Login"));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      retry: 2,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+class ErrorBoundary extends React.Component<
+  React.PropsWithChildren<object>,
+  ErrorBoundaryState
+> {
+  constructor(props: React.PropsWithChildren<object>) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+          <div className="bg-white rounded-xl shadow-md p-8 max-w-sm w-full text-center">
+            <h2 className="text-lg font-semibold text-gray-800 mb-2">
+              Something went wrong
+            </h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              An unexpected error occurred. Please reload the page.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-5 py-2 rounded-md transition-colors"
+            >
+              Reload
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<DashboardLayout />}>
-            <Route index element={<Overview />} />
-            <Route path="jobs" element={<JobsBoard />} />
-            <Route path="jobs/:id" element={<JobDetail />} />
-            <Route path="cv-editor" element={<CVEditor />} />
-            <Route path="applications" element={<Applications />} />
-            <Route path="chat" element={<Chat />} />
-            <Route path="preview" element={<Preview />} />
-            <Route path="settings" element={<Settings />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="w-6 h-6 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" /></div>}>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route element={<ProtectedRoute />}>
+                <Route path="/" element={<DashboardLayout />}>
+                  <Route index element={<Overview />} />
+                  <Route path="jobs" element={<JobsBoard />} />
+                  <Route path="jobs/:id" element={<JobDetail />} />
+                  <Route path="cv-editor" element={<CVList />} />
+                  <Route path="cv-editor/tailor" element={<CVEditor />} />
+                  <Route path="cv-editor/:id" element={<CVWorkspace />} />
+                  <Route path="chat" element={<Chat />} />
+                  <Route path="settings" element={<Settings />} />
+                </Route>
+              </Route>
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

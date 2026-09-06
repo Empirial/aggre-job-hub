@@ -1,25 +1,71 @@
 import io
 import json
+import logging
+import mimetypes
 import os
+import uuid
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
+import fitz  # PyMuPDF
 import httpx
 import pdfplumber
 import pypdf
-from fastapi import APIRouter, Form, HTTPException, UploadFile, File
+import pytesseract
+from PIL import Image
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile, File
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from app.auth import require_auth
+from app.limiter import limiter
+from app import firebase_client as db
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/documents", tags=["documents"])
 
-MAX_SIZE_MB = 20
-UPLOADS_DIR = Path(__file__).resolve().parents[2] / "uploads" / "profile"
-UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+MAX_SIZE_MB = 10
 
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".doc", ".jpg", ".jpeg", ".png"}
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 DEEPSEEK_URL = os.getenv("DEEPSEEK_API_URL", "https://api.deepseek.com/v1/chat/completions")
+
+# Magic bytes for file type validation
+MAGIC_BYTES = {
+    ".pdf": b"%PDF",
+    ".docx": b"PK",
+    ".doc": b"\xd0\xcf",
+    ".jpg": b"\xff\xd8",
+    ".jpeg": b"\xff\xd8",
+    ".png": b"\x89PNG",
+}
+
+
+OCR_MAX_PAGES = 20
+
+
+def _ocr_pdf_bytes(content: bytes) -> str:
+    """OCR fallback for scanned/image-only PDFs with no extractable text layer."""
+    try:
+        doc = fitz.open(stream=content, filetype="pdf")
+    except Exception as e:
+        logger.warning("OCR: failed to open PDF: %s", e)
+        return ""
+
+    texts = []
+    try:
+        for i, page in enumerate(doc):
+            if i >= OCR_MAX_PAGES:
+                break
+            try:
+                pix = page.get_pixmap(dpi=200)
+                img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                texts.append(pytesseract.image_to_string(img))
+            except Exception as e:
+                logger.warning("OCR: failed on page %d: %s", i, e)
+    finally:
+        doc.close()
+
+    return "\n\n".join(texts).strip()
 
 
 async def _deepseek(messages: list[dict], max_tokens: int = 600) -> str:
@@ -43,7 +89,8 @@ async def _deepseek(messages: list[dict], max_tokens: int = 600) -> str:
 
 
 @router.post("/extract")
-async def extract_pdf(file: UploadFile = File(...)):
+@limiter.limit("10/minute")
+async def extract_pdf(request: Request, file: UploadFile = File(...), uid: str = Depends(require_auth)):
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are accepted")
 
@@ -51,15 +98,22 @@ async def extract_pdf(file: UploadFile = File(...)):
     if len(content) > MAX_SIZE_MB * 1024 * 1024:
         raise HTTPException(status_code=413, detail=f"File exceeds {MAX_SIZE_MB} MB limit")
 
-    # Extract text
+    if not content.startswith(b"%PDF"):
+        raise HTTPException(status_code=400, detail="File content does not match PDF format")
+
     try:
         with pdfplumber.open(io.BytesIO(content)) as pdf:
             pages = [page.extract_text() or "" for page in pdf.pages]
         full_text = "\n\n".join(pages).strip()
     except Exception as e:
-        raise HTTPException(status_code=422, detail=f"Could not parse PDF: {e}")
+        logger.error("extract_pdf failed: %s", e, exc_info=True)
+        raise HTTPException(status_code=422, detail="Could not parse PDF")
 
-    # Extract AcroForm fields
+    ocr_used = False
+    if not full_text:
+        full_text = _ocr_pdf_bytes(content)
+        ocr_used = True
+
     fields: list[str] = []
     try:
         reader = pypdf.PdfReader(io.BytesIO(content))
@@ -75,64 +129,8 @@ async def extract_pdf(file: UploadFile = File(...)):
         "char_count": len(full_text),
         "fields": fields,
         "is_fillable": len(fields) > 0,
+        "ocr_used": ocr_used,
     }
-
-
-# ── Chat ─────────────────────────────────────────────────────────────────────
-
-class ChatMessage(BaseModel):
-    role: str
-    content: str
-
-class ChatRequest(BaseModel):
-    document_text: str
-    messages: list[ChatMessage]
-    message: str
-
-
-@router.post("/chat")
-async def chat_with_document(request: ChatRequest):
-    system = (
-        "You are a document assistant. The user has uploaded a PDF document. "
-        "Help them understand it, extract key information, identify requirements, "
-        "assist with form filling, or tailor their CV to a job description in the document.\n\n"
-        f"Full document text:\n\n{request.document_text[:4000]}"
-    )
-    history = [{"role": m.role, "content": m.content} for m in request.messages[-8:]]
-    history.append({"role": "user", "content": request.message})
-
-    reply = await _deepseek(
-        [{"role": "system", "content": system}] + history,
-        max_tokens=700,
-    )
-
-    if not reply:
-        reply = _fallback_reply(request.message, request.document_text)
-
-    return {"reply": reply}
-
-
-def _fallback_reply(msg: str, doc_text: str) -> str:
-    q = msg.lower()
-    if any(w in q for w in ["summarise", "summarize", "summary", "what is", "about"]):
-        snippet = doc_text[:500].replace("\n", " ")
-        return f"Here's what I can see:\n\n{snippet}...\n\nWhat specifically would you like to know?"
-    if any(w in q for w in ["fill", "form", "field", "complete"]):
-        return "Click the **Fill Form** button in the top bar — I'll use your saved profile to suggest values for every field in this document."
-    if "keyword" in q:
-        words = list({w for w in doc_text.split() if len(w) > 5})[:12]
-        return "Keywords found:\n\n" + "\n".join(f"• {w}" for w in words)
-    if any(w in q for w in ["require", "qualify", "eligib", "must"]):
-        lines = [l.strip() for l in doc_text.split("\n") if len(l.strip()) > 30][:6]
-        return "Key lines from the document:\n\n" + "\n".join(f"• {l}" for l in lines)
-    return (
-        "I have this document loaded. You can ask me to:\n\n"
-        "• Summarise it\n"
-        "• Extract requirements or qualifications\n"
-        "• Identify keywords\n"
-        "• Help understand specific sections\n\n"
-        "Or click **Fill Form** to auto-populate all fields using your profile."
-    )
 
 
 # ── Suggest fill values ───────────────────────────────────────────────────────
@@ -144,9 +142,10 @@ class SuggestFillRequest(BaseModel):
 
 
 @router.post("/suggest-fill")
-async def suggest_fill(request: SuggestFillRequest):
-    profile_str = json.dumps(request.profile or {}, indent=2)
-    field_list = "\n".join(f"- {f}" for f in request.fields)
+@limiter.limit("20/minute")
+async def suggest_fill(request: Request, body: SuggestFillRequest, uid: str = Depends(require_auth)):
+    profile_str = json.dumps(body.profile or {}, indent=2)
+    field_list = "\n".join(f"- {f}" for f in body.fields)
 
     system = (
         "You are a form-filling assistant. Given PDF form field names, document context, "
@@ -155,7 +154,7 @@ async def suggest_fill(request: SuggestFillRequest):
         "and values are strings. Use empty string if a field cannot be inferred."
     )
     user = (
-        f"Document context:\n{request.document_text[:2000]}\n\n"
+        f"Document context:\n{body.document_text[:2000]}\n\n"
         f"User profile:\n{profile_str}\n\n"
         f"Form fields:\n{field_list}\n\n"
         "Return a JSON object mapping each field name to its suggested value."
@@ -174,18 +173,82 @@ async def suggest_fill(request: SuggestFillRequest):
         except json.JSONDecodeError:
             pass
 
-    # Ensure every field has an entry
-    for f in request.fields:
+    for f in body.fields:
         if f not in suggestions:
             suggestions[f] = ""
 
     return {"suggestions": suggestions}
 
 
-# ── Fill and return PDF ───────────────────────────────────────────────────────
+# ── Profile documents (Firebase Storage + Firestore metadata) ────────────────
 
-@router.post("/upload-profile")
-async def upload_profile_doc(file: UploadFile = File(...), doc_type: str = Form("supporting")):
+class ProfileDocument(BaseModel):
+    id: str
+    original_filename: str
+    doc_type: str
+    size: int
+    content_type: str
+    text_excerpt: Optional[str] = None
+    created_at: str
+
+
+def _extract_text_excerpt(ext: str, content: bytes) -> Optional[str]:
+    if ext != ".pdf":
+        return None
+    text = ""
+    try:
+        with pdfplumber.open(io.BytesIO(content)) as pdf:
+            pages = [p.extract_text() or "" for p in pdf.pages]
+        text = "\n\n".join(pages).strip()
+    except Exception:
+        pass
+
+    if not text:
+        try:
+            text = _ocr_pdf_bytes(content)
+        except Exception:
+            pass
+
+    return text or None
+
+
+def _save_document(uid: str, filename: str, content: bytes, doc_type: str) -> ProfileDocument:
+    ext = Path(filename).suffix.lower()
+    doc_id = str(uuid.uuid4())
+    storage_path = f"users/{uid}/documents/{doc_id}{ext}"
+    content_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+
+    db.upload_profile_document_blob(storage_path, content, content_type)
+
+    doc_data: dict = {
+        "original_filename": filename,
+        "doc_type": doc_type,
+        "size": len(content),
+        "content_type": content_type,
+        "storage_path": storage_path,
+        "text_excerpt": _extract_text_excerpt(ext, content),
+    }
+    db.save_profile_document(uid, doc_id, doc_data)
+
+    return ProfileDocument(
+        id=doc_id,
+        original_filename=doc_data["original_filename"],
+        doc_type=doc_data["doc_type"],
+        size=doc_data["size"],
+        content_type=doc_data["content_type"],
+        text_excerpt=doc_data["text_excerpt"],
+        created_at=doc_data["created_at"],
+    )
+
+
+@router.post("/upload-profile", response_model=ProfileDocument)
+@limiter.limit("10/minute")
+async def upload_profile_doc(
+    request: Request,
+    file: UploadFile = File(...),
+    doc_type: str = Form("supporting"),
+    uid: str = Depends(require_auth),
+):
     if not file.filename:
         raise HTTPException(status_code=400, detail="No filename provided")
 
@@ -194,24 +257,107 @@ async def upload_profile_doc(file: UploadFile = File(...), doc_type: str = Form(
         raise HTTPException(status_code=400, detail=f"File type {ext} not allowed")
 
     content = await file.read()
-    if len(content) > 10 * 1024 * 1024:
-        raise HTTPException(status_code=413, detail="File exceeds 10 MB limit")
+    if len(content) > MAX_SIZE_MB * 1024 * 1024:
+        raise HTTPException(status_code=413, detail=f"File exceeds {MAX_SIZE_MB} MB limit")
 
-    safe_name = Path(file.filename).name
-    dest = (UPLOADS_DIR / safe_name).resolve()
-    if not dest.is_relative_to(UPLOADS_DIR.resolve()):
-        raise HTTPException(status_code=400, detail="Invalid filename")
+    expected_magic = MAGIC_BYTES.get(ext)
+    if expected_magic and not content.startswith(expected_magic):
+        raise HTTPException(status_code=400, detail=f"File content does not match {ext} format")
 
-    dest.write_bytes(content)
-    return {"filename": safe_name, "doc_type": doc_type, "size": len(content)}
+    try:
+        return _save_document(uid, file.filename, content, doc_type)
+    except Exception as e:
+        logger.error("Storage upload failed: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to store document")
 
 
-@router.post("/fill")
-async def fill_pdf(file: UploadFile = File(...), values: str = Form(...)):
+@router.post("/profile-docs/reprocess")
+@limiter.limit("5/minute")
+def reprocess_profile_docs(request: Request, uid: str = Depends(require_auth)):
+    """Re-extract text_excerpt for existing PDF uploads with the current (uncapped) extraction logic."""
+    docs = db.get_profile_documents(uid)
+    reprocessed = 0
+    for d in docs:
+        ext = Path(d.get("original_filename", "")).suffix.lower()
+        storage_path = d.get("storage_path")
+        if ext != ".pdf" or not storage_path:
+            continue
+        try:
+            content = db.download_profile_document_blob(storage_path)
+        except Exception as e:
+            logger.warning("Reprocess: failed to download %s: %s", d.get("id"), e)
+            continue
+        data = {**d, "text_excerpt": _extract_text_excerpt(ext, content)}
+        data.pop("id", None)
+        db.save_profile_document(uid, d["id"], data)
+        reprocessed += 1
+    return {"reprocessed": reprocessed, "total": len(docs)}
+
+
+@router.get("/profile-docs", response_model=List[ProfileDocument])
+def list_profile_docs(uid: str = Depends(require_auth)):
+    docs = db.get_profile_documents(uid)
+    return [
+        ProfileDocument(
+            id=d["id"],
+            original_filename=d.get("original_filename", "document"),
+            doc_type=d.get("doc_type", "supporting"),
+            size=d.get("size", 0),
+            content_type=d.get("content_type", "application/octet-stream"),
+            text_excerpt=d.get("text_excerpt"),
+            created_at=d.get("created_at", ""),
+        )
+        for d in docs
+    ]
+
+
+@router.delete("/profile-docs/{doc_id}")
+def delete_profile_doc(doc_id: str, uid: str = Depends(require_auth)):
+    data = db.delete_profile_document(uid, doc_id)
+    if data and data.get("storage_path"):
+        try:
+            db.delete_profile_document_blob(data["storage_path"])
+        except Exception as e:
+            logger.warning("Failed to delete storage blob: %s", e)
+    return {"status": "deleted"}
+
+
+@router.get("/profile-docs/{doc_id}/download")
+def download_profile_doc(doc_id: str, uid: str = Depends(require_auth)):
+    data = db.get_profile_document(uid, doc_id)
+    if not data or not data.get("storage_path"):
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    try:
+        content = db.download_profile_document_blob(data["storage_path"])
+    except Exception as e:
+        logger.error("Storage download failed: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to retrieve document")
+
+    return StreamingResponse(
+        io.BytesIO(content),
+        media_type=data.get("content_type", "application/octet-stream"),
+        headers={"Content-Disposition": f'attachment; filename="{data.get("original_filename", "document")}"'},
+    )
+
+
+# ── Fill a PDF form and save it as a profile document ─────────────────────────
+
+@router.post("/fill", response_model=ProfileDocument)
+@limiter.limit("10/minute")
+async def fill_pdf(
+    request: Request,
+    file: UploadFile = File(...),
+    values: str = Form(...),
+    uid: str = Depends(require_auth),
+):
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are accepted")
 
     content = await file.read()
+
+    if not content.startswith(b"%PDF"):
+        raise HTTPException(status_code=400, detail="File content does not match PDF format")
 
     try:
         field_values: dict = json.loads(values)
@@ -227,17 +373,18 @@ async def fill_pdf(file: UploadFile = File(...), values: str = Form(...)):
             try:
                 writer.update_page_form_field_values(page, field_values)
             except Exception:
-                pass  # page has no form fields — skip
+                pass
 
         output = io.BytesIO()
         writer.write(output)
-        output.seek(0)
+        filled_content = output.getvalue()
     except Exception as e:
-        raise HTTPException(status_code=422, detail=f"Could not fill PDF: {e}")
+        logger.error("fill_pdf failed: %s", e, exc_info=True)
+        raise HTTPException(status_code=422, detail="Could not fill PDF")
 
-    safe_name = f"filled_{file.filename}"
-    return StreamingResponse(
-        output,
-        media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
-    )
+    filled_name = f"Filled_{Path(file.filename).stem}.pdf"
+    try:
+        return _save_document(uid, filled_name, filled_content, "filled_form")
+    except Exception as e:
+        logger.error("Storage upload failed: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to save filled document")

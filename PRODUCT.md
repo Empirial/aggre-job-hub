@@ -10,7 +10,7 @@ South African job seekers, primarily recent graduates and mid-career professiona
 
 ## Product Purpose
 
-CareerGate automates the job application pipeline: scraping listings, tailoring CVs with AI to mirror ATS requirements, filling government forms (Z83), sending applications via email, and tracking everything in a dashboard. Success means a user applies to more jobs with less effort and gets more interview callbacks.
+CareerGate automates the hardest part of the job application pipeline: scraping listings, tailoring CVs with AI to mirror ATS requirements, and helping fill government forms (Z83) — producing a ready-to-download CV in seconds. The user submits the application themselves. Success means a user applies to more jobs with less effort and gets more interview callbacks.
 
 ## Brand Personality
 

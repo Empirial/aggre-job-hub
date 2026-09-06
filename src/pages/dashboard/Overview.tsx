@@ -1,26 +1,47 @@
-import { Briefcase, FileText, SendHorizontal, Trophy, RefreshCw, Loader2, ChevronRight } from "lucide-react";
+import { Briefcase, FileText, RefreshCw, Loader2, ChevronRight, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useJobs, useScrapeJobs } from "@/hooks/useJobs";
-import { useApplications } from "@/hooks/useApplications";
+import { useProfile } from "@/hooks/useProfile";
+import { useNavigate } from "react-router-dom";
+
+const DEFAULT_KEYWORDS = ["software engineer", "developer", "python", "react"];
 
 export default function Overview() {
+  const navigate = useNavigate();
   const { data: jobs = [], isLoading: jobsLoading } = useJobs();
-  const { data: applications = [], isLoading: appsLoading } = useApplications();
+  const { data: profile } = useProfile();
   const scrape = useScrapeJobs();
 
-  const loading = jobsLoading || appsLoading;
+  const loading = jobsLoading;
+
+  // Use saved job preference keywords if available, fall back to defaults
+  const scrapeKeywords: string[] =
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (profile as any)?.jobPreferences?.keywords?.length
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ? (profile as any).jobPreferences.keywords
+      : DEFAULT_KEYWORDS;
 
   const cvGenerated = jobs.filter((j) => j.cv_generated).length;
-  const sent = applications.filter((a) => a.status === "sent" || a.status === "interview").length;
-  const interviews = applications.filter((a) => a.status === "interview").length;
   const today = new Date().toLocaleDateString("en-ZA", {
     weekday: "long", year: "numeric", month: "long", day: "numeric",
   });
 
   const recentJobs = jobs.slice(0, 5);
+
+  const profileFields = [
+    !!profile?.name,
+    !!profile?.email,
+    !!profile?.summary,
+    (profile?.skills?.length ?? 0) > 0,
+    (profile?.experience?.length ?? 0) > 0,
+    !!profile?.education,
+  ];
+  const profilePct = Math.round((profileFields.filter(Boolean).length / profileFields.length) * 100);
+  const profileIncomplete = profilePct < 100;
 
   // Build last-7-days chart from job created_at timestamps
   const chartData = Array.from({ length: 7 }, (_, i) => {
@@ -28,16 +49,13 @@ export default function Overview() {
     d.setDate(d.getDate() - (6 - i));
     const label = d.toLocaleDateString("en-ZA", { weekday: "short" });
     const dateStr = d.toISOString().slice(0, 10);
-    const scraped = jobs.filter((j) => j.created_at?.startsWith(dateStr)).length;
-    const appsOnDay = applications.filter((a) => a.dateApplied?.startsWith(dateStr)).length;
-    return { day: label, scraped, sent: appsOnDay };
+    const scraped = jobs.filter((j) => j.created_at?.slice(0, 10) === dateStr).length;
+    return { day: label, scraped };
   });
 
   const pipeline = [
     { label: "Scraped", value: loading ? "—" : String(jobs.length), icon: Briefcase },
     { label: "CVs Ready", value: loading ? "—" : String(cvGenerated), icon: FileText },
-    { label: "Applied", value: loading ? "—" : String(sent), icon: SendHorizontal },
-    { label: "Interviews", value: loading ? "—" : String(interviews), icon: Trophy },
   ];
 
   return (
@@ -49,8 +67,8 @@ export default function Overview() {
         </div>
         <Button
           size="sm"
-          className="bg-[#F7941D] hover:bg-[#E08518] text-white"
-          onClick={() => scrape.mutate({ keywords: ["software engineer", "developer", "python", "react"], location: "South Africa" })}
+          className="bg-brand-600 hover:bg-brand-700 text-white"
+          onClick={() => scrape.mutate({ keywords: scrapeKeywords, location: "South Africa" })}
           disabled={scrape.isPending}
         >
           {scrape.isPending
@@ -63,6 +81,28 @@ export default function Overview() {
         <div className="text-xs text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">
           Done — {scrape.data.saved} new jobs saved.
         </div>
+      )}
+
+      {/* Profile completion banner */}
+      {profileIncomplete && (
+        <button
+          onClick={() => navigate("/settings")}
+          className="w-full flex items-center gap-3 bg-brand-50 border border-brand-100 rounded-xl px-4 py-3 text-left hover:bg-brand-100/60 transition-colors"
+        >
+          <AlertCircle className="w-4 h-4 text-brand-500 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm font-medium text-brand-700">Profile {profilePct}% complete</span>
+              <span className="text-xs text-brand-500">Finish setup →</span>
+            </div>
+            <div className="h-1.5 bg-brand-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-brand-500 rounded-full transition-all"
+                style={{ width: `${profilePct}%` }}
+              />
+            </div>
+          </div>
+        </button>
       )}
 
       {/* Pipeline strip */}
@@ -93,8 +133,7 @@ export default function Overview() {
                 <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }} />
-                <Bar dataKey="scraped" fill="#FEF3E2" radius={[4, 4, 0, 0]} name="Scraped" />
-                <Bar dataKey="sent" fill="#F7941D" radius={[4, 4, 0, 0]} name="Sent" />
+                <Bar dataKey="scraped" fill="#F7941D" radius={[4, 4, 0, 0]} name="Scraped" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -113,17 +152,23 @@ export default function Overview() {
               <p className="text-xs text-gray-400 py-4">No jobs yet. Run the scraper.</p>
             ) : (
               recentJobs.map((job) => (
-                <div key={job.id} className="flex items-start justify-between gap-2">
+                <button
+                  key={job.id}
+                  onClick={() => navigate(`/jobs/${job.id}`)}
+                  className="w-full flex items-start justify-between gap-2 hover:bg-gray-50 rounded-lg px-1 py-1.5 -mx-1 transition-colors text-left"
+                >
                   <div className="min-w-0">
                     <p className="text-xs font-medium text-gray-900 truncate">{job.title}</p>
                     <p className="text-xs text-gray-400">{job.company} · {job.location}</p>
                   </div>
-                  {job.ats_score && (
+                  {job.ats_score ? (
                     <Badge className="text-xs shrink-0 bg-brand-50 text-brand-600 border-0">
                       {job.ats_score}%
                     </Badge>
+                  ) : (
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-300 shrink-0 mt-0.5" />
                   )}
-                </div>
+                </button>
               ))
             )}
           </CardContent>

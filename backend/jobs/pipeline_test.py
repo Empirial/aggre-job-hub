@@ -1,15 +1,11 @@
 """
 Full end-to-end pipeline test.
 
-Tests every phase without sending a real email.
-
 Usage:
     python jobs/pipeline_test.py
-    python jobs/pipeline_test.py --send-email --recipient test@example.com
 """
 
 import asyncio
-import argparse
 import sys
 from pathlib import Path
 
@@ -25,7 +21,6 @@ from app.scraper.linkedin import LinkedInScraper
 from app.ai.deepseek_client import DeepSeekClient
 from app.cv.ats_mirror import ATSMirror
 from app.cv.docx_generator import generate_cv_docx
-from app.email_sender.sender import send_application
 from app.models import CVProfile, JobAnalysisRequest
 
 PROFILE = CVProfile(
@@ -57,7 +52,7 @@ def check(label: str, condition: bool, detail: str = ""):
     return condition
 
 
-async def run(send_email: bool = False, recipient: str = ""):
+async def run():
     results = []
     print("\n=== JobApplier Full Pipeline Test ===\n")
 
@@ -131,43 +126,6 @@ async def run(send_email: bool = False, recipient: str = ""):
     )
     results.append(check(".docx file created", output_path.exists(), str(output_path.resolve())))
 
-    # ── Phase 5: Email sender ─────────────────────────────────────────────────
-    print("\n[Phase 5] Email Sender")
-    if send_email and recipient:
-        result = send_application(
-            recipient_email=recipient,
-            applicant_name=PROFILE.name,
-            job_title=test_job["title"],
-            company=test_job.get("company", ""),
-            cv_path=output_path,
-        )
-        results.append(check("Email sent", result["success"], result.get("error", "")))
-    else:
-        sender_configured = bool(os.getenv("SENDER_EMAIL") and os.getenv("SENDER_PASSWORD"))
-        results.append(check(
-            "Email config present",
-            sender_configured,
-            "skipping send (pass --send-email --recipient to test)"
-        ))
-
-    # ── Application record ────────────────────────────────────────────────────
-    print("\n[Phase 5] Application Tracking")
-    from app.models import Application
-    import hashlib
-    app_id = hashlib.md5(f"{test_job['id']}{PROFILE.email}".encode()).hexdigest()[:12]
-    app = Application(
-        id=app_id,
-        job_id=test_job["id"],
-        job_title=test_job["title"],
-        company=test_job.get("company", ""),
-        status="sent" if (send_email and recipient) else "pending",
-        cv_path=str(output_path),
-    )
-    db.save_application(app.model_dump())
-    retrieved = db.get_applications()
-    results.append(check("Application saved", len(retrieved) > 0))
-    results.append(check("Application retrievable", retrieved[0]["job_title"] == test_job["title"]))
-
     # ── Summary ───────────────────────────────────────────────────────────────
     passed = sum(results)
     total = len(results)
@@ -183,10 +141,5 @@ async def run(send_email: bool = False, recipient: str = ""):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--send-email", action="store_true")
-    parser.add_argument("--recipient", default="")
-    args = parser.parse_args()
-
-    success = asyncio.run(run(send_email=args.send_email, recipient=args.recipient))
+    success = asyncio.run(run())
     sys.exit(0 if success else 1)

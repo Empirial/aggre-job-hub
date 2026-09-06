@@ -1,262 +1,511 @@
 import { useState, useEffect, useRef } from "react";
-import { Save, Eye, EyeOff, Plus, X, Upload, FileText, Trash2, Loader2 } from "lucide-react";
+import {
+  Save, Plus, X, Upload, FileText, Trash2, Loader2, User,
+  Briefcase, Code, GraduationCap, BookOpen, RefreshCw,
+} from "lucide-react";
+import { useZaraSuggest, ZaraTrigger, ZaraSuggestionCard } from "@/components/ZaraSuggest";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { useProfile, useSaveProfile } from "@/hooks/useProfile";
+import { Textarea } from "@/components/ui/textarea";
+import { useProfile, useSaveProfile, type UserProfile } from "@/hooks/useProfile";
+import {
+  useProfileDocuments,
+  useUploadProfileDocument,
+  useDeleteProfileDocument,
+} from "@/hooks/useProfileDocuments";
+import { documentsApi } from "@/lib/api";
+import { toast } from "sonner";
 
 export default function Settings() {
-  const { data: savedProfile } = useProfile();
+  const { data: saved, isLoading } = useProfile();
   const saveProfile = useSaveProfile();
-  const [showKey, setShowKey] = useState(false);
-  const [profile, setProfile] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    linkedin: "",
-  });
 
-  useEffect(() => {
-    if (savedProfile) {
-      setProfile({
-        name: savedProfile.name,
-        email: savedProfile.email,
-        phone: savedProfile.phone,
-        linkedin: savedProfile.linkedin,
-      });
-    }
-  }, [savedProfile]);
-  const [keywords, setKeywords] = useState(["React", "Python", "Full Stack", "Software Engineer"]);
-  const [locations, setLocations] = useState(["Johannesburg", "Remote", "Pretoria"]);
-  const [jobTypes, setJobTypes] = useState({ fullTime: true, remote: true, contract: false });
-  const [api, setApi] = useState({
-    deepseekKey: "sk-••••••••••••••••••••••••••••••••",
-    schedule: "0 6 * * *",
-    senderEmail: "lufuno@mphelaindustries.co.za",
-  });
+  const [form, setForm] = useState<UserProfile | null>(null);
+  const [expInput, setExpInput] = useState("");
+  const [skillInput, setSkillInput] = useState("");
   const [kwInput, setKwInput] = useState("");
   const [locInput, setLocInput] = useState("");
 
-  const addTag = (
-    list: string[],
-    setList: (v: string[]) => void,
-    input: string,
-    setInput: (v: string) => void
+  const zara = useZaraSuggest();
+  const [zaraField, setZaraField] = useState<string | null>(null);
+  const zaraBulletRef = useRef<number | null>(null);
+
+  const zaraAsk = (field: string, prompt: string, onApply: (v: string) => void) => {
+    setZaraField(field);
+    zara.ask(prompt, onApply);
+  };
+  const zaraShowFor = (field: string) => zaraField === field && zara.state === "done";
+  const zaraDismiss = () => { zara.dismiss(); setZaraField(null); };
+
+  useEffect(() => {
+    if (saved && !form) setForm(saved);
+  }, [saved]);
+
+  const set = (patch: Partial<UserProfile>) =>
+    setForm((prev) => (prev ? { ...prev, ...patch } : prev));
+
+  const addToList = (
+    field: "skills" | "experience" | "keywords" | "locations",
+    value: string,
+    clearFn: () => void
   ) => {
-    const val = input.trim();
-    if (val && !list.includes(val)) setList([...list, val]);
-    setInput("");
+    const val = value.trim();
+    if (!val || !form) return;
+    if (!form[field].includes(val)) set({ [field]: [...form[field], val] });
+    clearFn();
   };
 
-  const removeTag = (list: string[], setList: (v: string[]) => void, tag: string) =>
-    setList(list.filter((t) => t !== tag));
+  const removeFromList = (
+    field: "skills" | "experience" | "keywords" | "locations",
+    value: string
+  ) => {
+    if (!form) return;
+    set({ [field]: (form[field] as string[]).filter((v) => v !== value) });
+  };
+
+  const handleSave = async () => {
+    if (!form) return;
+    await saveProfile.mutateAsync(form);
+    toast.success("Profile saved.");
+  };
+
+  if (isLoading || !form) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 space-y-5 max-w-2xl">
+    <div className="p-4 sm:p-6 space-y-5 max-w-2xl pb-20">
       <div>
         <h1 className="text-xl font-semibold text-gray-900">Settings</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Manage your profile, preferences, and API configuration</p>
+        <p className="text-sm text-gray-500 mt-0.5">
+          Fill in your profile so the AI can tailor your CVs accurately
+        </p>
       </div>
 
-      {/* Profile */}
+      {/* ── Personal Info ─────────────────────────────────────────────── */}
       <Card className="border-0 shadow-sm">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-gray-700">Profile</CardTitle>
+        <CardHeader className="pb-2 pt-4">
+          <div className="flex items-center gap-2">
+            <User className="w-4 h-4 text-gray-400" />
+            <CardTitle className="text-sm font-medium text-gray-700">Personal Info</CardTitle>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs text-gray-500">Full Name</Label>
               <Input
-                value={profile.name}
-                onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                value={form.name}
+                onChange={(e) => set({ name: e.target.value })}
+                placeholder="Jane Doe"
                 className="text-sm border-gray-200"
               />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs text-gray-500">Email</Label>
               <Input
-                value={profile.email}
-                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                value={form.email}
+                onChange={(e) => set({ email: e.target.value })}
+                placeholder="jane@example.com"
                 className="text-sm border-gray-200"
               />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs text-gray-500">Phone</Label>
               <Input
-                value={profile.phone}
-                onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                value={form.phone}
+                onChange={(e) => set({ phone: e.target.value })}
+                placeholder="+27 81 234 5678"
                 className="text-sm border-gray-200"
               />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs text-gray-500">LinkedIn URL</Label>
               <Input
-                value={profile.linkedin}
-                onChange={(e) => setProfile({ ...profile, linkedin: e.target.value })}
+                value={form.linkedin}
+                onChange={(e) => set({ linkedin: e.target.value })}
+                placeholder="linkedin.com/in/janedoe"
                 className="text-sm border-gray-200"
               />
             </div>
           </div>
-          <div className="flex justify-end">
+        </CardContent>
+      </Card>
+
+      {/* ── Professional Summary ──────────────────────────────────────── */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="pb-2 pt-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-gray-400" />
+              <CardTitle className="text-sm font-medium text-gray-700">Professional Summary</CardTitle>
+            </div>
+            <ZaraTrigger
+              loading={zaraField === "summary" && zara.state === "loading"}
+              error={zaraField === "summary" && zara.state === "error"}
+              onClick={() => zaraAsk(
+                "summary",
+                `Write ONLY a professional summary (2-3 sentences) for a CV. No labels, no explanation, no quotes — just the summary text itself. Profile: Name: ${form.name || "Job Seeker"}, Skills: ${form.skills.slice(0, 8).join(", ") || "not set"}, Experience: ${form.experience.slice(0, 3).join(" | ") || "not set"}, Job keywords: ${form.keywords.slice(0, 5).join(", ") || "general"}. Make it ATS-friendly for South African employers.`,
+                (v) => set({ summary: v })
+              )}
+            />
+          </div>
+          <p className="text-xs text-gray-400 mt-0.5">
+            2–4 sentences about who you are and what you bring. The AI uses this as the base for CV tailoring.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <Textarea
+            value={form.summary}
+            onChange={(e) => set({ summary: e.target.value })}
+            placeholder="e.g. Results-driven software engineer with 4 years of experience building scalable web applications using React and Python. Passionate about clean code, agile delivery, and solving real-world problems in the South African fintech space."
+            rows={4}
+            className="text-sm border-gray-200 resize-none"
+          />
+          {zaraShowFor("summary") && (
+            <ZaraSuggestionCard
+              suggestion={zara.suggestion}
+              onApply={zara.apply}
+              onDismiss={zaraDismiss}
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ── Skills ───────────────────────────────────────────────────── */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="pb-2 pt-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Code className="w-4 h-4 text-gray-400" />
+              <CardTitle className="text-sm font-medium text-gray-700">Skills</CardTitle>
+            </div>
+            <ZaraTrigger
+              label="Suggest skills"
+              loading={zaraField === "skills" && zara.state === "loading"}
+              error={zaraField === "skills" && zara.state === "error"}
+              onClick={() => zaraAsk(
+                "skills",
+                `Suggest 6-8 skills to ADD to my CV for South African job applications. Current skills: ${form.skills.join(", ") || "none"}. My experience: ${form.experience.slice(0, 3).join(" | ") || "not provided"}. Output ONLY a comma-separated list of NEW skills to add, nothing else.`,
+                (v) => {
+                  const newSkills = v.split(/[,\n]/).map(s => s.replace(/^[-•*\d.)\s]+/, "").trim()).filter(Boolean);
+                  const toAdd = newSkills.filter(s => !form.skills.includes(s));
+                  if (toAdd.length) set({ skills: [...form.skills, ...toAdd] });
+                }
+              )}
+            />
+          </div>
+          <p className="text-xs text-gray-400 mt-0.5">
+            Add each skill separately. These are injected into the tailored CV's skills section.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap gap-1.5">
+            {form.skills.map((skill) => (
+              <Badge
+                key={skill}
+                className="bg-brand-50 text-brand-600 border-0 text-xs pr-1.5 flex items-center gap-1"
+              >
+                {skill}
+                <button onClick={() => removeFromList("skills", skill)}>
+                  <X className="w-3 h-3" />
+                </button>
+              </Badge>
+            ))}
+            {form.skills.length === 0 && (
+              <p className="text-xs text-gray-400">No skills added yet</p>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Input
+              value={skillInput}
+              onChange={(e) => setSkillInput(e.target.value)}
+              onKeyDown={(e) =>
+                e.key === "Enter" && addToList("skills", skillInput, () => setSkillInput(""))
+              }
+              placeholder="e.g. React, Python, SQL..."
+              className="text-sm border-gray-200 h-8"
+            />
             <Button
               size="sm"
               variant="outline"
-              disabled={saveProfile.isPending}
-              onClick={() =>
-                saveProfile.mutate({
-                  ...savedProfile!,
-                  ...profile,
-                })
-              }
+              className="h-8 shrink-0"
+              onClick={() => addToList("skills", skillInput, () => setSkillInput(""))}
             >
-              <Save className="w-3.5 h-3.5 mr-1.5" />
-              {saveProfile.isPending ? "Saving..." : saveProfile.isSuccess ? "Saved" : "Save Profile"}
+              <Plus className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+          {zaraShowFor("skills") && (
+            <ZaraSuggestionCard
+              suggestion={zara.suggestion}
+              applyLabel="Add These Skills"
+              onApply={zara.apply}
+              onDismiss={zaraDismiss}
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ── Experience ───────────────────────────────────────────────── */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="pb-2 pt-4">
+          <div className="flex items-center gap-2">
+            <Briefcase className="w-4 h-4 text-gray-400" />
+            <CardTitle className="text-sm font-medium text-gray-700">Experience</CardTitle>
+          </div>
+          <p className="text-xs text-gray-400 mt-0.5">
+            Add one bullet point per entry. The AI rewrites these to match each job's requirements.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="space-y-1.5">
+            {form.experience.map((line, i) => (
+              <div key={i} className="flex flex-col gap-1">
+                <div className="flex items-start gap-2 bg-gray-50 rounded-lg px-3 py-2">
+                  <span className="mt-1 w-1.5 h-1.5 rounded-full bg-gray-300 shrink-0" />
+                  <p className="text-sm text-gray-700 flex-1">{line}</p>
+                  <ZaraTrigger
+                    label="Improve"
+                    loading={zaraField === `exp-${i}` && zara.state === "loading"}
+                    error={zaraField === `exp-${i}` && zara.state === "error"}
+                    onClick={() => {
+                      zaraBulletRef.current = i;
+                      zaraAsk(
+                        `exp-${i}`,
+                        `Rewrite this experience bullet to be more impactful with action verbs and quantifiable results where possible. Output ONLY the improved bullet text, no quotes, no labels: ${line}`,
+                        (v) => {
+                          const idx = zaraBulletRef.current;
+                          if (idx !== null) set({ experience: form.experience.map((e, j) => j === idx ? v : e) });
+                        }
+                      );
+                    }}
+                  />
+                  <button
+                    onClick={() => removeFromList("experience", line)}
+                    className="text-gray-300 hover:text-red-400 shrink-0"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                {zaraShowFor(`exp-${i}`) && (
+                  <ZaraSuggestionCard
+                    suggestion={zara.suggestion}
+                    applyLabel="Replace Bullet"
+                    onApply={zara.apply}
+                    onDismiss={zaraDismiss}
+                  />
+                )}
+              </div>
+            ))}
+            {form.experience.length === 0 && (
+              <p className="text-xs text-gray-400">No experience entries yet</p>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Input
+              value={expInput}
+              onChange={(e) => setExpInput(e.target.value)}
+              onKeyDown={(e) =>
+                e.key === "Enter" && addToList("experience", expInput, () => setExpInput(""))
+              }
+              placeholder="e.g. Built REST APIs with FastAPI serving 10k daily users"
+              className="text-sm border-gray-200 h-8"
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 shrink-0"
+              onClick={() => addToList("experience", expInput, () => setExpInput(""))}
+            >
+              <Plus className="w-3.5 h-3.5" />
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Job Preferences */}
+      {/* ── Education ────────────────────────────────────────────────── */}
       <Card className="border-0 shadow-sm">
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-2 pt-4">
+          <div className="flex items-center gap-2">
+            <GraduationCap className="w-4 h-4 text-gray-400" />
+            <CardTitle className="text-sm font-medium text-gray-700">Education</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Textarea
+            value={form.education}
+            onChange={(e) => set({ education: e.target.value })}
+            placeholder="e.g. BSc Computer Science — University of South Africa (UNISA), 2024"
+            rows={2}
+            className="text-sm border-gray-200 resize-none"
+          />
+        </CardContent>
+      </Card>
+
+      {/* ── Job Preferences ──────────────────────────────────────────── */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="pb-2 pt-4">
           <CardTitle className="text-sm font-medium text-gray-700">Job Preferences</CardTitle>
+          <p className="text-xs text-gray-400 mt-0.5">
+            Used when running the job scraper
+          </p>
         </CardHeader>
         <CardContent className="space-y-5">
+          {/* Keywords */}
           <div className="space-y-2">
-            <Label className="text-xs text-gray-500">Keywords</Label>
-            <div className="flex flex-wrap gap-1.5 mb-2">
-              {keywords.map((kw) => (
-                <Badge key={kw} className="bg-brand-50 text-brand-600 border-0 text-xs pr-1.5 flex items-center gap-1">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs text-gray-500">Search Keywords</Label>
+              <ZaraTrigger
+                label="Suggest keywords"
+                loading={zaraField === "keywords" && zara.state === "loading"}
+                error={zaraField === "keywords" && zara.state === "error"}
+                onClick={() => zaraAsk(
+                  "keywords",
+                  `Suggest 6 job search keywords for South African job boards (Adzuna, PNet, Indeed) based on this profile. Skills: ${form.skills.join(", ") || "not set"}. Summary: ${form.summary.slice(0, 100) || "not set"}. Output ONLY a comma-separated list, nothing else.`,
+                  (v) => {
+                    const newKws = v.split(/[,\n]/).map(s => s.replace(/^[-•*\d.)\s]+/, "").trim()).filter(Boolean);
+                    const toAdd = newKws.filter(k => !form.keywords.includes(k));
+                    if (toAdd.length) set({ keywords: [...form.keywords, ...toAdd] });
+                  }
+                )}
+              />
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {form.keywords.map((kw) => (
+                <Badge
+                  key={kw}
+                  className="bg-brand-50 text-brand-600 border-0 text-xs pr-1.5 flex items-center gap-1"
+                >
                   {kw}
-                  <button onClick={() => removeTag(keywords, setKeywords, kw)}>
+                  <button onClick={() => removeFromList("keywords", kw)}>
                     <X className="w-3 h-3" />
                   </button>
                 </Badge>
               ))}
+              {form.keywords.length === 0 && (
+                <p className="text-xs text-gray-400">No keywords added</p>
+              )}
             </div>
             <div className="flex gap-2">
               <Input
                 value={kwInput}
                 onChange={(e) => setKwInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && addTag(keywords, setKeywords, kwInput, setKwInput)}
-                placeholder="Add keyword..."
+                onKeyDown={(e) =>
+                  e.key === "Enter" && addToList("keywords", kwInput, () => setKwInput(""))
+                }
+                placeholder="e.g. React, Software Engineer..."
                 className="text-sm border-gray-200 h-8"
               />
-              <Button size="sm" variant="outline" className="h-8"
-                onClick={() => addTag(keywords, setKeywords, kwInput, setKwInput)}>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 shrink-0"
+                onClick={() => addToList("keywords", kwInput, () => setKwInput(""))}
+              >
                 <Plus className="w-3.5 h-3.5" />
               </Button>
             </div>
+            {zaraShowFor("keywords") && (
+              <ZaraSuggestionCard
+                suggestion={zara.suggestion}
+                applyLabel="Add These Keywords"
+                onApply={zara.apply}
+                onDismiss={zaraDismiss}
+              />
+            )}
           </div>
 
+          {/* Locations */}
           <div className="space-y-2">
             <Label className="text-xs text-gray-500">Preferred Locations</Label>
-            <div className="flex flex-wrap gap-1.5 mb-2">
-              {locations.map((loc) => (
-                <Badge key={loc} className="bg-gray-100 text-gray-600 border-0 text-xs pr-1.5 flex items-center gap-1">
+            <div className="flex flex-wrap gap-1.5">
+              {form.locations.map((loc) => (
+                <Badge
+                  key={loc}
+                  className="bg-gray-100 text-gray-600 border-0 text-xs pr-1.5 flex items-center gap-1"
+                >
                   {loc}
-                  <button onClick={() => removeTag(locations, setLocations, loc)}>
+                  <button onClick={() => removeFromList("locations", loc)}>
                     <X className="w-3 h-3" />
                   </button>
                 </Badge>
               ))}
+              {form.locations.length === 0 && (
+                <p className="text-xs text-gray-400">No locations added</p>
+              )}
             </div>
             <div className="flex gap-2">
               <Input
                 value={locInput}
                 onChange={(e) => setLocInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && addTag(locations, setLocations, locInput, setLocInput)}
-                placeholder="Add location..."
+                onKeyDown={(e) =>
+                  e.key === "Enter" && addToList("locations", locInput, () => setLocInput(""))
+                }
+                placeholder="e.g. Johannesburg, Remote..."
                 className="text-sm border-gray-200 h-8"
               />
-              <Button size="sm" variant="outline" className="h-8"
-                onClick={() => addTag(locations, setLocations, locInput, setLocInput)}>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 shrink-0"
+                onClick={() => addToList("locations", locInput, () => setLocInput(""))}
+              >
                 <Plus className="w-3.5 h-3.5" />
               </Button>
             </div>
           </div>
 
+          {/* Job types */}
           <div className="space-y-2">
             <Label className="text-xs text-gray-500">Job Types</Label>
-            <div className="flex gap-5">
-              {[
+            <div className="flex flex-wrap gap-5">
+              {([
                 { key: "fullTime", label: "Full-time" },
                 { key: "remote", label: "Remote" },
                 { key: "contract", label: "Contract" },
-              ].map(({ key, label }) => (
+              ] as const).map(({ key, label }) => (
                 <div key={key} className="flex items-center gap-2">
                   <Checkbox
                     id={key}
-                    checked={jobTypes[key as keyof typeof jobTypes]}
-                    onCheckedChange={(v) => setJobTypes({ ...jobTypes, [key]: !!v })}
+                    checked={form.jobTypes[key]}
+                    onCheckedChange={(v) =>
+                      set({ jobTypes: { ...form.jobTypes, [key]: !!v } })
+                    }
                   />
-                  <Label htmlFor={key} className="text-sm text-gray-600 cursor-pointer">{label}</Label>
+                  <Label htmlFor={key} className="text-sm text-gray-600 cursor-pointer">
+                    {label}
+                  </Label>
                 </div>
               ))}
             </div>
           </div>
-
-          <div className="flex justify-end">
-            <Button size="sm" variant="outline">
-              <Save className="w-3.5 h-3.5 mr-1.5" /> Save Preferences
-            </Button>
-          </div>
         </CardContent>
       </Card>
 
-      {/* API Config */}
-      <Card className="border-0 shadow-sm">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-gray-700">API Configuration</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs text-gray-500">DeepSeek API Key</Label>
-            <div className="relative">
-              <Input
-                type={showKey ? "text" : "password"}
-                value={api.deepseekKey}
-                onChange={(e) => setApi({ ...api, deepseekKey: e.target.value })}
-                className="text-sm border-gray-200 pr-10"
-              />
-              <button
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                onClick={() => setShowKey(!showKey)}
-              >
-                {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs text-gray-500">Scraper Schedule (cron)</Label>
-            <Input
-              value={api.schedule}
-              onChange={(e) => setApi({ ...api, schedule: e.target.value })}
-              className="text-sm border-gray-200 font-mono"
-            />
-            <p className="text-xs text-gray-400">Default: every day at 6:00 AM</p>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs text-gray-500">Sender Email</Label>
-            <Input
-              value={api.senderEmail}
-              onChange={(e) => setApi({ ...api, senderEmail: e.target.value })}
-              className="text-sm border-gray-200"
-            />
-          </div>
-          <div className="flex justify-end">
-            <Button size="sm" variant="outline">
-              <Save className="w-3.5 h-3.5 mr-1.5" /> Save Config
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* ── Save all ─────────────────────────────────────────────────── */}
+      <div className="flex justify-end">
+        <Button
+          className="bg-brand-600 hover:bg-brand-700 text-white"
+          disabled={saveProfile.isPending}
+          onClick={handleSave}
+        >
+          {saveProfile.isPending ? (
+            <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
+          ) : (
+            <><Save className="w-4 h-4 mr-2" />Save All</>
+          )}
+        </Button>
+      </div>
 
-      {/* Documents */}
+      {/* ── Documents ────────────────────────────────────────────────── */}
       <DocumentsSection />
     </div>
   );
@@ -264,70 +513,82 @@ export default function Settings() {
 
 // ── Documents upload section ──────────────────────────────────────────────────
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
-
-interface UploadedDoc {
-  name: string;
-  type: "cv" | "supporting";
-  size: string;
-  uploadedAt: string;
+function formatSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function DocumentsSection() {
   const cvRef = useRef<HTMLInputElement>(null);
   const docsRef = useRef<HTMLInputElement>(null);
-  const [docs, setDocs] = useState<UploadedDoc[]>([]);
-  const [uploading, setUploading] = useState<"cv" | "supporting" | null>(null);
+  const { data: docs = [] } = useProfileDocuments();
+  const uploadDoc = useUploadProfileDocument();
+  const deleteDoc = useDeleteProfileDocument();
   const [error, setError] = useState<string | null>(null);
+  const [reprocessing, setReprocessing] = useState(false);
 
-  const formatSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
+  const uploading = uploadDoc.isPending ? uploadDoc.variables?.docType ?? null : null;
 
-  const upload = async (file: File, type: "cv" | "supporting") => {
-    setUploading(type);
-    setError(null);
+  const reprocess = async () => {
+    setReprocessing(true);
     try {
-      const form = new FormData();
-      form.append("file", file);
-      form.append("doc_type", type);
-      const res = await fetch(`${API_BASE}/documents/upload-profile`, { method: "POST", body: form });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ detail: "Upload failed" }));
-        throw new Error(err.detail);
-      }
-      const newDoc: UploadedDoc = {
-        name: file.name,
-        type,
-        size: formatSize(file.size),
-        uploadedAt: new Date().toLocaleDateString("en-ZA"),
-      };
-      if (type === "cv") {
-        setDocs((d) => [newDoc, ...d.filter((x) => x.type !== "cv")]);
-      } else {
-        setDocs((d) => [newDoc, ...d]);
-      }
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Upload failed");
+      const res = await documentsApi.reprocess();
+      toast.success(`Refreshed text for ${res.reprocessed} of ${res.total} document(s).`);
+    } catch {
+      toast.error("Failed to refresh document text.");
     } finally {
-      setUploading(null);
+      setReprocessing(false);
     }
   };
 
-  const remove = (name: string) => setDocs((d) => d.filter((x) => x.name !== name));
+  const upload = async (file: File, docType: "cv" | "supporting") => {
+    setError(null);
+    try {
+      await uploadDoc.mutateAsync({ file, docType });
+      toast.success(`${docType === "cv" ? "CV" : "Document"} uploaded.`);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Upload failed");
+    }
+  };
 
-  const cv = docs.find((d) => d.type === "cv");
-  const supporting = docs.filter((d) => d.type === "supporting");
+  const remove = async (docId: string) => {
+    try {
+      await deleteDoc.mutateAsync(docId);
+    } catch {
+      toast.error("Failed to remove document.");
+    }
+  };
+
+  const cv = docs.find((d) => d.doc_type === "cv");
+  const supporting = docs.filter((d) => d.doc_type === "supporting");
 
   return (
     <Card className="border-0 shadow-sm">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-gray-700">Documents</CardTitle>
+      <CardHeader className="pb-2 pt-4">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-medium text-gray-700">Documents</CardTitle>
+          {docs.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs"
+              disabled={reprocessing}
+              onClick={reprocess}
+            >
+              {reprocessing ? (
+                <><Loader2 className="w-3 h-3 mr-1.5 animate-spin" />Refreshing…</>
+              ) : (
+                <><RefreshCw className="w-3 h-3 mr-1.5" />Refresh document text</>
+              )}
+            </Button>
+          )}
+        </div>
+        <p className="text-xs text-gray-400 mt-0.5">
+          Upload your base CV and any supporting documents
+        </p>
       </CardHeader>
       <CardContent className="space-y-5">
-
         {/* Base CV */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -339,9 +600,11 @@ function DocumentsSection() {
               disabled={uploading === "cv"}
               onClick={() => cvRef.current?.click()}
             >
-              {uploading === "cv"
-                ? <><Loader2 className="w-3 h-3 mr-1.5 animate-spin" />Uploading…</>
-                : <><Upload className="w-3 h-3 mr-1.5" />{cv ? "Replace" : "Upload CV"}</>}
+              {uploading === "cv" ? (
+                <><Loader2 className="w-3 h-3 mr-1.5 animate-spin" />Uploading…</>
+              ) : (
+                <><Upload className="w-3 h-3 mr-1.5" />{cv ? "Replace" : "Upload CV"}</>
+              )}
             </Button>
             <input
               ref={cvRef}
@@ -355,10 +618,12 @@ function DocumentsSection() {
             <div className="flex items-center gap-3 px-3 py-2 bg-brand-50 rounded-lg">
               <FileText className="w-4 h-4 text-brand-600 shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-gray-800 truncate">{cv.name}</p>
-                <p className="text-[10px] text-gray-400">{cv.size} · {cv.uploadedAt}</p>
+                <p className="text-xs font-medium text-gray-800 truncate">{cv.original_filename}</p>
+                <p className="text-[10px] text-gray-400">
+                  {formatSize(cv.size)} · {new Date(cv.created_at).toLocaleDateString("en-ZA")}
+                </p>
               </div>
-              <button onClick={() => remove(cv.name)} className="text-gray-300 hover:text-red-400">
+              <button onClick={() => remove(cv.id)} className="text-gray-300 hover:text-red-400">
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -372,7 +637,7 @@ function DocumentsSection() {
           )}
         </div>
 
-        {/* Supporting documents */}
+        {/* Supporting docs */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label className="text-xs text-gray-500">Supporting Documents</Label>
@@ -383,9 +648,11 @@ function DocumentsSection() {
               disabled={uploading === "supporting"}
               onClick={() => docsRef.current?.click()}
             >
-              {uploading === "supporting"
-                ? <><Loader2 className="w-3 h-3 mr-1.5 animate-spin" />Uploading…</>
-                : <><Plus className="w-3 h-3 mr-1.5" />Add Document</>}
+              {uploading === "supporting" ? (
+                <><Loader2 className="w-3 h-3 mr-1.5 animate-spin" />Uploading…</>
+              ) : (
+                <><Plus className="w-3 h-3 mr-1.5" />Add Document</>
+              )}
             </Button>
             <input
               ref={docsRef}
@@ -395,17 +662,21 @@ function DocumentsSection() {
               onChange={(e) => e.target.files?.[0] && upload(e.target.files[0], "supporting")}
             />
           </div>
-          <p className="text-[10px] text-gray-400">ID, certificates, matric results, references — PDF, DOCX, or image</p>
+          <p className="text-[10px] text-gray-400">
+            ID, certificates, matric results, references — PDF, DOCX, or image
+          </p>
           {supporting.length > 0 ? (
             <div className="space-y-1.5">
-              {supporting.map((doc) => (
-                <div key={doc.name} className="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg">
+              {supporting.map((d) => (
+                <div key={d.id} className="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg">
                   <FileText className="w-4 h-4 text-gray-400 shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-gray-700 truncate">{doc.name}</p>
-                    <p className="text-[10px] text-gray-400">{doc.size} · {doc.uploadedAt}</p>
+                    <p className="text-xs font-medium text-gray-700 truncate">{d.original_filename}</p>
+                    <p className="text-[10px] text-gray-400">
+                      {formatSize(d.size)} · {new Date(d.created_at).toLocaleDateString("en-ZA")}
+                    </p>
                   </div>
-                  <button onClick={() => remove(doc.name)} className="text-gray-300 hover:text-red-400">
+                  <button onClick={() => remove(d.id)} className="text-gray-300 hover:text-red-400">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -416,7 +687,7 @@ function DocumentsSection() {
               className="border border-dashed border-gray-200 rounded-lg px-4 py-5 text-center cursor-pointer hover:border-brand-400 transition-colors"
               onClick={() => docsRef.current?.click()}
             >
-              <p className="text-xs text-gray-400">Drag & drop or click to add</p>
+              <p className="text-xs text-gray-400">Click to add</p>
             </div>
           )}
         </div>

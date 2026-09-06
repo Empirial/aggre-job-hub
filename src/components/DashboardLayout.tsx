@@ -1,39 +1,84 @@
-import { useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Briefcase,
   FileText,
-  SendHorizontal,
   Settings,
-  MessageSquare,
-  ScanText,
   Menu,
   X,
+  MessageSquare,
+  ChevronLeft,
+  ChevronRight,
+  LogOut,
 } from "lucide-react";
-// Briefcase kept for Jobs Board nav icon
 import { cn } from "@/lib/utils";
+import { useProfile } from "@/hooks/useProfile";
+import { signOut } from "@/lib/auth";
+import { DEMO_MODE_KEY } from "@/hooks/useAuth";
+import ChatBot from "@/components/ChatBot";
 
 const navItems = [
   { to: "/", label: "Overview", icon: LayoutDashboard, end: true },
   { to: "/jobs", label: "Jobs Board", icon: Briefcase },
   { to: "/cv-editor", label: "CV Editor", icon: FileText },
-  { to: "/applications", label: "Applications", icon: SendHorizontal },
-  { to: "/chat", label: "AI Chat", icon: MessageSquare },
-  { to: "/preview", label: "Document AI", icon: ScanText },
+  { to: "/chat", label: "Chat with Zara", icon: MessageSquare },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
-function Sidebar({ onClose }: { onClose?: () => void }) {
+const LS_KEY = "cg_sidebar_collapsed";
+
+function Sidebar({
+  collapsed,
+  onToggle,
+  onClose,
+}: {
+  collapsed: boolean;
+  onToggle: () => void;
+  onClose?: () => void;
+}) {
+  const { data: profile } = useProfile();
+  const navigate = useNavigate();
+  const displayName = profile?.name || "User";
+  const displaySub = profile?.email || "Job Seeker";
+  const initials = displayName
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  async function handleLogout() {
+    sessionStorage.removeItem(DEMO_MODE_KEY);
+    try {
+      await signOut();
+    } catch {
+      /* ignore */
+    }
+    navigate("/login", { replace: true });
+  }
+
   return (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-gray-100 shrink-0">
-        <img
-          src="/CareergateLogo.png"
-          alt="CareerGate"
-          className="h-9 w-auto object-contain"
-        />
+      <div className={cn(
+        "h-16 flex items-center border-b border-gray-100 shrink-0 transition-all duration-200",
+        collapsed ? "justify-center px-2" : "justify-between px-4"
+      )}>
+        {!collapsed && (
+          <img
+            src="/CareergateLogo.png"
+            alt="CareerGate"
+            className="h-9 w-auto object-contain"
+          />
+        )}
+        {collapsed && (
+          <img
+            src="/CareergateLogo.png"
+            alt="CareerGate"
+            className="h-7 w-7 object-contain"
+          />
+        )}
         {onClose && (
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 lg:hidden">
             <X className="w-5 h-5" />
@@ -42,39 +87,81 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+      <nav className={cn("flex-1 py-4 space-y-0.5 overflow-y-auto", collapsed ? "px-2" : "px-3")}>
         {navItems.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
             to={to}
             end={end}
             onClick={onClose}
+            title={collapsed ? label : undefined}
             className={({ isActive }) =>
               cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
+                "flex items-center rounded-lg text-sm transition-colors",
+                collapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2.5",
                 isActive
-                  ? "bg-[#F7941D] text-white font-medium"
+                  ? "bg-brand-600 text-white font-medium"
                   : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
               )
             }
           >
             <Icon className="w-4 h-4 flex-shrink-0" />
-            {label}
+            {!collapsed && label}
           </NavLink>
         ))}
       </nav>
 
-      {/* User */}
-      <div className="p-3 border-t border-gray-100 shrink-0">
-        <div className="flex items-center gap-3 px-2 py-2">
-          <div className="w-7 h-7 bg-gray-200 rounded-full flex items-center justify-center text-xs font-medium text-gray-600">
-            LM
+      {/* User + collapse toggle */}
+      <div className="border-t border-gray-100 shrink-0">
+        {/* User row */}
+        {!collapsed && (
+          <div className="flex items-center gap-3 px-5 py-3">
+            <div className="w-7 h-7 bg-gray-200 rounded-full flex items-center justify-center text-xs font-medium text-gray-600 shrink-0">
+              {initials}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-gray-900 truncate">{displayName}</p>
+              <p className="text-xs text-gray-400 truncate">{displaySub}</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              title="Log out"
+              className="text-gray-400 hover:text-gray-600 shrink-0 p-1"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-gray-900 truncate">Lufuno Mphela</p>
-            <p className="text-xs text-gray-400 truncate">Job Seeker</p>
+        )}
+        {collapsed && (
+          <div className="flex flex-col items-center gap-2 px-2 py-3">
+            <div
+              className="w-7 h-7 bg-gray-200 rounded-full flex items-center justify-center text-xs font-medium text-gray-600"
+              title={displayName}
+            >
+              {initials}
+            </div>
+            <button
+              onClick={handleLogout}
+              title="Log out"
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
-        </div>
+        )}
+
+        {/* Collapse toggle (desktop only) */}
+        <button
+          onClick={onToggle}
+          className={cn(
+            "hidden lg:flex w-full items-center gap-2 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors border-t border-gray-100 py-2",
+            collapsed ? "justify-center px-2" : "px-4"
+          )}
+        >
+          {collapsed
+            ? <ChevronRight className="w-4 h-4" />
+            : <><ChevronLeft className="w-4 h-4" /><span>Collapse</span></>}
+        </button>
       </div>
     </div>
   );
@@ -82,12 +169,29 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try { return localStorage.getItem(LS_KEY) === "1"; } catch { return false; }
+  });
+  const location = useLocation();
+  const isFullChat = location.pathname === "/chat";
+
+  useEffect(() => {
+    try { localStorage.setItem(LS_KEY, collapsed ? "1" : "0"); } catch { /* ignore */ }
+  }, [collapsed]);
 
   return (
-    <div className="flex h-screen bg-[#F0F2F5] overflow-hidden">
+    <div className="flex h-screen bg-gray-100 overflow-hidden">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex w-56 bg-white border-r border-gray-100 flex-col shrink-0">
-        <Sidebar />
+      <aside
+        className={cn(
+          "hidden lg:flex flex-col bg-white border-r border-gray-100 shrink-0 transition-all duration-200",
+          collapsed ? "w-14" : "w-56"
+        )}
+      >
+        <Sidebar
+          collapsed={collapsed}
+          onToggle={() => setCollapsed((v) => !v)}
+        />
       </aside>
 
       {/* Mobile overlay */}
@@ -105,7 +209,11 @@ export default function DashboardLayout() {
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <Sidebar onClose={() => setSidebarOpen(false)} />
+        <Sidebar
+          collapsed={false}
+          onToggle={() => {}}
+          onClose={() => setSidebarOpen(false)}
+        />
       </aside>
 
       {/* Main */}
@@ -128,6 +236,7 @@ export default function DashboardLayout() {
         <main className="flex-1 overflow-auto">
           <Outlet />
         </main>
+        {!isFullChat && <ChatBot />}
       </div>
     </div>
   );

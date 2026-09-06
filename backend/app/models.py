@@ -12,7 +12,7 @@ class ScrapedJob(BaseModel):
     location: str
     description: str
     url: str
-    source: Literal["indeed", "pnet", "linkedin"]
+    source: Literal["indeed", "pnet", "linkedin", "adzuna", "jooble", "careerjet", "reed", "themuse", "manual"]
     date_posted: Optional[str] = None
     ats_score: Optional[int] = None
     keywords: List[str] = Field(default_factory=list)
@@ -32,13 +32,21 @@ class ScrapeResponse(BaseModel):
     jobs: List[ScrapedJob]
 
 
+class ManualJobRequest(BaseModel):
+    title: str = Field(max_length=200)
+    company: str = Field(max_length=200)
+    location: str = Field(max_length=200)
+    description: str = Field(max_length=6000)
+    url: Optional[str] = Field(default=None, max_length=500)
+
+
 # ── CV tailoring ──────────────────────────────────────────────────────────────
 
 class JobAnalysisRequest(BaseModel):
-    title: str
-    company: Optional[str] = None
-    location: Optional[str] = None
-    description: str
+    title: str = Field(max_length=200)
+    company: Optional[str] = Field(default=None, max_length=200)
+    location: Optional[str] = Field(default=None, max_length=200)
+    description: str = Field(max_length=6000)
 
 
 class JobAnalysisResponse(BaseModel):
@@ -51,14 +59,14 @@ class JobAnalysisResponse(BaseModel):
 
 
 class CVProfile(BaseModel):
-    name: str
-    email: str
-    phone: Optional[str] = None
-    linkedin: Optional[str] = None
-    summary: Optional[str] = None
+    name: str = Field(max_length=200)
+    email: str = Field(max_length=200)
+    phone: Optional[str] = Field(default=None, max_length=50)
+    linkedin: Optional[str] = Field(default=None, max_length=200)
+    summary: Optional[str] = Field(default=None, max_length=6000)
     skills: List[str] = Field(default_factory=list)
     experience: List[str] = Field(default_factory=list)
-    education: Optional[str] = None
+    education: Optional[str] = Field(default=None, max_length=2000)
 
 
 class CVTailorRequest(BaseModel):
@@ -75,22 +83,16 @@ class CVTailorResponse(BaseModel):
     docx_path: Optional[str] = None
 
 
-# ── Applications ──────────────────────────────────────────────────────────────
-
-class Application(BaseModel):
-    id: Optional[str] = None
-    job_id: str
-    job_title: str
-    company: str
-    date_applied: str = Field(default_factory=lambda: datetime.utcnow().date().isoformat())
-    status: Literal["pending", "sent", "rejected", "interview"] = "pending"
-    cv_path: Optional[str] = None
-    cv_url: Optional[str] = None
-    recipient_email: Optional[str] = None
-
-
-class SendApplicationRequest(BaseModel):
-    job_id: str
+class CVDocxRequest(BaseModel):
     profile: CVProfile
-    recipient_email: str
-    cover_note: Optional[str] = None
+    summary: str = Field(default="", max_length=6000)
+    skills: List[str] = Field(default_factory=list)
+    experience: List[str] = Field(default_factory=list)
+    education: Optional[str] = Field(default=None, max_length=2000)
+    job_title: Optional[str] = Field(default=None, max_length=200)
+
+
+class CVDocxResponse(BaseModel):
+    docx_path: str
+
+

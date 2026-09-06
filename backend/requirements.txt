@@ -10,3 +10,7 @@ firebase-admin
 pdfplumber
 pypdf
 python-multipart
+slowapi
+pymupdf
+pytesseract
+pillow

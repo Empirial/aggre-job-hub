@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Calendar, Globe, Loader2, CheckCircle, ExternalLink } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Globe, Loader2, CheckCircle, ExternalLink, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useJob } from "@/hooks/useJobs";
 import { useProfile } from "@/hooks/useProfile";
-import { cvApi } from "@/lib/api";
+import { cvApi, triggerBlobDownload } from "@/lib/api";
+import { toast } from "sonner";
 
 type GenerateState = "idle" | "generating" | "done";
 
@@ -16,12 +17,13 @@ export default function JobDetail() {
   const { data: job, isLoading, isError } = useJob(id!);
   const { data: profile } = useProfile();
   const [genState, setGenState] = useState<GenerateState>("idle");
+  const [docxPath, setDocxPath] = useState<string | null>(null);
 
   const handleGenerate = async () => {
     if (!job || !profile) return;
     setGenState("generating");
     try {
-      await cvApi.tailor({
+      const result = await cvApi.tailor({
         profile,
         job: {
           title: job.title,
@@ -30,9 +32,22 @@ export default function JobDetail() {
           description: job.description,
         },
       });
+      setDocxPath(result.docx_path ?? null);
       setGenState("done");
     } catch {
       setGenState("idle");
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!docxPath) return;
+    const filename = docxPath.split(/[/\\]/).pop();
+    if (!filename) return;
+    try {
+      const blob = await cvApi.download(filename);
+      triggerBlobDownload(blob, filename);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to download CV.");
     }
   };
 
@@ -81,27 +96,36 @@ export default function JobDetail() {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {job.ats_score && (
-            <Badge className="bg-brand-50 text-brand-600 border-0 text-sm px-3 py-1">
-              {job.ats_score}% ATS
-            </Badge>
-          )}
-          {genState === "idle" && (
-            <Button size="sm" className="bg-brand-600 hover:bg-brand-700 text-white" onClick={handleGenerate}>
-              Generate Tailored CV
-            </Button>
-          )}
-          {genState === "generating" && (
-            <Button size="sm" disabled className="bg-brand-400 text-white">
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating...
-            </Button>
-          )}
-          {genState === "done" && (
-            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => navigate("/cv-editor")}>
-              <CheckCircle className="w-4 h-4 mr-2" />CV Ready — View
-            </Button>
-          )}
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          <div className="flex items-center gap-2">
+            {job.ats_score && (
+              <Badge className="bg-brand-50 text-brand-600 border-0 text-sm px-3 py-1">
+                {job.ats_score}% ATS
+              </Badge>
+            )}
+            {genState === "idle" && (
+              <Button size="sm" className="bg-brand-600 hover:bg-brand-700 text-white" onClick={handleGenerate}>
+                Generate Tailored CV
+              </Button>
+            )}
+            {genState === "generating" && (
+              <Button size="sm" disabled className="bg-brand-400 text-white">
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating...
+              </Button>
+            )}
+            {genState === "done" && (
+              <>
+                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => navigate("/cv-editor")}>
+                  <CheckCircle className="w-4 h-4 mr-2" />CV Ready — View
+                </Button>
+                {docxPath && (
+                  <Button size="sm" className="bg-brand-600 hover:bg-brand-700 text-white" onClick={handleDownload}>
+                    <Download className="w-4 h-4 mr-2" />Download CV
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
 

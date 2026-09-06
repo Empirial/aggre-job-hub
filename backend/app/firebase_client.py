@@ -4,12 +4,14 @@ Initializes once on startup. Falls back to in-memory store if no credentials pro
 so the app runs locally without Firebase during development.
 
 Collections:
-  jobs/{jobId}                          — global scraped listings
-  users/{uid}/profile                   — CV + personal info (single doc)
-  users/{uid}/applications/{appId}      — per-user job applications
-  users/{uid}/chatHistory/{sessionId}   — per-user chat sessions
-  users/{uid}/cvDrafts/{draftId}        — per-user tailored CV snapshots
-  users/{uid}/savedJobs/{jobId}         — per-user bookmarked jobs
+  jobs/{jobId}                            — global scraped listings
+  users/{uid}/profile                     — CV + personal info (single doc)
+  users/{uid}/chatHistory/{sessionId}     — per-user chat sessions
+  users/{uid}/cvDrafts/{draftId}          — per-user tailored CV snapshots
+  users/{uid}/savedJobs/{jobId}           — per-user bookmarked jobs
+  users/{uid}/profileDocuments/{docId}    — per-user uploaded document metadata
+                                             (file bytes live in Firebase Storage
+                                             under users/{uid}/documents/{docId}{ext})
 """
 import os
 import logging
@@ -38,10 +40,10 @@ def _user_mem(uid: str) -> Dict[str, Any]:
     if uid not in _memory_store["users"]:
         _memory_store["users"][uid] = {
             "profile": {},
-            "applications": {},
             "chatHistory": {},
             "cvDrafts": {},
             "savedJobs": {},
+            "profileDocuments": {},
         }
     return _memory_store["users"][uid]
 
@@ -141,41 +143,6 @@ def save_profile(uid: str, profile: Dict[str, Any]) -> None:
         _user_mem(uid)["profile"] = profile
         return
     _user_ref(uid).collection("profile").document("data").set(profile)
-
-
-# ── Per-user Applications ─────────────────────────────────────────────────────
-
-def save_application(uid: str, app_data: Dict[str, Any]) -> str:
-    app_id = app_data.get("id") or app_data.get("job_id", "")[:12]
-    app_data.setdefault("created_at", _now())
-    if _use_memory or _db is None:
-        _user_mem(uid)["applications"][app_id] = app_data
-        return app_id
-    _user_ref(uid).collection("applications").document(app_id).set(app_data)
-    return app_id
-
-
-def get_applications(uid: str, limit: int = 100) -> List[Dict[str, Any]]:
-    if _use_memory or _db is None:
-        apps = list(_user_mem(uid)["applications"].values())
-        return sorted(apps, key=lambda a: a.get("date_applied", ""), reverse=True)[:limit]
-    docs = (
-        _user_ref(uid)
-        .collection("applications")
-        .order_by("date_applied", direction="DESCENDING")
-        .limit(limit)
-        .stream()
-    )
-    return [{"id": doc.id, **doc.to_dict()} for doc in docs]
-
-
-def update_application(uid: str, app_id: str, data: Dict[str, Any]) -> None:
-    if _use_memory or _db is None:
-        bucket = _user_mem(uid)["applications"]
-        if app_id in bucket:
-            bucket[app_id].update(data)
-        return
-    _user_ref(uid).collection("applications").document(app_id).update(data)
 
 
 # ── Chat History ──────────────────────────────────────────────────────────────
@@ -291,20 +258,92 @@ def is_job_saved(uid: str, job_id: str) -> bool:
     return doc.exists
 
 
+# ── Profile Documents (Firebase Storage + metadata) ───────────────────────────
+
+_memory_blobs: Dict[str, bytes] = {}
+
+
+def _storage_bucket():
+    from firebase_admin import storage
+    return storage.bucket()
+
+
+def upload_profile_document_blob(storage_path: str, content: bytes, content_type: str) -> None:
+    if _use_memory or _db is None:
+        _memory_blobs[storage_path] = content
+        return
+    blob = _storage_bucket().blob(storage_path)
+    blob.upload_from_string(content, content_type=content_type)
+
+
+def delete_profile_document_blob(storage_path: str) -> None:
+    if _use_memory or _db is None:
+        _memory_blobs.pop(storage_path, None)
+        return
+    blob = _storage_bucket().blob(storage_path)
+    if blob.exists():
+        blob.delete()
+
+
+def save_profile_document(uid: str, doc_id: str, data: Dict[str, Any]) -> None:
+    data.setdefault("created_at", _now())
+    if _use_memory or _db is None:
+        _user_mem(uid)["profileDocuments"][doc_id] = data
+        return
+    _user_ref(uid).collection("profileDocuments").document(doc_id).set(data)
+
+
+def get_profile_documents(uid: str) -> List[Dict[str, Any]]:
+    if _use_memory or _db is None:
+        docs = list(_user_mem(uid)["profileDocuments"].values())
+        return sorted(docs, key=lambda d: d.get("created_at", ""), reverse=True)
+    docs = (
+        _user_ref(uid)
+        .collection("profileDocuments")
+        .order_by("created_at", direction="DESCENDING")
+        .stream()
+    )
+    return [{"id": doc.id, **doc.to_dict()} for doc in docs]
+
+
+def get_profile_document(uid: str, doc_id: str) -> Optional[Dict[str, Any]]:
+    if _use_memory or _db is None:
+        return _user_mem(uid)["profileDocuments"].get(doc_id)
+    doc = _user_ref(uid).collection("profileDocuments").document(doc_id).get()
+    return {"id": doc.id, **doc.to_dict()} if doc.exists else None
+
+
+def delete_profile_document(uid: str, doc_id: str) -> Optional[Dict[str, Any]]:
+    if _use_memory or _db is None:
+        return _user_mem(uid)["profileDocuments"].pop(doc_id, None)
+    ref = _user_ref(uid).collection("profileDocuments").document(doc_id)
+    snap = ref.get()
+    data = snap.to_dict() if snap.exists else None
+    ref.delete()
+    return data
+
+
+def download_profile_document_blob(storage_path: str) -> bytes:
+    if _use_memory or _db is None:
+        return _memory_blobs.get(storage_path, b"")
+    blob = _storage_bucket().blob(storage_path)
+    return blob.download_as_bytes()
+
+
 # ── User Context snapshot (for AI chat) ───────────────────────────────────────
 
 def get_user_context(uid: str) -> Dict[str, Any]:
     """Load a lightweight snapshot of everything the AI needs to know about the user."""
     profile = get_profile(uid)
-    applications = get_applications(uid, limit=10)
     saved_jobs = get_saved_jobs(uid)
     cv_drafts = get_cv_drafts(uid, limit=5)
     recent_jobs = get_jobs(limit=10)
+    profile_documents = get_profile_documents(uid)
 
     return {
         "profile": profile,
-        "applications": applications,
         "saved_jobs": saved_jobs,
         "cv_drafts": cv_drafts,
         "recent_scraped_jobs": recent_jobs,
+        "profile_documents": profile_documents,
     }

@@ -1,10 +1,10 @@
-# Job Applier — Project Goal
+# CareerGate — Project Goal
 
 ## What We're Building
 
-An AI-powered automated job application system. It scrapes job listings, tailors a CV per job using DeepSeek AI to mirror ATS requirements, sends applications automatically, and tracks everything in a React dashboard.
+An AI-powered job application assistant for South African job seekers. It scrapes real job listings from Adzuna (and fallback sources), tailors a CV per job using DeepSeek AI to mirror ATS requirements, and lets the user download the tailored CV to submit themselves.
 
-The user reviews and approves. The system does the rest.
+The user reviews, generates, and downloads. Sending the application is a manual step outside the platform.
 
 ---
 
@@ -12,25 +12,25 @@ The user reviews and approves. The system does the rest.
 
 Manual job applications are slow and generic. Recruiters use ATS (Applicant Tracking Systems) that filter CVs by keyword match before a human ever reads them. Most applications fail at this stage. This system fixes that by:
 
-- Automatically finding relevant job listings daily
+- Automatically finding relevant SA job listings daily
 - Analyzing each job description for exact ATS keywords
 - Rewriting the CV to mirror those keywords (truthfully)
-- Sending tailored applications without manual effort
+- Producing a ready-to-download tailored CV in seconds
 
 ---
 
 ## How It Works
 
 ```
-fly.io triggers Python at 6am daily
-  → Scraper fetches new job listings (Indeed, PNet, LinkedIn)
-  → Each listing saved to Firestore
+Cloud Scheduler triggers Python at 6am daily  ← NOT YET ACTIVE
+  → Adzuna API fetches real SA job listings
+  → Each listing saved to Firestore (with localStorage fallback)
   → DeepSeek analyzes job description → extracts ATS keywords, tone, seniority
   → python-docx tailors base CV template per job
-  → Tailored .docx uploaded to Firebase Storage
+  → Tailored .docx saved locally on backend
   → React dashboard shows results for review
-  → User approves → Python sends application via email
-  → Application status tracked in Firestore
+  → User selects job → CV Editor shows duties + tailored output
+  → User downloads the tailored .docx and applies manually
 ```
 
 ---
@@ -39,128 +39,136 @@ fly.io triggers Python at 6am daily
 
 | Layer | Technology |
 |---|---|
-| Frontend Dashboard | React + TypeScript + Vite + Tailwind + shadcn-ui |
+| Frontend Dashboard | React + TypeScript + Vite + Tailwind + shadcn/ui |
 | Backend Engine | Python + FastAPI |
-| Hosting (Backend) | fly.io (free tier, scheduled execution) |
-| Database | Firebase Firestore |
+| Hosting (Backend) | Google Cloud Run (`careergate-api-93102026777.africa-south1.run.app`) |
+| Hosting (Frontend) | Firebase Hosting |
+| Database | Firebase Firestore (with localStorage fallback) |
 | File Storage | Firebase Storage |
 | AI Brain | DeepSeek API (deepseek-chat model) |
 | CV Generation | python-docx |
-| Scheduling | fly.io cron (0 6 * * *) |
+| Job Source | Adzuna Jobs API (primary) + Indeed/PNet fallback (mock) |
+| Auth | Firebase Auth + demo bypass (sessionStorage) |
+| Scheduling | Cloud Scheduler — not yet configured |
 
 ---
 
 ## Core Modules
 
 ### 1. Job Scraper (`backend/app/scraper/`)
-- Scrapes Indeed, PNet (SA), LinkedIn
-- Extracts: title, company, description, location, date posted, source URL
-- Deduplicates by URL before saving
-- Saves to Firestore `jobs` collection
+- **Adzuna** (`adzuna.py`) — real SA listings via API. Requires `ADZUNA_APP_ID` + `ADZUNA_APP_KEY`
+- **Indeed** (`indeed.py`) — HTML scraper, falls back to mock data (bot protection)
+- **PNet** (`pnet.py`) — HTML scraper, falls back to mock data
+- **LinkedIn** (`linkedin.py`) — always mock (ToS restricts scraping)
+- Deduplicates by URL before saving to Firestore
 
-### 2. JD Analyzer (`backend/app/ai/`)
-- Reads job description
+### 2. JD Analyzer (`backend/app/ai/deepseek_client.py`)
 - DeepSeek prompt extracts: keywords, required skills, nice-to-have, tone, seniority
-- Returns structured JSON attached to the job record
+- Returns structured JSON; fallback analysis if API unreachable
+- Used by `/analyze` and `/tailor-cv` endpoints
 
 ### 3. CV Template Engine (`backend/app/cv/`)
-- Base CV stored as `.docx` with placeholders: `{{name}}`, `{{summary}}`, `{{skills}}`, `{{experience_bullets}}`, etc.
-- Static sections auto-filled from `userProfile` in Firestore
-- Dynamic sections (summary, skills, experience bullets) rewritten per job
+- Profile sourced from request body (frontend sends it)
+- Dynamic sections (summary, skills, experience bullets) rewritten per job by DeepSeek
 
 ### 4. ATS Mirror Layer (`backend/app/cv/ats_mirror.py`)
 - DeepSeek rewrites experience bullets to reflect JD keywords
-- Prompt enforces truthfulness — only reframes existing experience
-- Maximizes ATS pass rate without fabrication
+- Enforces truthfulness — only reframes existing experience
+- Maximises ATS pass rate without fabrication
 
 ### 5. Document Generator
-- `python-docx` injects tailored content into base template
-- Generates one `.docx` per job application
-- Uploads to Firebase Storage, saves URL to Firestore
+- `python-docx` generates one `.docx` per job application
+- Saved to local backend storage; download URL returned to frontend
+- User downloads the file directly from Job Detail / CV Editor and applies manually — the platform does not send applications
 
-### 6. Application Sender (`backend/app/email_sender/`)
-- Sends email with tailored CV attached
-- Logs to Firestore `applications` collection with status: `sent`
+### 6. AI Chatbot (`src/components/ChatBot.tsx`)
+- Floating widget on every dashboard page
+- Page-aware context — prompts and welcome message change per route
+- Mobile: full-screen bottom sheet. Desktop: fixed panel
+- Powered by DeepSeek via `/chat` endpoint
 
 ---
 
 ## React Dashboard Pages
 
-| Route | Page | Purpose |
-|---|---|---|
-| `/dashboard` | Overview | Stats: scraped today, CVs generated, sent, interview rate |
-| `/dashboard/jobs` | Jobs Board | Table of all scraped jobs with ATS score, filters |
-| `/dashboard/jobs/:id` | Job Detail | Full JD, ATS keywords panel, "Generate CV" button |
-| `/dashboard/cv-editor` | CV Editor | Base vs tailored CV side-by-side, edit before sending |
-| `/dashboard/applications` | Applications | Table of all sent applications + status tracking |
-| `/dashboard/settings` | Settings | Profile, job preferences, API keys, email config |
+| Route | Page | Status | Purpose |
+|---|---|---|---|
+| `/login` | Login | Done | Email/password + "Try Demo" bypass |
+| `/` | Overview | Done | Pipeline stats, 7-day chart, scraper trigger |
+| `/jobs` | Jobs Board | Done | Scraped jobs table, search + filter |
+| `/jobs/:id` | Job Detail | Done | Full JD, ATS keywords, generate CV |
+| `/cv-editor` | CV Editor | Done | Job picker from scraped list, duties preview, AI tailor, download |
+| `/preview` | Document AI | Done | PDF upload, field extraction, document chat |
+| `/settings` | Settings | Done | Profile, summary, skills, experience, education, job preferences |
 
 ---
 
-## Firebase Structure
+## Firebase / Storage Structure
 
 ```
 Firestore
 ├── jobs/
 │   └── {jobId}
 │       ├── title, company, location, description
-│       ├── source (indeed | pnet | linkedin)
-│       ├── datePosted, createdAt
-│       ├── atsScore, keywords[]
-│       └── cvGenerated (bool)
-│
-├── applications/
-│   └── {appId}
-│       ├── jobId, jobTitle, company
-│       ├── dateApplied
-│       ├── status (pending | sent | rejected | interview)
-│       └── cvUrl (Firebase Storage link)
+│       ├── source (adzuna | indeed | pnet | linkedin)
+│       ├── date_posted, created_at
+│       ├── ats_score, keywords[]
+│       └── cv_generated (bool)
 │
 └── userProfile/
-    └── {userId}
+    └── default
         ├── name, email, phone, linkedin
-        ├── keywords[], locations[], jobTypes[]
-        ├── deepseekApiKey, scraperSchedule
-        └── senderEmail
+        ├── summary, skills[], experience[], education
+        ├── keywords[], locations[], jobTypes{}
+        └── (falls back to localStorage if Firestore rules block writes)
 
-Firebase Storage
-└── cvs/
-    └── {jobId}.docx
+Backend local storage
+└── /uploads/
+    ├── profile/      ← uploaded CVs and supporting docs
+    └── *.docx        ← generated tailored CVs
 ```
 
 ---
 
-## fly.io Schedule
+## Google Cloud Run Deployment
 
-```toml
-[[machines]]
-  schedule = "0 6 * * *"   # Runs every day at 6am
-```
+- **Service URL:** `https://careergate-api-93102026777.africa-south1.run.app`
+- **Region:** `africa-south1` (Johannesburg)
+- **Resources:** scales to zero when idle (cold starts possible)
+- **HTTPS:** enforced
+- **Required secrets:** `DEEPSEEK_API_KEY`, `FIREBASE_CREDENTIALS_JSON`, `FIREBASE_STORAGE_BUCKET`, `ADZUNA_APP_ID`, `ADZUNA_APP_KEY`
+- **Cron:** not yet configured — use Cloud Scheduler to POST `/jobs/scrape` at 06:00 SAST daily
 
 ---
 
 ## Project Phases
 
-| Phase | Focus | Status |
-|---|---|---|
-| Phase 1 | Python CV editor + DeepSeek integration | Not started |
-| Phase 2 | Job scraper + Firebase setup | Not started |
-| Phase 3 | fly.io deployment + scheduling | Not started |
-| Phase 4 | React dashboard (all 6 pages) | Not started |
-| Phase 5 | Auto email sender + full pipeline test | Not started |
+| Phase | Focus | Status | Notes |
+|---|---|---|---|
+| Phase 1 | Python CV editor + DeepSeek integration | **~80% done** | Tailor, ATS mirror, DOCX gen working. Cover letter generation not yet built |
+| Phase 2 | Job scraper + Firebase setup | **~90% done** | Adzuna live, Firebase wired. Indeed/PNet/LinkedIn mostly mock |
+| Phase 3 | Cloud Run deployment + scheduling | **~70% done** | Backend deployed on Cloud Run. Daily cron via Cloud Scheduler not yet configured |
+| Phase 4 | React dashboard | **Done** | All pages built. CV download replaces the send flow |
+| Phase 5 | Full pipeline test | **Not started** | Scrape → tailor → download, full flow with real data |
+
+**Overall: ~80% complete**
+
+---
+
+## What's Left (Priority Order)
+
+1. **Configure Cloud Scheduler daily cron** — create a Cloud Scheduler job to POST `/jobs/scrape` at 06:00 SAST automatically
+2. **Cover letter generation** — DeepSeek prompt to generate a cover letter per job alongside the tailored CV
+3. **End-to-end pipeline test** — scrape → tailor → download, full flow with real data
 
 ---
 
 ## Key Decisions
 
 - **DeepSeek over OpenAI** — cheaper, sufficient for ATS keyword extraction and rewriting
-- **fly.io over Vercel/Railway** — free tier supports scheduled execution (cron jobs)
-- **Firebase over Supabase** — already familiar, free tier covers this scale
-- **python-docx over PDF generation** — `.docx` is what recruiters and ATS systems prefer
-- **aggre-job-hub as the shell** — existing React project reused as dashboard frontend; public job board pages remain, dashboard added under `/dashboard` route
-
----
-
-## Current Project State
-
-The `aggre-job-hub` repo currently holds a public-facing job listing aggregator (South African jobs, STEM careers, resources). The dashboard will be added as a protected `/dashboard` section of the same app. The Python backend is a separate service deployed to fly.io.
+- **Adzuna over scraping** — reliable SA job API vs brittle HTML scraping
+- **Cloud Run over Vercel/Railway** — scales to zero, `africa-south1` region keeps latency low for SA users, integrates natively with Cloud Scheduler and Firebase
+- **Firebase over Supabase** — Firestore + Storage + Auth in one SDK
+- **localStorage fallback** — profile and settings persist in browser when Firestore rules block client writes
+- **python-docx over PDF** — `.docx` is what recruiters and ATS systems prefer
+- **Demo bypass** — `sessionStorage` flag skips Firebase Auth for demos without creating a test account
