@@ -75,7 +75,7 @@ export default function JobsBoard() {
           className="bg-brand-600 hover:bg-brand-700 text-white w-full sm:w-auto"
           onClick={() =>
             scrape.mutate({
-              keywords: ["software engineer", "developer", "python", "react"],
+              keywords: [],
               location: "South Africa",
             })
           }
@@ -123,15 +123,7 @@ export default function JobsBoard() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All sources</SelectItem>
-            <SelectItem value="adzuna">Adzuna</SelectItem>
-            <SelectItem value="indeed">Indeed</SelectItem>
-            <SelectItem value="pnet">PNet</SelectItem>
-            <SelectItem value="jooble">Jooble</SelectItem>
-            <SelectItem value="careerjet">CareerJet</SelectItem>
-            <SelectItem value="reed">Reed</SelectItem>
-            <SelectItem value="themuse">The Muse</SelectItem>
             <SelectItem value="dpsa">Government (DPSA)</SelectItem>
-            <SelectItem value="linkedin">LinkedIn</SelectItem>
             <SelectItem value="manual">Added by me</SelectItem>
           </SelectContent>
         </Select>
@@ -181,7 +173,7 @@ export default function JobsBoard() {
               className="bg-brand-600 hover:bg-brand-700 text-white"
               onClick={() =>
                 scrape.mutate({
-                  keywords: ["software engineer", "developer", "python", "react"],
+                  keywords: [],
                   location: "South Africa",
                 })
               }

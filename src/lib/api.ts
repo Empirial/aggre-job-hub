@@ -61,6 +61,11 @@ async function del<T>(path: string): Promise<T> {
 
 export const jobsApi = {
   list: () => get<Job[]>("/jobs"),
+  listPublic: async (): Promise<Job[]> => {
+    const res = await fetch(`${API_BASE}/jobs/public`);
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
   get: (id: string) => get<Job>(`/jobs/${id}`),
   scrape: (keywords: string[], location: string) =>
     post<ScrapeResponse>("/jobs/scrape", { keywords, location, max_per_source: 10 }),
