@@ -234,6 +234,15 @@ class DPSAScraper(BaseScraper):
                 parts.append(f"{label.title()}: {value}")
 
         description = "\n\n".join(parts)[:6000]
+
+        # Multi-post adverts list every centre in one CENTRE field; keep the label short
+        # for the job card and let the full list live in the description.
+        if len(centre) > 70:
+            parts.insert(1, f"Centres: {centre}")
+            description = "\n\n".join(parts)[:6000]
+            first = re.split(r"\s+Ref\s*No", centre)[0].strip(" ,;")
+            centre = (first[:70].rstrip(" ,;") or "South Africa") + " + more"
+
         url = f"{pdf_url}#post-{post['ref'].replace('/', '-')}"
 
         return ScrapedJob(
