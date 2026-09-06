@@ -19,7 +19,7 @@ const DEFAULT_KEYWORDS = ["software engineer", "developer", "python", "react"];
 export default function Overview() {
   const navigate = useNavigate();
   const { data: jobs = [], isLoading: jobsLoading } = useJobs();
-  const { data: profile } = useProfile();
+  const { data: profile, isLoading: profileLoading } = useProfile();
   const scrape = useScrapeJobs();
 
   const loading = jobsLoading;
@@ -48,7 +48,7 @@ export default function Overview() {
     !!profile?.education,
   ];
   const profilePct = Math.round((profileFields.filter(Boolean).length / profileFields.length) * 100);
-  const profileIncomplete = profilePct < 100;
+  const profileIncomplete = !profileLoading && !!profile && profilePct < 100;
 
   // Build last-7-days chart from job created_at timestamps
   const chartData = Array.from({ length: 7 }, (_, i) => {
