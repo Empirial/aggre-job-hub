@@ -431,7 +431,7 @@ export default function CVEditor() {
         </div>
       )}
 
-      {/* ATS Match Score */}
+      {/* Match score */}
       {tailored && selectedJob && (() => {
         const ats = computeAtsMatch(selectedJob.description, tailored);
         const color = ats.score >= 70 ? "green" : ats.score >= 45 ? "amber" : "red";
@@ -446,7 +446,7 @@ export default function CVEditor() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm font-medium text-gray-700">ATS Match Score</span>
+                  <span className="text-sm font-medium text-gray-700">Match score</span>
                   <Badge className={`${colorMap.badge} border-0 text-xs font-semibold`}>
                     {ats.score}%
                   </Badge>
@@ -607,7 +607,7 @@ export default function CVEditor() {
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2">
                   <h2 className="text-sm font-medium text-gray-700">Tailored CV</h2>
-                  <Badge className="bg-brand-50 text-brand-600 border-0 text-xs">ATS Optimised</Badge>
+                  <Badge className="bg-brand-50 text-brand-600 border-0 text-xs">Ready to send</Badge>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button

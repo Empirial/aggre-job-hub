@@ -635,7 +635,7 @@ function DocumentsSection() {
               className="border border-dashed border-gray-200 rounded-lg px-4 py-5 text-center cursor-pointer hover:border-brand-400 transition-colors"
               onClick={() => cvRef.current?.click()}
             >
-              <p className="text-xs text-gray-400">PDF or DOCX · max 10 MB</p>
+              <p className="text-xs text-gray-400">PDF or Word document · up to 10 MB</p>
             </div>
           )}
         </div>
@@ -666,7 +666,7 @@ function DocumentsSection() {
             />
           </div>
           <p className="text-[10px] text-gray-400">
-            ID, certificates, matric results, references — PDF, DOCX, or image
+            ID, certificates, matric results or references
           </p>
           {supporting.length > 0 ? (
             <div className="space-y-1.5">

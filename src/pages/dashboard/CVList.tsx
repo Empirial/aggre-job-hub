@@ -63,7 +63,7 @@ export default function CVList() {
       await profileApi.saveDraft(draft);
       navigate(`/cv-editor/${draftId}`);
     } catch {
-      toast.error("Failed to create blank CV. Check backend connection.");
+      toast.error("Could not create a new CV. Please try again.");
     }
   };
 
@@ -94,7 +94,7 @@ export default function CVList() {
             onClick={handleNewBlank}
           >
             <Plus className="w-3.5 h-3.5 mr-1.5" />
-            New Blank CV
+            Blank CV
           </Button>
           <Button
             size="sm"
@@ -102,7 +102,7 @@ export default function CVList() {
             onClick={() => navigate("/cv-editor/tailor")}
           >
             <Wand2 className="w-3.5 h-3.5 mr-1.5" />
-            Tailor from Job
+            Tailor to a job
           </Button>
         </div>
       </div>
@@ -133,7 +133,7 @@ export default function CVList() {
               className="bg-brand-600 hover:bg-brand-700 text-white"
               onClick={() => navigate("/cv-editor/tailor")}
             >
-              <Wand2 className="w-3.5 h-3.5 mr-1.5" />Tailor from Job
+              <Wand2 className="w-3.5 h-3.5 mr-1.5" />Tailor to a job
             </Button>
           </div>
         </div>
@@ -215,7 +215,7 @@ export default function CVList() {
       {/* Filled forms (from Zara document fills) */}
       {filledForms.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-gray-900">Filled Forms</h2>
+          <h2 className="text-sm font-semibold text-gray-900">Completed forms</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filledForms.map((doc) => (
               <div
