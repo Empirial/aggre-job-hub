@@ -35,7 +35,6 @@ export default function JobsBoard() {
   const scrape = useScrapeJobs();
   const [search, setSearch] = useState("");
   const [location, setLocation] = useState("all");
-  const [source, setSource] = useState("all");
   const [department, setDepartment] = useState("all");
 
   const locations = [...new Set(jobs.map((j) => j.location))].filter(Boolean);
@@ -48,9 +47,8 @@ export default function JobsBoard() {
       j.title.toLowerCase().includes(search.toLowerCase()) ||
       j.company.toLowerCase().includes(search.toLowerCase());
     const matchLocation = location === "all" || j.location === location;
-    const matchSource = source === "all" || j.source === source;
     const matchDepartment = department === "all" || j.company === department;
-    return matchSearch && matchLocation && matchSource && matchDepartment;
+    return matchSearch && matchLocation && matchDepartment;
   });
 
   return (

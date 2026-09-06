@@ -20,11 +20,11 @@ import ChatBot from "@/components/ChatBot";
 import Logo from "@/components/Logo";
 
 const navItems = [
-  { to: "/dashboard", label: "Overview", icon: LayoutDashboard, end: true },
-  { to: "/jobs", label: "Jobs Board", icon: Briefcase },
-  { to: "/cv-editor", label: "CV Editor", icon: FileText },
+  { to: "/dashboard", label: "Home", icon: LayoutDashboard, end: true },
+  { to: "/jobs", label: "Find Jobs", icon: Briefcase },
+  { to: "/cv-editor", label: "My CVs", icon: FileText },
   { to: "/chat", label: "Chat with Zara", icon: MessageSquare },
-  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/settings", label: "My Profile", icon: Settings },
 ];
 
 const LS_KEY = "cg_sidebar_collapsed";
