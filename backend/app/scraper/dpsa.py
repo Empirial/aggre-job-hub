@@ -118,8 +118,8 @@ def _department_from_text(text: str) -> Optional[str]:
             continue
         if _FIELD_RE.match(line) or _POST_RE.match(line):
             break
-        if _DEPT_RE.match(line) and len(line) < 120:
-            dept = _pretty_department(line)
+        dept = _clean_department(line)
+        if dept:
             return f"{dept} ({province})" if province else dept
     return f"Provincial Administration: {province}" if province else None
 
@@ -240,10 +240,11 @@ class DPSAScraper(BaseScraper):
                     jobs.append(job)
 
         for line in lines:
-            dept_match = _DEPT_RE.match(line)
-            if dept_match and current is None and len(line) < 120:
-                department = _pretty_department(line)
-                continue
+            if current is None and _DEPT_RE.match(line):
+                dept = _clean_department(line)
+                if dept:
+                    department = dept
+                    continue
 
             post_match = _POST_RE.match(line)
             if post_match:
