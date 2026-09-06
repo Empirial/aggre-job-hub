@@ -53,7 +53,61 @@ _FIELD_RE = re.compile(
     re.IGNORECASE,
 )
 _POST_RE = re.compile(r"^POST\s+(?P<ref>\d+\s*/\s*\d+)\s*:\s*(?P<title>.*)$", re.IGNORECASE)
-_DEPT_RE = re.compile(r"^\s*((?:NATIONAL\s+)?DEPARTMENT|PROVINCIAL\s+ADMINISTRATION|OFFICE)\b.*$", re.IGNORECASE)
+_DEPT_RE = re.compile(r"^\s*((?:NATIONAL\s+)?DEPARTMENT|PROVINCIAL\s+ADMINISTRATION|OFFICE\s+OF)\b.*$", re.IGNORECASE)
+_ANNEXURE_RE = re.compile(r"ANNEXURE\s+[A-Z]{1,3}\b(?P<rest>.{0,600})", re.S)
+_PROV_RE = re.compile(r"^PROVINCIAL\s+ADMINISTRATION\s*:?\s*(?P<province>.+)$", re.IGNORECASE)
+
+_LOWER_WORDS = {"of", "and", "the", "for", "in", "on", "to", "at"}
+
+
+def _pretty_department(name: str) -> str:
+    """Title-case a department name while keeping acronyms (DOA, DSAC) uppercase."""
+    words = []
+    for i, word in enumerate(clean_text(name).split(" ")):
+        stripped = word.strip("()–-:,")
+        if stripped and stripped.isupper() and len(stripped) <= 6 and stripped.isalpha():
+            words.append(word)  # acronym — leave as-is
+        elif i > 0 and word.lower() in _LOWER_WORDS:
+            words.append(word.lower())
+        else:
+            words.append(word.capitalize() if word.isupper() else word.title())
+    return " ".join(words)
+
+
+def _department_from_text(text: str) -> Optional[str]:
+    """
+    Every annexure PDF opens with:
+
+        ANNEXURE G
+        DEPARTMENT OF HOME AFFAIRS
+
+    or, for provinces:
+
+        ANNEXURE T
+        PROVINCIAL ADMINISTRATION: MPUMALANGA
+        DEPARTMENT OF HEALTH
+    """
+    match = _ANNEXURE_RE.search(text)
+    if not match:
+        return None
+
+    lines = [clean_text(l) for l in match.group("rest").splitlines()]
+    lines = [l for l in lines if l][:4]
+    if not lines:
+        return None
+
+    province: Optional[str] = None
+    for line in lines:
+        prov = _PROV_RE.match(line)
+        if prov:
+            province = _pretty_department(prov.group("province"))
+            continue
+        if _FIELD_RE.match(line) or _POST_RE.match(line):
+            break
+        if _DEPT_RE.match(line) and len(line) < 120:
+            dept = _pretty_department(line)
+            return f"{dept} ({province})" if province else dept
+    return f"Provincial Administration: {province}" if province else None
 
 
 def _normalise(raw_text: str) -> List[str]:
