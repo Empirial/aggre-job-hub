@@ -140,10 +140,13 @@ export default function CVList() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {drafts.map((draft) => (
-            <button
+            <div
               key={draft.draft_id}
+              role="button"
+              tabIndex={0}
               onClick={() => navigate(`/cv-editor/${draft.draft_id}`)}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 text-left hover:shadow-md hover:border-brand-100 transition-all group relative"
+              onKeyDown={(e) => e.key === "Enter" && navigate(`/cv-editor/${draft.draft_id}`)}
+              className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 text-left hover:shadow-md hover:border-brand-100 transition-all group relative cursor-pointer"
             >
               {/* Delete button */}
               <button
@@ -207,7 +210,7 @@ export default function CVList() {
                   {draft.experience?.length ? <div className="w-1.5 h-1.5 rounded-full bg-purple-400" title="Experience" /> : null}
                 </div>
               </div>
-            </button>
+            </div>
           ))}
         </div>
       )}

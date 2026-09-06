@@ -217,9 +217,13 @@ export default function JobsBoard() {
 
               {/* Footer row */}
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
-                <Badge className={`text-xs border-0 ${sourceColor(job.source)}`}>
-                  {sourceLabel(job.source)}
-                </Badge>
+                {job.source === "dpsa" || job.source === "manual" ? (
+                  <Badge className={`text-xs border-0 ${sourceColor(job.source)}`}>
+                    {sourceLabel(job.source)}
+                  </Badge>
+                ) : (
+                  <span />
+                )}
                 {job.cv_generated ? (
                   <span className="text-xs text-emerald-500 font-medium flex items-center gap-1">
                     <ExternalLink className="w-3 h-3" />
