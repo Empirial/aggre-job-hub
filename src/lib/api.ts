@@ -216,7 +216,7 @@ export interface Job {
   location: string;
   description: string;
   url: string;
-  source: "indeed" | "pnet" | "linkedin" | "adzuna" | "jooble" | "careerjet" | "reed" | "themuse" | "manual";
+  source: "indeed" | "pnet" | "linkedin" | "adzuna" | "jooble" | "careerjet" | "reed" | "themuse" | "dpsa" | "manual";
   date_posted?: string;
   ats_score?: number;
   keywords: string[];
