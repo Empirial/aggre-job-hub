@@ -532,6 +532,63 @@ export default function CVWorkspace() {
           </div>
         </div>
       </div>
+
+      {/* Gmail draft dialog */}
+      <Dialog open={mailOpen} onOpenChange={setMailOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Draft this application in Gmail</DialogTitle>
+            <DialogDescription>
+              Zara writes the email and attaches your tailored CV as a PDF. It lands in your Gmail
+              drafts — nothing is sent until you press send.
+            </DialogDescription>
+          </DialogHeader>
+
+          {gmailReady === false && (
+            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-md p-3">
+              Your Gmail isn't connected yet. Open Settings and connect it first.
+            </p>
+          )}
+
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-gray-600">To (optional)</label>
+              <Input
+                value={mailTo}
+                onChange={(e) => setMailTo(e.target.value)}
+                placeholder="recruiter@company.co.za"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-gray-600">Subject</label>
+              <Input value={mailSubject} onChange={(e) => setMailSubject(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-gray-600">Message</label>
+              <Textarea
+                value={mailBody}
+                onChange={(e) => setMailBody(e.target.value)}
+                className="min-h-[180px] text-sm"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMailOpen(false)} disabled={mailBusy}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-brand-600 hover:bg-brand-700 text-white"
+              onClick={handleCreateDraft}
+              disabled={mailBusy || gmailReady === false || !mailSubject.trim()}
+            >
+              {mailBusy
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating draft...</>
+                : <><Mail className="w-4 h-4 mr-2" />Create draft</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
