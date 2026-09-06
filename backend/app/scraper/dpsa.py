@@ -131,7 +131,7 @@ class DPSAScraper(BaseScraper):
     source = "dpsa"
     timeout = 45
     max_circulars = 1
-    max_annexures = 12
+    max_annexures = 30
 
     async def scrape(self, keywords: List[str], location: str, max_results: int) -> List[ScrapedJob]:
         try:
