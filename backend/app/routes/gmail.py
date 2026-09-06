@@ -104,8 +104,7 @@ async def auth_url(request: Request, body: AuthUrlRequest, uid: str = Depends(re
         "include_granted_scopes": "true",
         "state": secrets.token_urlsafe(16),
     }
-    query = "&".join(f"{k}={httpx.QueryParams({k: v})[k]}" for k, v in params.items())
-    return {"url": f"{AUTH_ENDPOINT}?{str(httpx.QueryParams(params))}", "state": params["state"], "_debug": query[:0]}
+    return {"url": f"{AUTH_ENDPOINT}?{httpx.QueryParams(params)}", "state": params["state"]}
 
 
 @router.post("/exchange")
