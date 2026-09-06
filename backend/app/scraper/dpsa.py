@@ -53,7 +53,75 @@ _FIELD_RE = re.compile(
     re.IGNORECASE,
 )
 _POST_RE = re.compile(r"^POST\s+(?P<ref>\d+\s*/\s*\d+)\s*:\s*(?P<title>.*)$", re.IGNORECASE)
-_DEPT_RE = re.compile(r"^\s*((?:NATIONAL\s+)?DEPARTMENT|PROVINCIAL\s+ADMINISTRATION|OFFICE)\b.*$", re.IGNORECASE)
+_DEPT_RE = re.compile(r"^\s*((?:NATIONAL\s+)?DEPARTMENT|PROVINCIAL\s+ADMINISTRATION|OFFICE\s+OF)\b.*$", re.IGNORECASE)
+_ANNEXURE_RE = re.compile(r"ANNEXURE\s+[A-Z]{1,3}\b(?P<rest>.{0,600})", re.S)
+_PROV_RE = re.compile(r"^PROVINCIAL\s+ADMINISTRATION\s*:?\s*(?P<province>.+)$", re.IGNORECASE)
+
+_LOWER_WORDS = {"of", "and", "the", "for", "in", "on", "to", "at", "with"}
+# Boilerplate that follows the department heading in some circulars.
+_DEPT_TAIL_RE = re.compile(
+    r"\s*(MANAGEMENT\s+ECHELON|OTHER\s+POSTS?|THE\s+MANDATE|IT\s+IS\s+|THE\s+DEPARTMENT\s+IS|APPLICATIONS?\s*:|NOTE\s*:).*$",
+    re.IGNORECASE,
+)
+_DEPT_REJECT_RE = re.compile(r"reserves the right|equal opportunit|intention to promote", re.I)
+
+
+def _pretty_department(name: str) -> str:
+    """Title-case a department name while keeping bracketed acronyms (DOA) uppercase."""
+    words = []
+    for i, word in enumerate(clean_text(name).split(" ")):
+        if False:
+            pass
+        elif i > 0 and word.lower() in _LOWER_WORDS:
+            words.append(word.lower())
+        else:
+            words.append(word.title())
+    return " ".join(words)
+
+
+def _clean_department(line: str) -> Optional[str]:
+    """Trim trailing boilerplate off a department heading; None if it isn't one."""
+    line = _DEPT_TAIL_RE.sub("", clean_text(line)).strip(" :,-")
+    line = re.sub(r"\s*\([A-Z][A-Za-z&\s]{1,10}\)\s*$", "", line).strip(" :,-")
+    if not line or len(line) > 110 or _DEPT_REJECT_RE.search(line) or not _DEPT_RE.match(line):
+        return None
+    return _pretty_department(line)
+
+
+def _department_from_text(text: str) -> Optional[str]:
+    """
+    Every annexure PDF opens with:
+
+        ANNEXURE G
+        DEPARTMENT OF HOME AFFAIRS
+
+    or, for provinces:
+
+        ANNEXURE T
+        PROVINCIAL ADMINISTRATION: MPUMALANGA
+        DEPARTMENT OF HEALTH
+    """
+    match = _ANNEXURE_RE.search(text)
+    if not match:
+        return None
+
+    lines = [clean_text(l) for l in match.group("rest").splitlines()]
+    lines = [l for l in lines if l][:4]
+    if not lines:
+        return None
+
+    province: Optional[str] = None
+    for line in lines:
+        prov = _PROV_RE.match(line)
+        if prov:
+            province = _pretty_department(prov.group("province"))
+            continue
+        if _FIELD_RE.match(line) or _POST_RE.match(line):
+            break
+        dept = _clean_department(line)
+        if dept:
+            return f"{dept} ({province})" if province else dept
+    return f"Provincial Administration: {province}" if province else None
 
 
 def _normalise(raw_text: str) -> List[str]:
@@ -77,7 +145,7 @@ class DPSAScraper(BaseScraper):
     source = "dpsa"
     timeout = 45
     max_circulars = 1
-    max_annexures = 12
+    max_annexures = 30
 
     async def scrape(self, keywords: List[str], location: str, max_results: int) -> List[ScrapedJob]:
         try:
@@ -159,7 +227,7 @@ class DPSAScraper(BaseScraper):
     def _posts_from_text(self, text: str, pdf_url: str) -> List[ScrapedJob]:
         lines = _normalise(text)
 
-        department = "Department of Public Service and Administration"
+        department = _department_from_text(text) or "South African Government"
         circular_closing: Optional[str] = None
         jobs: List[ScrapedJob] = []
         current: Optional[dict] = None
@@ -172,10 +240,11 @@ class DPSAScraper(BaseScraper):
                     jobs.append(job)
 
         for line in lines:
-            dept_match = _DEPT_RE.match(line)
-            if dept_match and current is None and len(line) < 120:
-                department = clean_text(line).title()
-                continue
+            if current is None and _DEPT_RE.match(line):
+                dept = _clean_department(line)
+                if dept:
+                    department = dept
+                    continue
 
             post_match = _POST_RE.match(line)
             if post_match:

@@ -43,8 +43,12 @@ export default function JobsBoard() {
   const [search, setSearch] = useState("");
   const [location, setLocation] = useState("all");
   const [source, setSource] = useState("all");
+  const [department, setDepartment] = useState("all");
 
   const locations = [...new Set(jobs.map((j) => j.location))].filter(Boolean);
+  const departments = [...new Set(jobs.filter((j) => j.source === "dpsa").map((j) => j.company))]
+    .filter(Boolean)
+    .sort();
 
   const filtered = jobs.filter((j) => {
     const matchSearch =
@@ -52,7 +56,8 @@ export default function JobsBoard() {
       j.company.toLowerCase().includes(search.toLowerCase());
     const matchLocation = location === "all" || j.location === location;
     const matchSource = source === "all" || j.source === source;
-    return matchSearch && matchLocation && matchSource;
+    const matchDepartment = department === "all" || j.company === department;
+    return matchSearch && matchLocation && matchSource && matchDepartment;
   });
 
   return (
@@ -131,6 +136,20 @@ export default function JobsBoard() {
           </SelectContent>
         </Select>
       </div>
+
+      {departments.length > 0 && (
+        <Select value={department} onValueChange={setDepartment}>
+          <SelectTrigger className="w-full sm:w-72 bg-white border-gray-200 text-sm">
+            <SelectValue placeholder="Government department" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All government departments</SelectItem>
+            {departments.map((d) => (
+              <SelectItem key={d} value={d}>{d}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
 
       {/* Content */}
       {isLoading ? (

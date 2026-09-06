@@ -89,10 +89,13 @@ async def scrape_jobs(request: Request, body: ScrapeRequest, uid: str = Depends(
 
     for source, scraper in scrapers.items():
         try:
+            # One DPSA circular carries every national + provincial department,
+            # so it gets a much larger budget than the per-board scrapers.
+            limit = max(body.max_per_source, 250) if source == "dpsa" else body.max_per_source
             jobs = await scraper.scrape(
                 keywords=body.keywords,
                 location=body.location,
-                max_results=body.max_per_source,
+                max_results=limit,
             )
             all_jobs.extend(jobs)
             logger.info("[%s] scraped %d jobs", source, len(jobs))
