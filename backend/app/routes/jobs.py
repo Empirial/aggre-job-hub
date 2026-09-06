@@ -3,14 +3,6 @@ from datetime import datetime, timezone
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from app.models import ManualJobRequest, ScrapedJob, ScrapeRequest, ScrapeResponse
-from app.scraper.adzuna import AdzunaScraper
-from app.scraper.indeed import IndeedScraper
-from app.scraper.pnet import PNetScraper
-from app.scraper.linkedin import LinkedInScraper
-from app.scraper.jooble import JooblesScraper
-from app.scraper.careerjet import CareerJetScraper
-from app.scraper.reed import ReedScraper
-from app.scraper.themuse import TheMuseScraper
 from app.scraper.dpsa import DPSAScraper
 from app.scraper.base import make_job_id
 from app.limiter import limiter
@@ -20,22 +12,11 @@ from app import firebase_client as db
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
-# Adzuna + Jooble + CareerJet — real SA API listings.
-# Indeed + PNet — HTML scraping with embedded JSON extraction.
-# Reed — UK API, catches remote/SA-employer roles.
-# TheMuse — tech/startup roles, good for remote positions.
-# DPSA — official SA government vacancy circulars (PDF parsing, no API key).
-# LinkedIn — always mock (ToS restricts scraping).
+# Government-only by design: DPSA circulars carry every national and provincial
+# department (Sports, Arts & Culture; Agriculture; Health; Basic Education...).
+# Private-company boards are intentionally not scraped.
 scrapers = {
-    "adzuna": AdzunaScraper(),
-    "jooble": JooblesScraper(),
-    "careerjet": CareerJetScraper(),
-    "indeed": IndeedScraper(),
-    "pnet": PNetScraper(),
-    "reed": ReedScraper(),
-    "themuse": TheMuseScraper(),
     "dpsa": DPSAScraper(),
-    "linkedin": LinkedInScraper(),
 }
 
 
