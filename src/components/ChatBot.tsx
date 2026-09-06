@@ -29,81 +29,82 @@ function getPageContext(pathname: string): PageContext {
     return {
       label: "Overview",
       systemContext:
-        "The user is on the Overview dashboard. This page shows their job pipeline stats (pending, sent, interview, rejected), a 7-day activity chart, and recent scraped jobs. They can also trigger a job scrape from here.",
+        "The user is on their dashboard home. It shows how many jobs are available to them, how many CVs they have ready, and their most recent job matches.",
       suggestions: [
-        "Why are my application stats low?",
-        "How do I improve my pipeline?",
-        "What jobs should I prioritise applying to?",
-        "How often should I run the scraper?",
+        "What should I do first?",
+        "Which jobs should I apply to today?",
+        "How do I get more interviews?",
+        "Help me finish my profile",
       ],
       welcome:
-        "Hi! I can see you're on the Overview page. Ask me about your pipeline stats, job strategy, or how to get more interviews.",
+        "Hi! I'm Zara. Ask me what to do next, which jobs to go for, or how to get more interviews.",
     };
   }
   if (pathname.startsWith("/jobs/") && pathname.length > 6) {
     return {
-      label: "Job Detail",
+      label: "Job",
       systemContext:
-        "The user is viewing a specific job listing detail page. It shows the full job description, ATS keywords, company info, and has a button to generate a tailored CV for this role.",
+        "The user is viewing a single job listing with its full description and requirements, and can create a CV tailored to this role.",
       suggestions: [
-        "How do I tailor my CV for this job?",
-        "What ATS keywords should I focus on?",
-        "Should I apply for this role?",
+        "Is this job a good fit for me?",
+        "Tailor my CV for this job",
+        "What should I highlight in my application?",
         "Write a cover letter for this job",
       ],
       welcome:
-        "You're looking at a job listing. Want help deciding if this role is a good fit, or should I help you tailor your CV for it?",
+        "You're looking at a job. Want me to check if it's a good fit, or tailor your CV for it?",
     };
   }
   if (pathname === "/jobs") {
     return {
-      label: "Jobs Board",
+      label: "Find Jobs",
       systemContext:
-        "The user is on the Jobs Board page, which lists all scraped jobs from Indeed, PNet, and LinkedIn. They can search and filter by location and source, and click a job to see its detail.",
+        "The user is browsing available job listings, including South African government vacancies. They can search and filter by location and department.",
       suggestions: [
-        "How do I filter jobs effectively?",
-        "Which job source has the best listings in SA?",
-        "What keywords should I search for my role?",
-        "How do I know which jobs are worth applying for?",
+        "Which of these jobs suit me?",
+        "What should I search for in my field?",
+        "How do I apply for a government post?",
+        "How do I know a job is worth applying for?",
       ],
       welcome:
-        "You're browsing scraped jobs. I can help you decide which roles to target or what to look for in a job listing.",
+        "You're browsing jobs. I can help you pick the roles worth your time.",
     };
   }
   if (pathname === "/cv-editor") {
     return {
-      label: "CV Editor",
+      label: "My CVs",
       systemContext:
-        "The user is on the CV Editor page. They can select a scraped job, view key duties from the listing, and click 'Tailor CV for this Job' to have AI rewrite their summary, skills, and experience to match the role's ATS requirements. The tailored CV can be downloaded as a .docx file.",
+        "The user is on their CVs page. They can create a CV tailored to a specific job, and download it.",
       suggestions: [
-        "How does the AI tailor my CV?",
-        "What makes a CV ATS-friendly?",
-        "How should I write my summary for a tech role?",
-        "What skills should I highlight for government jobs?",
+        "How do I make my CV stand out?",
+        "What makes a CV pass automatic screening?",
+        "Help me write my summary",
+        "What should I highlight for government jobs?",
       ],
       welcome:
-        "You're in the CV Editor. Select a job from the list and I'll tailor your CV to match its ATS keywords. Ask me anything about CV writing or ATS optimisation.",
+        "Pick a job and I'll rewrite your CV to match it. Ask me anything about CV writing.",
     };
   }
   if (pathname === "/settings") {
     return {
-      label: "Settings",
+      label: "My Profile",
       systemContext:
-        "The user is on the Settings page. They can update their profile (name, email, phone, LinkedIn), set job preferences (keywords, preferred locations, job types), configure the backend API URL and scraping schedule, and upload their CV and supporting documents.",
+        "The user is filling in their profile: contact details, summary, skills, experience, education, the kind of work they want, and their documents.",
       suggestions: [
-        "What should I write in my profile summary?",
-        "What job keywords should I set for a finance role?",
+        "What should I write in my summary?",
+        "What skills should I list for a finance role?",
         "How do I write a strong LinkedIn headline?",
-        "What locations should I target in South Africa?",
+        "Which cities should I look at in South Africa?",
       ],
       welcome:
-        "You're setting up your profile. A complete profile helps the AI tailor better CVs. Ask me what to write in any field.",
+        "A complete profile means better CVs. Ask me what to write in any field.",
     };
   }
   return {
     label: "CareerGate",
     systemContext:
-      "The user is using CareerGate, an AI-powered job application platform for South African job seekers. It scrapes jobs from Indeed, PNet, and LinkedIn, tailors CVs using AI, and tracks applications.",
+      "The user is using CareerGate, an AI job application assistant for South African job seekers. It finds jobs (including government vacancies), tailors CVs, and helps with applications.",
+
     suggestions: [
       "Tailor my CV for a banking role",
       "Write a cover letter for a dev role at Takealot",
@@ -303,8 +304,9 @@ export default function ChatBot() {
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-white" />
                 <div>
-                  <p className="text-sm font-semibold text-white">AI Assistant</p>
-                  <p className="text-xs text-brand-200">{pageCtx.label} · DeepSeek</p>
+                  <p className="text-sm font-semibold text-white">Zara</p>
+                  <p className="text-xs text-brand-200">{pageCtx.label}</p>
+
                 </div>
               </div>
               <div className="flex items-center gap-1">
