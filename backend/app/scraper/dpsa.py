@@ -57,21 +57,35 @@ _DEPT_RE = re.compile(r"^\s*((?:NATIONAL\s+)?DEPARTMENT|PROVINCIAL\s+ADMINISTRAT
 _ANNEXURE_RE = re.compile(r"ANNEXURE\s+[A-Z]{1,3}\b(?P<rest>.{0,600})", re.S)
 _PROV_RE = re.compile(r"^PROVINCIAL\s+ADMINISTRATION\s*:?\s*(?P<province>.+)$", re.IGNORECASE)
 
-_LOWER_WORDS = {"of", "and", "the", "for", "in", "on", "to", "at"}
+_LOWER_WORDS = {"of", "and", "the", "for", "in", "on", "to", "at", "with"}
+# Boilerplate that follows the department heading in some circulars.
+_DEPT_TAIL_RE = re.compile(
+    r"\s*(MANAGEMENT\s+ECHELON|OTHER\s+POSTS?|IT\s+IS\s+|THE\s+DEPARTMENT\s+IS|APPLICATIONS?\s*:|NOTE\s*:).*$",
+    re.IGNORECASE,
+)
+_DEPT_REJECT_RE = re.compile(r"reserves the right|equal opportunit|intention to promote", re.I)
 
 
 def _pretty_department(name: str) -> str:
-    """Title-case a department name while keeping acronyms (DOA, DSAC) uppercase."""
+    """Title-case a department name while keeping bracketed acronyms (DOA) uppercase."""
     words = []
     for i, word in enumerate(clean_text(name).split(" ")):
-        stripped = word.strip("()–-:,")
-        if stripped and stripped.isupper() and len(stripped) <= 6 and stripped.isalpha():
-            words.append(word)  # acronym — leave as-is
+        bare = word.strip("()–-:,.")
+        if bare.isupper() and bare.isalpha() and 2 <= len(bare) <= 6 and word != bare:
+            words.append(word)  # bracketed acronym, e.g. (DOA)
         elif i > 0 and word.lower() in _LOWER_WORDS:
             words.append(word.lower())
         else:
-            words.append(word.capitalize() if word.isupper() else word.title())
+            words.append(word.title())
     return " ".join(words)
+
+
+def _clean_department(line: str) -> Optional[str]:
+    """Trim trailing boilerplate off a department heading; None if it isn't one."""
+    line = _DEPT_TAIL_RE.sub("", clean_text(line)).strip(" :,-")
+    if not line or len(line) > 110 or _DEPT_REJECT_RE.search(line) or not _DEPT_RE.match(line):
+        return None
+    return _pretty_department(line)
 
 
 def _department_from_text(text: str) -> Optional[str]:
