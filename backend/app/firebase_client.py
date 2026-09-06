@@ -362,3 +362,28 @@ def get_user_context(uid: str) -> Dict[str, Any]:
         "recent_scraped_jobs": recent_jobs,
         "profile_documents": profile_documents,
     }
+
+
+# ── Third-party integrations (Gmail OAuth tokens, etc.) ───────────────────────
+
+def save_integration(uid: str, name: str, data: Dict[str, Any]) -> None:
+    """Persist an integration record (e.g. Gmail OAuth tokens) for a user."""
+    payload = {**data, "updated_at": _now()}
+    if _use_memory or _db is None:
+        _user_mem(uid).setdefault("integrations", {})[name] = payload
+        return
+    _user_ref(uid).collection("integrations").document(name).set(payload)
+
+
+def get_integration(uid: str, name: str) -> Optional[Dict[str, Any]]:
+    if _use_memory or _db is None:
+        return _user_mem(uid).get("integrations", {}).get(name)
+    doc = _user_ref(uid).collection("integrations").document(name).get()
+    return doc.to_dict() if doc.exists else None
+
+
+def delete_integration(uid: str, name: str) -> None:
+    if _use_memory or _db is None:
+        _user_mem(uid).get("integrations", {}).pop(name, None)
+        return
+    _user_ref(uid).collection("integrations").document(name).delete()

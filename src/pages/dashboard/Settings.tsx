@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Save, Plus, X, Upload, FileText, Trash2, Loader2, User,
-  Briefcase, Code, GraduationCap, BookOpen, RefreshCw,
+  Briefcase, Code, GraduationCap, BookOpen, RefreshCw, Mail, CheckCircle2,
 } from "lucide-react";
 import { useZaraSuggest, ZaraTrigger, ZaraSuggestionCard } from "@/components/ZaraSuggest";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +17,7 @@ import {
   useUploadProfileDocument,
   useDeleteProfileDocument,
 } from "@/hooks/useProfileDocuments";
-import { documentsApi } from "@/lib/api";
+import { documentsApi, gmailApi, GMAIL_REDIRECT_URI, type GmailStatus } from "@/lib/api";
 import { toast } from "sonner";
 
 export default function Settings() {
@@ -507,6 +507,9 @@ export default function Settings() {
 
       {/* ── Documents ────────────────────────────────────────────────── */}
       <DocumentsSection />
+
+      {/* ── Gmail ────────────────────────────────────────────────────── */}
+      <GmailSection />
     </div>
   );
 }
@@ -693,6 +696,97 @@ function DocumentsSection() {
         </div>
 
         {error && <p className="text-xs text-red-400">{error}</p>}
+      </CardContent>
+    </Card>
+  );
+}
+
+
+// ── Gmail connection section ──────────────────────────────────────────────────
+
+function GmailSection() {
+  const [status, setStatus] = useState<GmailStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+
+  const refresh = () => {
+    setLoading(true);
+    gmailApi
+      .status()
+      .then(setStatus)
+      .catch(() => setStatus(null))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(refresh, []);
+
+  const connect = async () => {
+    setBusy(true);
+    try {
+      const { url } = await gmailApi.authUrl(GMAIL_REDIRECT_URI);
+      window.location.href = url;
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not start the Gmail connection.");
+      setBusy(false);
+    }
+  };
+
+  const disconnect = async () => {
+    setBusy(true);
+    try {
+      await gmailApi.disconnect();
+      toast.success("Gmail disconnected.");
+      refresh();
+    } catch {
+      toast.error("Could not disconnect Gmail.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card className="border-0 shadow-sm">
+      <CardHeader className="pb-2 pt-4">
+        <CardTitle className="text-sm font-medium text-gray-700 flex items-center gap-2">
+          <Mail className="w-4 h-4 text-brand-600" />
+          Gmail
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-gray-500">
+          Connect your Gmail so Zara can write the application email for you, attach your tailored CV,
+          and leave it waiting in your Drafts. Nothing is ever sent without you pressing send.
+        </p>
+
+        {loading ? (
+          <div className="flex items-center gap-2 text-sm text-gray-400">
+            <Loader2 className="w-4 h-4 animate-spin" /> Checking...
+          </div>
+        ) : !status?.configured ? (
+          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-md p-3">
+            Gmail isn't set up on the server yet. A Google sign-in key still needs to be added before
+            this can be switched on.
+          </p>
+        ) : status.connected ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-emerald-100 bg-emerald-50 p-3">
+            <span className="flex items-center gap-2 text-sm text-emerald-800">
+              <CheckCircle2 className="w-4 h-4" />
+              Connected{status.email ? ` — ${status.email}` : ""}
+            </span>
+            <Button size="sm" variant="outline" disabled={busy} onClick={disconnect}>
+              Disconnect
+            </Button>
+          </div>
+        ) : (
+          <Button
+            className="bg-brand-600 hover:bg-brand-700 text-white"
+            disabled={busy}
+            onClick={connect}
+          >
+            {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+            Connect your Gmail
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

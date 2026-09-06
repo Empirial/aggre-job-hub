@@ -11,6 +11,7 @@ from app.scraper.jooble import JooblesScraper
 from app.scraper.careerjet import CareerJetScraper
 from app.scraper.reed import ReedScraper
 from app.scraper.themuse import TheMuseScraper
+from app.scraper.dpsa import DPSAScraper
 from app.scraper.base import make_job_id
 from app.limiter import limiter
 from app.auth import require_auth
@@ -23,6 +24,7 @@ router = APIRouter(prefix="/jobs", tags=["jobs"])
 # Indeed + PNet — HTML scraping with embedded JSON extraction.
 # Reed — UK API, catches remote/SA-employer roles.
 # TheMuse — tech/startup roles, good for remote positions.
+# DPSA — official SA government vacancy circulars (PDF parsing, no API key).
 # LinkedIn — always mock (ToS restricts scraping).
 scrapers = {
     "adzuna": AdzunaScraper(),
@@ -32,6 +34,7 @@ scrapers = {
     "pnet": PNetScraper(),
     "reed": ReedScraper(),
     "themuse": TheMuseScraper(),
+    "dpsa": DPSAScraper(),
     "linkedin": LinkedInScraper(),
 }
 

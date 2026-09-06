@@ -20,6 +20,7 @@ from app.routes import jobs as jobs_router
 from app.routes import documents as documents_router
 from app.routes import chat as chat_router
 from app.routes import profile as profile_router
+from app.routes import gmail as gmail_router
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +61,7 @@ app.include_router(jobs_router.router)
 app.include_router(documents_router.router)
 app.include_router(chat_router.router)
 app.include_router(profile_router.router)
+app.include_router(gmail_router.router)
 
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 DEEPSEEK_API_URL = os.getenv("DEEPSEEK_API_URL", "https://api.deepseek.com/v1/chat/completions")

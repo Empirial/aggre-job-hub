@@ -12,7 +12,7 @@ class ScrapedJob(BaseModel):
     location: str
     description: str
     url: str
-    source: Literal["indeed", "pnet", "linkedin", "adzuna", "jooble", "careerjet", "reed", "themuse", "manual"]
+    source: Literal["indeed", "pnet", "linkedin", "adzuna", "jooble", "careerjet", "reed", "themuse", "dpsa", "manual"]
     date_posted: Optional[str] = None
     ats_score: Optional[int] = None
     keywords: List[str] = Field(default_factory=list)

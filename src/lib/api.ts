@@ -175,6 +175,38 @@ export const profileApi = {
   checkSaved: (jobId: string) => get<{ saved: boolean }>(`/profile/saved-jobs/${jobId}/status`),
 };
 
+// ── Gmail ─────────────────────────────────────────────────────────────────────
+
+export interface GmailStatus {
+  configured: boolean;
+  connected: boolean;
+  email: string;
+  connected_at?: string;
+}
+
+export interface GmailDraftPayload {
+  to?: string;
+  subject: string;
+  body: string;
+  attachment_filename?: string;
+  attachment_base64?: string;
+}
+
+export const gmailApi = {
+  status: () => get<GmailStatus>("/gmail/status"),
+  authUrl: (redirectUri: string) =>
+    post<{ url: string; state: string }>("/gmail/auth-url", { redirect_uri: redirectUri }),
+  exchange: (code: string, redirectUri: string) =>
+    post<{ status: string; email: string }>("/gmail/exchange", { code, redirect_uri: redirectUri }),
+  disconnect: () => del<{ status: string }>("/gmail/disconnect"),
+  createDraft: (payload: GmailDraftPayload) =>
+    post<{ status: string; draft_id: string; gmail_url: string }>("/gmail/draft", payload),
+};
+
+export const GMAIL_REDIRECT_URI = `${window.location.origin}/gmail/callback`;
+
+
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface Job {
@@ -184,7 +216,7 @@ export interface Job {
   location: string;
   description: string;
   url: string;
-  source: "indeed" | "pnet" | "linkedin" | "adzuna" | "jooble" | "careerjet" | "reed" | "themuse" | "manual";
+  source: "indeed" | "pnet" | "linkedin" | "adzuna" | "jooble" | "careerjet" | "reed" | "themuse" | "dpsa" | "manual";
   date_posted?: string;
   ats_score?: number;
   keywords: string[];

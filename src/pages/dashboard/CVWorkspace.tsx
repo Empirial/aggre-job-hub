@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  Send, Loader2, Save, Download, ArrowLeft, Sparkles, FileText,
+  Send, Loader2, Save, Download, ArrowLeft, Sparkles, FileText, Mail,
 } from "lucide-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -9,7 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useCVDrafts, useSaveCVDraft } from "@/hooks/useCVDrafts";
 import { useProfile } from "@/hooks/useProfile";
-import { agentApi, type CVDraft } from "@/lib/api";
+import { agentApi, gmailApi, type CVDraft } from "@/lib/api";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
@@ -157,6 +161,12 @@ export default function CVWorkspace() {
   const [saved, setSaved] = useState(false);
   const [activeTab, setActiveTab] = useState<"chat" | "preview">("chat");
   const [downloading, setDownloading] = useState(false);
+  const [mailOpen, setMailOpen] = useState(false);
+  const [mailTo, setMailTo] = useState("");
+  const [mailSubject, setMailSubject] = useState("");
+  const [mailBody, setMailBody] = useState("");
+  const [mailBusy, setMailBusy] = useState(false);
+  const [gmailReady, setGmailReady] = useState<boolean | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -241,9 +251,9 @@ export default function CVWorkspace() {
     }
   };
 
-  const handleDownload = async () => {
-    if (!draft?.draft_id || !previewRef.current) return;
-    setDownloading(true);
+  /** Render the CV preview to a PDF and hand back the jsPDF doc + filename. */
+  const buildPdf = async (): Promise<{ pdf: jsPDF; filename: string } | null> => {
+    if (!draft?.draft_id || !previewRef.current) return null;
     const wasChatTab = activeTab === "chat";
     if (wasChatTab) setActiveTab("preview");
     try {
@@ -252,12 +262,8 @@ export default function CVWorkspace() {
         await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       }
       const node = previewRef.current;
-      if (!node) return;
-      const canvas = await html2canvas(node, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-      });
+      if (!node) return null;
+      const canvas = await html2canvas(node, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
       const imgData = canvas.toDataURL("image/png");
 
       const pdf = new jsPDF({ unit: "px", format: "a4" });
@@ -279,13 +285,67 @@ export default function CVWorkspace() {
         heightLeft -= pageHeight;
       }
 
-      const filename = `CV_${(draft.job_title || "General_CV").replace(/\s+/g, "_")}.pdf`;
-      pdf.save(filename);
+      return {
+        pdf,
+        filename: `CV_${(draft.job_title || "General_CV").replace(/\s+/g, "_")}.pdf`,
+      };
+    } finally {
+      if (wasChatTab) setActiveTab("chat");
+    }
+  };
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      const built = await buildPdf();
+      if (built) built.pdf.save(built.filename);
     } catch {
       toast.error("Failed to generate PDF.");
     } finally {
-      if (wasChatTab) setActiveTab("chat");
       setDownloading(false);
+    }
+  };
+
+  const openMailDialog = async () => {
+    const name = profile?.name || "";
+    const role = draft?.job_title || "the advertised position";
+    setMailSubject(`Application: ${role}${name ? ` — ${name}` : ""}`);
+    setMailBody(
+      `Good day,\n\nI would like to apply for the ${role} position. ` +
+        `My CV, tailored to the requirements of the role, is attached for your consideration.\n\n` +
+        `I would welcome the opportunity to discuss how my experience fits your team.\n\n` +
+        `Kind regards,\n${name}${profile?.phone ? `\n${profile.phone}` : ""}${profile?.email ? `\n${profile.email}` : ""}`
+    );
+    setMailOpen(true);
+    try {
+      const status = await gmailApi.status();
+      setGmailReady(status.connected);
+    } catch {
+      setGmailReady(false);
+    }
+  };
+
+  const handleCreateDraft = async () => {
+    setMailBusy(true);
+    try {
+      const built = await buildPdf();
+      if (!built) throw new Error("Could not render the CV.");
+      const base64 = built.pdf.output("datauristring").split(",")[1];
+      const res = await gmailApi.createDraft({
+        to: mailTo.trim(),
+        subject: mailSubject,
+        body: mailBody,
+        attachment_filename: built.filename,
+        attachment_base64: base64,
+      });
+      setMailOpen(false);
+      toast.success("Draft waiting in your Gmail — review it and hit send.", {
+        action: { label: "Open Gmail", onClick: () => window.open(res.gmail_url, "_blank") },
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not create the Gmail draft.");
+    } finally {
+      setMailBusy(false);
     }
   };
 
@@ -377,6 +437,14 @@ export default function CVWorkspace() {
               ? <><Loader2 className="w-3 h-3 animate-spin" />Exporting...</>
               : <><Download className="w-3 h-3" /><span className="hidden sm:inline">Export PDF</span></>}
           </Button>
+          <Button
+            size="sm"
+            className="h-8 text-xs gap-1.5 bg-brand-600 hover:bg-brand-700 text-white"
+            onClick={openMailDialog}
+          >
+            <Mail className="w-3 h-3" />
+            <span className="hidden sm:inline">Draft in Gmail</span>
+          </Button>
         </div>
       </div>
 
@@ -464,6 +532,63 @@ export default function CVWorkspace() {
           </div>
         </div>
       </div>
+
+      {/* Gmail draft dialog */}
+      <Dialog open={mailOpen} onOpenChange={setMailOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Draft this application in Gmail</DialogTitle>
+            <DialogDescription>
+              Zara writes the email and attaches your tailored CV as a PDF. It lands in your Gmail
+              drafts — nothing is sent until you press send.
+            </DialogDescription>
+          </DialogHeader>
+
+          {gmailReady === false && (
+            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-md p-3">
+              Your Gmail isn't connected yet. Open Settings and connect it first.
+            </p>
+          )}
+
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-gray-600">To (optional)</label>
+              <Input
+                value={mailTo}
+                onChange={(e) => setMailTo(e.target.value)}
+                placeholder="recruiter@company.co.za"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-gray-600">Subject</label>
+              <Input value={mailSubject} onChange={(e) => setMailSubject(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-gray-600">Message</label>
+              <Textarea
+                value={mailBody}
+                onChange={(e) => setMailBody(e.target.value)}
+                className="min-h-[180px] text-sm"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMailOpen(false)} disabled={mailBusy}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-brand-600 hover:bg-brand-700 text-white"
+              onClick={handleCreateDraft}
+              disabled={mailBusy || gmailReady === false || !mailSubject.trim()}
+            >
+              {mailBusy
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating draft...</>
+                : <><Mail className="w-4 h-4 mr-2" />Create draft</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
