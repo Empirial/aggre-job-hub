@@ -53,8 +53,15 @@ def init_firebase() -> None:
 
     creds_json = os.getenv("FIREBASE_CREDENTIALS_JSON", "")
     creds_path = os.getenv("FIREBASE_CREDENTIALS_PATH", "")
+    # On Google Cloud Run / GCE the runtime service account is picked up
+    # automatically via Application Default Credentials — no key file needed.
+    use_adc = bool(
+        os.getenv("K_SERVICE")
+        or os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+        or os.getenv("GOOGLE_CLOUD_PROJECT")
+    )
 
-    if not creds_json and (not creds_path or not os.path.exists(creds_path)):
+    if not creds_json and (not creds_path or not os.path.exists(creds_path)) and not use_adc:
         logger.warning("No Firebase credentials found — using in-memory store. Data will NOT persist.")
         _use_memory = True
         return
@@ -66,13 +73,20 @@ def init_firebase() -> None:
         from firebase_admin import credentials, firestore
 
         if not firebase_admin._apps:
+            options = {"storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET", "")}
+            project_id = os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv("FIREBASE_PROJECT_ID")
+            if project_id:
+                options["projectId"] = project_id
+
             if creds_json:
                 cred = credentials.Certificate(json.loads(base64.b64decode(creds_json)))
-            else:
+            elif creds_path and os.path.exists(creds_path):
                 cred = credentials.Certificate(creds_path)
-            firebase_admin.initialize_app(cred, {
-                "storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET", ""),
-            })
+            else:
+                cred = credentials.ApplicationDefault()
+                logger.info("Using Application Default Credentials (Cloud Run service account).")
+
+            firebase_admin.initialize_app(cred, options)
 
         _db = firestore.client()
         firebase_initialized = True
@@ -80,6 +94,7 @@ def init_firebase() -> None:
     except Exception as e:
         logger.error("Firebase init failed: %s — falling back to in-memory store.", e, exc_info=True)
         _use_memory = True
+
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
