@@ -17,6 +17,7 @@ const Settings = lazy(() => import("./pages/dashboard/Settings"));
 const Chat = lazy(() => import("./pages/dashboard/Chat"));
 const Login = lazy(() => import("./pages/Login"));
 const Landing = lazy(() => import("./pages/Landing"));
+const GmailCallback = lazy(() => import("./pages/GmailCallback"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
