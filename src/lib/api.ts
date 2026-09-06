@@ -7,7 +7,7 @@ export async function getAuthHeader(): Promise<Record<string, string>> {
     if (sessionStorage.getItem("cg_demo_mode")) {
       return { "X-Demo-Mode": "true" };
     }
-    const user = auth.currentUser;
+    const user = auth?.currentUser;
     if (user) {
       const token = await user.getIdToken();
       return { Authorization: `Bearer ${token}` };

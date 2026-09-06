@@ -1,6 +1,6 @@
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { initializeApp, type FirebaseApp } from "firebase/app";
+import { getFirestore, type Firestore } from "firebase/firestore";
+import { getStorage, type FirebaseStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -12,6 +12,20 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-export const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+export const firebaseConfigured = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
+
+let app: FirebaseApp | null = null;
+let db: Firestore | null = null;
+let storage: FirebaseStorage | null = null;
+
+if (firebaseConfigured) {
+  try {
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    storage = getStorage(app);
+  } catch (err) {
+    console.warn("Firebase initialization failed — running without Firebase:", err);
+  }
+}
+
+export { app, db, storage };

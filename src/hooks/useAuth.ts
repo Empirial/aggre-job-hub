@@ -9,16 +9,21 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (sessionStorage.getItem(DEMO_MODE_KEY) === "1") {
+    if (sessionStorage.getItem(DEMO_MODE_KEY) === "1" || !auth) {
       setLoading(false);
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
+    let unsubscribe: (() => void) | undefined;
+    try {
+      unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+        setUser(firebaseUser);
+        setLoading(false);
+      });
+    } catch {
       setLoading(false);
-    });
-    return () => unsubscribe();
+    }
+    return () => unsubscribe?.();
   }, []);
 
   const isDemo = sessionStorage.getItem(DEMO_MODE_KEY) === "1";
