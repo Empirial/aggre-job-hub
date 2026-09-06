@@ -1,6 +1,10 @@
 import { auth } from "./auth";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+// Live CareerGate AI server (Google Cloud Run, africa-south1).
+// Override locally with VITE_API_URL when running the backend on your machine.
+const API_BASE =
+  import.meta.env.VITE_API_URL ||
+  "https://careergate-api-93102026777.africa-south1.run.app";
 
 export async function getAuthHeader(): Promise<Record<string, string>> {
   try {
