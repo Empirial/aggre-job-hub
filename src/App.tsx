@@ -82,6 +82,7 @@ const App = () => (
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route element={<ProtectedRoute />}>
+                <Route path="/gmail/callback" element={<GmailCallback />} />
                 <Route element={<DashboardLayout />}>
                   <Route path="/dashboard" element={<Overview />} />
                   <Route path="/jobs" element={<JobsBoard />} />
