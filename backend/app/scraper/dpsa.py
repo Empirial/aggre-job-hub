@@ -213,7 +213,7 @@ class DPSAScraper(BaseScraper):
     def _posts_from_text(self, text: str, pdf_url: str) -> List[ScrapedJob]:
         lines = _normalise(text)
 
-        department = "Department of Public Service and Administration"
+        department = _department_from_text(text) or "South African Government"
         circular_closing: Optional[str] = None
         jobs: List[ScrapedJob] = []
         current: Optional[dict] = None
