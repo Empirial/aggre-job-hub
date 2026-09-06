@@ -11,6 +11,9 @@ import { toast } from "sonner";
 
 type GenerateState = "idle" | "generating" | "done";
 
+const sourceLabel = (source?: string) =>
+  source === "dpsa" ? "Government" : source === "manual" ? "Added by you" : "Job board";
+
 export default function JobDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -65,7 +68,7 @@ export default function JobDetail() {
         <Button variant="ghost" size="sm" onClick={() => navigate("/jobs")}>
           <ArrowLeft className="w-4 h-4 mr-1" /> Back
         </Button>
-        <p className="mt-6 text-sm text-red-400">Job not found or backend unavailable.</p>
+        <p className="mt-6 text-sm text-gray-500">We couldn't open this job. It may no longer be listed.</p>
       </div>
     );
   }
@@ -88,7 +91,7 @@ export default function JobDetail() {
             <span className="font-medium text-gray-700">{job.company}</span>
             <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{job.location}</span>
             {job.date_posted && <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{job.date_posted}</span>}
-            <span className="flex items-center gap-1 capitalize"><Globe className="w-3.5 h-3.5" />{job.source}</span>
+            <span className="flex items-center gap-1"><Globe className="w-3.5 h-3.5" />{sourceLabel(job.source)}</span>
             {job.url && (
               <a href={job.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-brand-500 hover:underline">
                 <ExternalLink className="w-3.5 h-3.5" /> View original
@@ -100,7 +103,7 @@ export default function JobDetail() {
           <div className="flex items-center gap-2">
             {job.ats_score && (
               <Badge className="bg-brand-50 text-brand-600 border-0 text-sm px-3 py-1">
-                {job.ats_score}% ATS
+                {job.ats_score}% match
               </Badge>
             )}
             {genState === "idle" && (
@@ -147,7 +150,7 @@ export default function JobDetail() {
           {job.keywords?.length > 0 && (
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-700">ATS Keywords</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-700">Words to include in your CV</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-1.5">
@@ -161,22 +164,22 @@ export default function JobDetail() {
 
           <Card className="border-0 shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700">Job Info</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-700">At a glance</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Source</span>
-                <span className="text-gray-700 font-medium capitalize">{job.source}</span>
+                <span className="text-gray-400">Listed by</span>
+                <span className="text-gray-700 font-medium">{sourceLabel(job.source)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">CV Generated</span>
+                <span className="text-gray-400">CV ready</span>
                 <span className={`font-medium ${job.cv_generated ? "text-emerald-600" : "text-gray-400"}`}>
                   {job.cv_generated ? "Yes" : "No"}
                 </span>
               </div>
               {job.ats_score && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">ATS Score</span>
+                  <span className="text-gray-400">CV match</span>
                   <span className="text-brand-600 font-medium">{job.ats_score}%</span>
                 </div>
               )}

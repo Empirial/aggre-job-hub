@@ -350,7 +350,7 @@ export default function Chat() {
         setDocumentName(null);
       }
     } catch {
-      setError("Zara is unavailable right now. Check your connection or API key.");
+      setError("Zara can't answer right now. Please check your internet and try again.");
     } finally {
       setLoading(false);
     }
