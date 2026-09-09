@@ -388,3 +388,69 @@ async def fill_pdf(
     except Exception as e:
         logger.error("Storage upload failed: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to save filled document")
+
+
+# ── Conversational form filling (Z83 and other government forms) ─────────────
+
+class FormChatRequest(BaseModel):
+    instruction: str
+    fields: list[str]
+    values: dict = {}
+    document_text: str = ""
+    profile: Optional[dict] = None
+
+
+@router.post("/form-chat")
+@limiter.limit("20/minute")
+async def form_chat(request: Request, body: FormChatRequest, uid: str = Depends(require_auth)):
+    """Apply a plain-language instruction to the current form values.
+
+    Returns a short reply plus the full updated value map, so the UI can
+    show the change immediately and let the user keep editing by hand.
+    """
+    system = (
+        "You help a South African job seeker fill in a government application form "
+        "(usually a Z83). You are given the form's field names, the values filled in "
+        "so far, the user's saved profile and an instruction in plain language.\n"
+        "Apply the instruction to the values. Only change the fields the instruction "
+        "affects, unless the user clearly asks you to fill in everything.\n"
+        "Never invent qualifications, ID numbers or dates that are not in the profile "
+        "or the instruction — leave those blank instead.\n"
+        'Return ONLY valid JSON: {"reply": "one short sentence", "values": {"<field>": "<value>"}} '
+        "where values contains every field name given, with its final value."
+    )
+    user = (
+        f"Form fields:\n{json.dumps(body.fields)}\n\n"
+        f"Current values:\n{json.dumps(body.values, indent=2)}\n\n"
+        f"User profile:\n{json.dumps(body.profile or {}, indent=2)}\n\n"
+        f"Form text (for context):\n{body.document_text[:2000]}\n\n"
+        f"Instruction:\n{body.instruction}"
+    )
+
+    raw = await _deepseek(
+        [{"role": "system", "content": system}, {"role": "user", "content": user}],
+        max_tokens=1200,
+    )
+
+    values = dict(body.values)
+    reply = ""
+    if raw:
+        try:
+            clean = raw.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+            parsed = json.loads(clean)
+            reply = str(parsed.get("reply", "")).strip()
+            new_values = parsed.get("values") or {}
+            if isinstance(new_values, dict):
+                for k, v in new_values.items():
+                    if k in body.fields:
+                        values[k] = "" if v is None else str(v)
+        except json.JSONDecodeError:
+            reply = raw.strip()
+
+    if not reply:
+        reply = "I could not work out that change — try naming the exact field, or edit it directly on the left."
+
+    for f in body.fields:
+        values.setdefault(f, "")
+
+    return {"reply": reply, "values": values}
