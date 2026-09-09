@@ -15,6 +15,7 @@ const CVEditor = lazy(() => import("./pages/dashboard/CVEditor"));
 const CVWorkspace = lazy(() => import("./pages/dashboard/CVWorkspace"));
 const Settings = lazy(() => import("./pages/dashboard/Settings"));
 const Chat = lazy(() => import("./pages/dashboard/Chat"));
+const Z83Form = lazy(() => import("./pages/dashboard/Z83Form"));
 const Login = lazy(() => import("./pages/Login"));
 const Landing = lazy(() => import("./pages/Landing"));
 const GmailCallback = lazy(() => import("./pages/GmailCallback"));
@@ -92,6 +93,7 @@ const App = () => (
                   <Route path="/cv-editor/tailor" element={<CVEditor />} />
                   <Route path="/cv-editor/:id" element={<CVWorkspace />} />
                   <Route path="/chat" element={<Chat />} />
+                  <Route path="/z83" element={<Z83Form />} />
                   <Route path="/settings" element={<Settings />} />
                 </Route>
               </Route>

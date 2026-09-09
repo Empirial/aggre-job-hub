@@ -8,6 +8,7 @@ import {
   Menu,
   X,
   MessageSquare,
+  FileCheck2,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -23,6 +24,7 @@ const navItems = [
   { to: "/dashboard", label: "Home", icon: LayoutDashboard, end: true },
   { to: "/jobs", label: "Find Jobs", icon: Briefcase },
   { to: "/cv-editor", label: "My CVs", icon: FileText },
+  { to: "/z83", label: "Z83 Form", icon: FileCheck2 },
   { to: "/chat", label: "Chat with Zara", icon: MessageSquare },
   { to: "/settings", label: "My Profile", icon: Settings },
 ];
