@@ -75,57 +75,9 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="border-b border-gray-100 bg-[#F0F2F5]">
-        <div className="max-w-6xl mx-auto px-5 py-16 lg:py-24">
-          <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-2 text-xs font-medium bg-brand-50 text-brand-700 px-3 py-1.5 rounded-full">
-              Built for South African job seekers
-            </span>
-            <h1 className="mt-5 text-4xl lg:text-5xl font-semibold text-gray-900 leading-[1.1]">
-              Apply to more jobs.
-              <br />
-              Do far less work.
-            </h1>
-            <p className="mt-5 text-base text-gray-600 max-w-xl leading-relaxed">
-              CareerGate finds the listings, reads the ATS requirements, rewrites your CV for each
-              role and tracks every application — so your effort goes into interviews, not admin.
-            </p>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <Link to="/dashboard">
-                <Button className="bg-[#F7941D] hover:bg-[#E08518] text-white">
-                  Start applying <ArrowRight className="w-4 h-4 ml-1.5" />
-                </Button>
-              </Link>
-              <a href="#jobs">
-                <Button variant="outline" className="border-gray-200 text-gray-700">
-                  Browse government vacancies
-                </Button>
-              </a>
-            </div>
-            <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-xs text-gray-500">
-              {["No CV rewriting by hand", "Government & private roles", "Free to start"].map((t) => (
-                <li key={t} className="flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5 text-emerald-600" /> {t}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
-
       {/* Public vacancies by department */}
       <JobsBrowse />
 
-      {/* Stats */}
-      <section className="max-w-6xl mx-auto px-5 py-10 grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((s) => (
-          <div key={s.label} className="px-4 py-3">
-            <p className="text-2xl font-semibold text-gray-900">{s.value}</p>
-            <p className="text-xs text-gray-500 mt-1">{s.label}</p>
-          </div>
-        ))}
-      </section>
 
       {/* How it works */}
       <section id="how" className="bg-[#F0F2F5] border-y border-gray-100">
