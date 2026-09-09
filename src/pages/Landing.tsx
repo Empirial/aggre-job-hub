@@ -77,8 +77,8 @@ export default function Landing() {
 
       {/* Hero */}
       <section className="border-b border-gray-100 bg-[#F0F2F5]">
-        <div className="max-w-6xl mx-auto px-5 py-16 lg:py-24 grid lg:grid-cols-2 gap-12 items-center">
-          <div>
+        <div className="max-w-6xl mx-auto px-5 py-16 lg:py-24">
+          <div className="max-w-2xl">
             <span className="inline-flex items-center gap-2 text-xs font-medium bg-brand-50 text-brand-700 px-3 py-1.5 rounded-full">
               Built for South African job seekers
             </span>
@@ -110,42 +110,6 @@ export default function Landing() {
                 </li>
               ))}
             </ul>
-          </div>
-
-          {/* Pipeline preview card */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-sm font-medium text-gray-700">Today's pipeline</p>
-              <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded">Live</span>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { l: "Jobs scraped", v: "42" },
-                { l: "CVs tailored", v: "12" },
-                { l: "Applications sent", v: "9" },
-                { l: "Interviews", v: "2" },
-              ].map((s) => (
-                <div key={s.l} className="rounded-xl bg-[#F0F2F5] px-4 py-3">
-                  <p className="text-xl font-semibold text-gray-900">{s.v}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{s.l}</p>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 space-y-2.5">
-              {[
-                { t: "Data Analyst — Absa", m: "Johannesburg · 92% ATS match" },
-                { t: "Software Developer — Capitec", m: "Stellenbosch · 88% ATS match" },
-                { t: "Admin Clerk — DPSA Circular 12", m: "Pretoria · Z83 ready" },
-              ].map((j) => (
-                <div key={j.t} className="flex items-center justify-between border-b border-gray-50 pb-2.5 last:border-0">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-gray-900 truncate">{j.t}</p>
-                    <p className="text-xs text-gray-400">{j.m}</p>
-                  </div>
-                  <span className="text-xs text-brand-600 bg-brand-50 px-2 py-0.5 rounded shrink-0">CV ready</span>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </section>
