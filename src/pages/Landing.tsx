@@ -77,7 +77,7 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto px-5 py-16">
           <h2 className="text-2xl font-semibold text-gray-900">How CareerGate works</h2>
           <p className="text-sm text-gray-600 mt-2 max-w-2xl">
-            Four steps run end to end. You only step in where judgement matters — approving what gets sent.
+            Four steps run end to end. You stay in control — you download and submit the final application yourself.
           </p>
           <div className="mt-8 grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             {steps.map((s, i) => (
@@ -120,9 +120,9 @@ export default function Landing() {
           <h2 className="text-2xl font-semibold text-gray-900">Questions</h2>
           <div className="mt-6 space-y-4">
             {[
-              { q: "Does it apply without me?", a: "No. Applications only go out once you review the tailored CV and approve it. The automation stops at your desk." },
+              { q: "Does it apply for me?", a: "No. CareerGate prepares your tailored CV and Z83 form — you download them and submit them to the department yourself." },
               { q: "Will the tailored CV be accurate?", a: "The AI rewrites wording and emphasis to mirror the job's keywords. It never invents experience — it works from the profile and CV you provide." },
-              { q: "Which jobs are covered?", a: "Only South African government posts, straight from the official DPSA circulars, with Z83 support. We deliberately leave private job boards out." },
+              { q: "Which jobs are covered?", a: "Only South African government posts, straight from the official DPSA circulars, with the Z83 form filled in for you. We deliberately leave private job boards out." },
               { q: "What does it cost?", a: "You can scrape jobs, tailor CVs and track applications from the dashboard at no cost while CareerGate is in early access." },
             ].map((f) => (
               <div key={f.q} className="bg-white rounded-xl border border-gray-100 p-5">
