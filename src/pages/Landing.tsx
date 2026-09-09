@@ -3,13 +3,12 @@ import {
   ArrowRight,
   Search,
   FileText,
-  SendHorizontal,
+  Download,
   BarChart3,
   ScanText,
   MessageSquare,
   ShieldCheck,
   Clock,
-  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/Logo";
@@ -29,30 +28,24 @@ const steps = [
   {
     icon: FileText,
     title: "We tailor the CV",
-    body: "Your base CV is rewritten per job to mirror those requirements — truthfully — and exported as a clean, ATS-safe .docx.",
+    body: "Your base CV is rewritten per job to mirror those requirements — truthfully — and exported as a clean, ATS-safe PDF.",
   },
   {
-    icon: SendHorizontal,
-    title: "You approve, we send",
-    body: "Review the tailored CV, hit send, and the application goes out by email. Status is tracked from sent to interview.",
+    icon: Download,
+    title: "You download and apply",
+    body: "Download your tailored CV and completed Z83 form, then submit them the way the department asks for it.",
   },
 ];
 
 const features = [
   { icon: BarChart3, title: "Application tracker", body: "Every application in one table — sent, pending, interview, rejected — with dates and ATS match scores." },
-  { icon: FileText, title: "Z83 & government ready", body: "Built for the South African market: DPSA circulars, Z83 forms, closing dates and rand salary bands." },
+  { icon: FileText, title: "Z83 form filler", body: "Fill the official Z83 by chatting or typing, then download the completed form ready to submit." },
   { icon: MessageSquare, title: "AI career chat", body: "Ask about a job spec, interview prep or salary expectations and get answers grounded in your own profile." },
   { icon: ScanText, title: "Document AI", body: "Upload an existing CV or certificate and we extract the detail straight into your profile — no retyping." },
   { icon: Clock, title: "Runs while you sleep", body: "The pipeline runs every morning at 6am, so new matches are waiting before you open the dashboard." },
   { icon: ShieldCheck, title: "Your data stays yours", body: "Documents are stored privately against your account and only used to build your applications." },
 ];
 
-const stats = [
-  { value: "Gov", label: "Official DPSA circulars" },
-  { value: "6am", label: "Daily pipeline run" },
-  { value: "< 60s", label: "To a tailored CV" },
-  { value: "100%", label: "ATS-safe exports" },
-];
 
 export default function Landing() {
   return (
