@@ -75,10 +75,57 @@ def add_manual_job(request: Request, body: ManualJobRequest, uid: str = Depends(
         raise HTTPException(status_code=500, detail="An internal error occurred")
 
 
+# How long a fresh scrape is considered good for everyone on the site.
+SCRAPE_FRESH_HOURS = 12
+# If a scrape started less than this many minutes ago, assume it is still running.
+SCRAPE_LOCK_MINUTES = 10
+
+
+def _hours_since(iso: str | None) -> float:
+    if not iso:
+        return 1e9
+    try:
+        then = datetime.fromisoformat(iso)
+        if then.tzinfo is None:
+            then = then.replace(tzinfo=timezone.utc)
+    except ValueError:
+        return 1e9
+    return (datetime.now(timezone.utc) - then).total_seconds() / 3600
+
+
 @router.post("/scrape", response_model=ScrapeResponse)
 @limiter.limit("10/minute")
 async def scrape_jobs(request: Request, body: ScrapeRequest, uid: str = Depends(require_auth)):
+    # Shared across all users: if someone already refreshed recently (or is
+    # refreshing right now), just hand back what is already in the database.
+    state = {}
+    try:
+        state = db.get_scrape_state() or {}
+    except Exception as e:
+        logger.warning("could not read scrape state: %s", e)
+
+    if not body.force:
+        since_done = _hours_since(state.get("last_completed_at"))
+        since_start = _hours_since(state.get("last_started_at"))
+        in_progress = bool(state.get("in_progress")) and since_start < SCRAPE_LOCK_MINUTES / 60
+        if since_done < SCRAPE_FRESH_HOURS or in_progress:
+            cached = [ScrapedJob(**j) for j in db.get_jobs(limit=250)]
+            return ScrapeResponse(
+                scraped=0,
+                saved=0,
+                jobs=cached,
+                cached=True,
+                last_updated=state.get("last_completed_at"),
+            )
+
+    started_at = datetime.now(timezone.utc).isoformat()
+    try:
+        db.set_scrape_state({"in_progress": True, "last_started_at": started_at})
+    except Exception as e:
+        logger.warning("could not set scrape state: %s", e)
+
     all_jobs: List[ScrapedJob] = []
+
 
     for source, scraper in scrapers.items():
         try:
