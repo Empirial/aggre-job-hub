@@ -233,6 +233,9 @@ export interface ScrapeResponse {
   scraped: number;
   saved: number;
   jobs: Job[];
+  /** True when the listings came from the shared refresh someone already did. */
+  cached?: boolean;
+  last_updated?: string | null;
 }
 
 export interface CVTailorResponse {
