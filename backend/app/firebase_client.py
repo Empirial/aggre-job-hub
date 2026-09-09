@@ -144,6 +144,24 @@ def job_exists(url: str) -> bool:
     return any(True for _ in docs)
 
 
+# ── Shared scrape state ───────────────────────────────────────────────────────
+# One shared record for the whole site: whoever refreshes first does the work,
+# everybody else reads the jobs that run already saved.
+
+def get_scrape_state() -> Dict[str, Any]:
+    if _use_memory or _db is None:
+        return _memory_store.setdefault("scrape_state", {})
+    doc = _db.collection("meta").document("scrape").get()
+    return doc.to_dict() if doc.exists else {}
+
+
+def set_scrape_state(data: Dict[str, Any]) -> None:
+    if _use_memory or _db is None:
+        _memory_store.setdefault("scrape_state", {}).update(data)
+        return
+    _db.collection("meta").document("scrape").set(data, merge=True)
+
+
 # ── User Profile ──────────────────────────────────────────────────────────────
 
 def get_profile(uid: str) -> Dict[str, Any]:

@@ -24,12 +24,15 @@ class ScrapeRequest(BaseModel):
     keywords: List[str] = Field(default=["software engineer", "developer"])
     location: str = "South Africa"
     max_per_source: int = 10
+    force: bool = False
 
 
 class ScrapeResponse(BaseModel):
     scraped: int
     saved: int
     jobs: List[ScrapedJob]
+    cached: bool = False
+    last_updated: Optional[str] = None
 
 
 class ManualJobRequest(BaseModel):

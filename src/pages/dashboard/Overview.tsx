@@ -90,7 +90,9 @@ export default function Overview() {
         <div className="text-xs text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">
           {scrape.data.saved > 0
             ? `${scrape.data.saved} new vacancies added.`
-            : "You're up to date — no new vacancies right now."}
+            : scrape.data.cached
+              ? "You're seeing this week's latest vacancies — already up to date."
+              : "You're up to date — no new vacancies right now."}
         </div>
       )}
 
