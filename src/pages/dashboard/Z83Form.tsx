@@ -301,7 +301,7 @@ export default function Z83Form() {
                   }
                 }}
                 rows={2}
-                placeholder='e.g. "My surname is Mphela and I have a driver&apos;s licence"'
+                placeholder={`e.g. "My surname is Mphela and I have a valid driver\u2019s licence"`}
                 className="resize-none"
                 disabled={!fields.length}
               />
