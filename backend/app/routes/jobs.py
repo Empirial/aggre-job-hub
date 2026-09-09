@@ -148,8 +148,21 @@ async def scrape_jobs(request: Request, body: ScrapeRequest, uid: str = Depends(
             db.save_job(job.model_dump())
             saved += 1
 
+    completed_at = datetime.now(timezone.utc).isoformat()
+    try:
+        db.set_scrape_state({
+            "in_progress": False,
+            "last_completed_at": completed_at,
+            "last_scraped": len(all_jobs),
+            "last_saved": saved,
+        })
+    except Exception as e:
+        logger.warning("could not update scrape state: %s", e)
+
     return ScrapeResponse(
         scraped=len(all_jobs),
         saved=saved,
         jobs=all_jobs,
+        cached=False,
+        last_updated=completed_at,
     )
