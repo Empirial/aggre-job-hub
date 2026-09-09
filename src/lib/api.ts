@@ -162,7 +162,37 @@ export const documentsApi = {
   },
   suggestFill: (body: { fields: string[]; document_text: string; profile?: unknown }) =>
     post<{ suggestions: Record<string, string> }>("/documents/suggest-fill", body),
+  extract: async (file: File): Promise<ExtractedForm> => {
+    const form = new FormData();
+    form.append("file", file);
+    const authHeader = await getAuthHeader();
+    const res = await fetch(`${API_BASE}/documents/extract`, {
+      method: "POST",
+      body: form,
+      headers: authHeader,
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+  formChat: (body: {
+    instruction: string;
+    fields: string[];
+    values: Record<string, string>;
+    document_text?: string;
+    profile?: unknown;
+  }) => post<{ reply: string; values: Record<string, string> }>("/documents/form-chat", body),
 };
+
+export interface ExtractedForm {
+  filename: string;
+  page_count: number;
+  text: string;
+  char_count: number;
+  fields: string[];
+  is_fillable: boolean;
+  ocr_used: boolean;
+}
+
 
 // ── Profile ───────────────────────────────────────────────────────────────────
 

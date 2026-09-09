@@ -3,13 +3,12 @@ import {
   ArrowRight,
   Search,
   FileText,
-  SendHorizontal,
+  Download,
   BarChart3,
   ScanText,
   MessageSquare,
   ShieldCheck,
   Clock,
-  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/Logo";
@@ -29,30 +28,24 @@ const steps = [
   {
     icon: FileText,
     title: "We tailor the CV",
-    body: "Your base CV is rewritten per job to mirror those requirements — truthfully — and exported as a clean, ATS-safe .docx.",
+    body: "Your base CV is rewritten per job to mirror those requirements — truthfully — and exported as a clean, ATS-safe PDF.",
   },
   {
-    icon: SendHorizontal,
-    title: "You approve, we send",
-    body: "Review the tailored CV, hit send, and the application goes out by email. Status is tracked from sent to interview.",
+    icon: Download,
+    title: "You download and apply",
+    body: "Download your tailored CV and completed Z83 form, then submit them the way the department asks for it.",
   },
 ];
 
 const features = [
   { icon: BarChart3, title: "Application tracker", body: "Every application in one table — sent, pending, interview, rejected — with dates and ATS match scores." },
-  { icon: FileText, title: "Z83 & government ready", body: "Built for the South African market: DPSA circulars, Z83 forms, closing dates and rand salary bands." },
+  { icon: FileText, title: "Z83 form filler", body: "Fill the official Z83 by chatting or typing, then download the completed form ready to submit." },
   { icon: MessageSquare, title: "AI career chat", body: "Ask about a job spec, interview prep or salary expectations and get answers grounded in your own profile." },
   { icon: ScanText, title: "Document AI", body: "Upload an existing CV or certificate and we extract the detail straight into your profile — no retyping." },
   { icon: Clock, title: "Runs while you sleep", body: "The pipeline runs every morning at 6am, so new matches are waiting before you open the dashboard." },
   { icon: ShieldCheck, title: "Your data stays yours", body: "Documents are stored privately against your account and only used to build your applications." },
 ];
 
-const stats = [
-  { value: "Gov", label: "Official DPSA circulars" },
-  { value: "6am", label: "Daily pipeline run" },
-  { value: "< 60s", label: "To a tailored CV" },
-  { value: "100%", label: "ATS-safe exports" },
-];
 
 export default function Landing() {
   return (
@@ -75,64 +68,16 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="border-b border-gray-100 bg-[#F0F2F5]">
-        <div className="max-w-6xl mx-auto px-5 py-16 lg:py-24">
-          <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-2 text-xs font-medium bg-brand-50 text-brand-700 px-3 py-1.5 rounded-full">
-              Built for South African job seekers
-            </span>
-            <h1 className="mt-5 text-4xl lg:text-5xl font-semibold text-gray-900 leading-[1.1]">
-              Apply to more jobs.
-              <br />
-              Do far less work.
-            </h1>
-            <p className="mt-5 text-base text-gray-600 max-w-xl leading-relaxed">
-              CareerGate finds the listings, reads the ATS requirements, rewrites your CV for each
-              role and tracks every application — so your effort goes into interviews, not admin.
-            </p>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <Link to="/dashboard">
-                <Button className="bg-[#F7941D] hover:bg-[#E08518] text-white">
-                  Start applying <ArrowRight className="w-4 h-4 ml-1.5" />
-                </Button>
-              </Link>
-              <a href="#jobs">
-                <Button variant="outline" className="border-gray-200 text-gray-700">
-                  Browse government vacancies
-                </Button>
-              </a>
-            </div>
-            <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-xs text-gray-500">
-              {["No CV rewriting by hand", "Government & private roles", "Free to start"].map((t) => (
-                <li key={t} className="flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5 text-emerald-600" /> {t}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
-
       {/* Public vacancies by department */}
       <JobsBrowse />
 
-      {/* Stats */}
-      <section className="max-w-6xl mx-auto px-5 py-10 grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((s) => (
-          <div key={s.label} className="px-4 py-3">
-            <p className="text-2xl font-semibold text-gray-900">{s.value}</p>
-            <p className="text-xs text-gray-500 mt-1">{s.label}</p>
-          </div>
-        ))}
-      </section>
 
       {/* How it works */}
       <section id="how" className="bg-[#F0F2F5] border-y border-gray-100">
         <div className="max-w-6xl mx-auto px-5 py-16">
           <h2 className="text-2xl font-semibold text-gray-900">How CareerGate works</h2>
           <p className="text-sm text-gray-600 mt-2 max-w-2xl">
-            Four steps run end to end. You only step in where judgement matters — approving what gets sent.
+            Four steps run end to end. You stay in control — you download and submit the final application yourself.
           </p>
           <div className="mt-8 grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             {steps.map((s, i) => (
@@ -175,9 +120,9 @@ export default function Landing() {
           <h2 className="text-2xl font-semibold text-gray-900">Questions</h2>
           <div className="mt-6 space-y-4">
             {[
-              { q: "Does it apply without me?", a: "No. Applications only go out once you review the tailored CV and approve it. The automation stops at your desk." },
+              { q: "Does it apply for me?", a: "No. CareerGate prepares your tailored CV and Z83 form — you download them and submit them to the department yourself." },
               { q: "Will the tailored CV be accurate?", a: "The AI rewrites wording and emphasis to mirror the job's keywords. It never invents experience — it works from the profile and CV you provide." },
-              { q: "Which jobs are covered?", a: "Only South African government posts, straight from the official DPSA circulars, with Z83 support. We deliberately leave private job boards out." },
+              { q: "Which jobs are covered?", a: "Only South African government posts, straight from the official DPSA circulars, with the Z83 form filled in for you. We deliberately leave private job boards out." },
               { q: "What does it cost?", a: "You can scrape jobs, tailor CVs and track applications from the dashboard at no cost while CareerGate is in early access." },
             ].map((f) => (
               <div key={f.q} className="bg-white rounded-xl border border-gray-100 p-5">
