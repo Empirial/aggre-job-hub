@@ -34,15 +34,8 @@ gcloud run deploy "$SERVICE" \
   --concurrency 20 \
   --min-instances 0 \
   --max-instances 5 \
-  --set-env-vars "GOOGLE_CLOUD_PROJECT=${PROJECT_ID},FIREBASE_STORAGE_BUCKET=${STORAGE_BUCKET},DEEPSEEK_API_URL=https://api.deepseek.com/v1/chat/completions,DEMO_MODE_ENABLED=true" \
-  --set-secrets "DEEPSEEK_API_KEY=DEEPSEEK_API_KEY:latest,GOOGLE_OAUTH_CLIENT_ID=GOOGLE_OAUTH_CLIENT_ID:latest,GOOGLE_OAUTH_CLIENT_SECRET=GOOGLE_OAUTH_CLIENT_SECRET:latest"
-
-# Gmail drafting needs a Google OAuth web client (Gmail API enabled) stored as the
-# GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET secrets, with these authorised
-# redirect URIs on the client:
-#   https://careergate.co.za/gmail/callback
-#   https://<your-lovable-preview-domain>/gmail/callback
-#   http://localhost:8080/gmail/callback
+  --set-env-vars "GOOGLE_CLOUD_PROJECT=${PROJECT_ID},FIREBASE_STORAGE_BUCKET=${STORAGE_BUCKET},DEEPSEEK_API_URL=https://api.deepseek.com/v1/chat/completions" \
+  --set-secrets "DEEPSEEK_API_KEY=DEEPSEEK_API_KEY:latest"
 
 echo
 echo "Deployed. Service URL:"

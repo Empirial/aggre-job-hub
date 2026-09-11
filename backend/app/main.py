@@ -20,7 +20,6 @@ from app.routes import jobs as jobs_router
 from app.routes import documents as documents_router
 from app.routes import chat as chat_router
 from app.routes import profile as profile_router
-from app.routes import gmail as gmail_router
 
 logger = logging.getLogger(__name__)
 
@@ -52,16 +51,19 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_origin_regex=r"https://.*\.lovable\.app|https://.*\.lovableproject\.com",
-    allow_credentials=True,
+    # No cookies/sessions are used anywhere in this app — every request authenticates
+    # via an explicit Authorization: Bearer header, sent by our own JS. Credentialed
+    # CORS (allow_credentials=True) would only add risk here, not capability, so it
+    # stays off even though the Lovable preview origin above is a wildcard.
+    allow_credentials=False,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "Accept", "X-Demo-Mode"],
+    allow_headers=["Content-Type", "Authorization", "Accept"],
 )
 
 app.include_router(jobs_router.router)
 app.include_router(documents_router.router)
 app.include_router(chat_router.router)
 app.include_router(profile_router.router)
-app.include_router(gmail_router.router)
 
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 DEEPSEEK_API_URL = os.getenv("DEEPSEEK_API_URL", "https://api.deepseek.com/v1/chat/completions")
@@ -103,6 +105,9 @@ async def tailor_cv(request: Request, body: CVTailorRequest, uid: str = Depends(
         tailored_experience = ATSMirror.rewrite_experience(
             body.profile.experience or [], body.job, body.analysis
         )
+        ats_score, matched_keywords, missing_keywords = ATSMirror.compute_match(
+            tailored_summary, tailored_skills, tailored_experience, body.analysis
+        )
 
         safe_name = re.sub(r'[^\w\-]', '_', body.profile.name)
         safe_title = re.sub(r'[^\w\-]', '_', body.job.title)
@@ -126,6 +131,9 @@ async def tailor_cv(request: Request, body: CVTailorRequest, uid: str = Depends(
             experience=tailored_experience,
             education=body.profile.education,
             docx_path=str(output_path),
+            ats_score=ats_score,
+            matched_keywords=matched_keywords,
+            missing_keywords=missing_keywords,
         )
     except Exception as exc:
         logger.error("tailor_cv failed: %s", exc, exc_info=True)

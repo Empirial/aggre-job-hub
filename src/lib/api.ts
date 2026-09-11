@@ -8,9 +8,6 @@ const API_BASE =
 
 export async function getAuthHeader(): Promise<Record<string, string>> {
   try {
-    if (sessionStorage.getItem("cg_demo_mode")) {
-      return { "X-Demo-Mode": "true" };
-    }
     const user = auth?.currentUser;
     if (user) {
       const token = await user.getIdToken();
@@ -22,38 +19,89 @@ export async function getAuthHeader(): Promise<Record<string, string>> {
   return {};
 }
 
-async function get<T>(path: string): Promise<T> {
+// AI-backed endpoints (tailoring, chat, document extraction) can legitimately
+// take longer than a typical CRUD call — give them more room before we give up.
+const DEFAULT_TIMEOUT_MS = 30_000;
+const AI_TIMEOUT_MS = 60_000;
+
+/** Turn a failed response into something a user should actually read — never
+ * the raw body (which can be a FastAPI validation-error blob or a stack trace). */
+export async function friendlyError(res: Response): Promise<string> {
+  let parsed: unknown = null;
+  try {
+    parsed = await res.json();
+  } catch {
+    /* not JSON — fall through to a status-based message */
+  }
+  if (parsed && typeof parsed === "object" && "detail" in parsed) {
+    const detail = (parsed as { detail: unknown }).detail;
+    if (typeof detail === "string" && detail.trim()) return detail;
+    if (Array.isArray(detail)) {
+      return "Some of the information you entered wasn't valid — please check and try again.";
+    }
+  }
+  if (res.status === 401) return "Please sign in again.";
+  if (res.status === 404) return "We couldn't find that.";
+  if (res.status === 429) return "You're doing that a bit too fast — please wait a moment and try again.";
+  if (res.status >= 500) return "Something went wrong on our end — please try again.";
+  return "Something went wrong. Please try again.";
+}
+
+export async function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeoutMs: number = DEFAULT_TIMEOUT_MS
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new Error("That took too long to respond — please try again.");
+    }
+    throw new Error("Couldn't reach the server — check your connection and try again.");
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function get<T>(path: string, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<T> {
   const authHeader = await getAuthHeader();
-  const res = await fetch(`${API_BASE}${path}`, { headers: { ...authHeader } });
-  if (!res.ok) throw new Error(await res.text());
+  const res = await fetchWithTimeout(`${API_BASE}${path}`, { headers: { ...authHeader } }, timeoutMs);
+  if (!res.ok) throw new Error(await friendlyError(res));
   return res.json();
 }
 
-async function post<T>(path: string, body: unknown): Promise<T> {
+async function post<T>(path: string, body: unknown, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<T> {
   const authHeader = await getAuthHeader();
-  const res = await fetch(`${API_BASE}${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...authHeader },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(await res.text());
+  const res = await fetchWithTimeout(
+    `${API_BASE}${path}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeader },
+      body: JSON.stringify(body),
+    },
+    timeoutMs
+  );
+  if (!res.ok) throw new Error(await friendlyError(res));
   return res.json();
 }
 
 async function getBlob(path: string): Promise<Blob> {
   const authHeader = await getAuthHeader();
-  const res = await fetch(`${API_BASE}${path}`, { headers: { ...authHeader } });
-  if (!res.ok) throw new Error(await res.text());
+  const res = await fetchWithTimeout(`${API_BASE}${path}`, { headers: { ...authHeader } });
+  if (!res.ok) throw new Error(await friendlyError(res));
   return res.blob();
 }
 
 async function del<T>(path: string): Promise<T> {
   const authHeader = await getAuthHeader();
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetchWithTimeout(`${API_BASE}${path}`, {
     method: "DELETE",
     headers: { ...authHeader },
   });
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) throw new Error(await friendlyError(res));
   return res.json();
 }
 
@@ -62,8 +110,8 @@ async function del<T>(path: string): Promise<T> {
 export const jobsApi = {
   list: () => get<Job[]>("/jobs"),
   listPublic: async (): Promise<Job[]> => {
-    const res = await fetch(`${API_BASE}/jobs/public`);
-    if (!res.ok) throw new Error(await res.text());
+    const res = await fetchWithTimeout(`${API_BASE}/jobs/public`);
+    if (!res.ok) throw new Error(await friendlyError(res));
     return res.json();
   },
   get: (id: string) => get<Job>(`/jobs/${id}`),
@@ -77,7 +125,7 @@ export const jobsApi = {
 
 export const chatApi = {
   send: (messages: { role: "user" | "assistant"; content: string }[], sessionId?: string) =>
-    post<{ reply: string; session_id: string }>("/chat", { messages, session_id: sessionId }),
+    post<{ reply: string; session_id: string }>("/chat", { messages, session_id: sessionId }, AI_TIMEOUT_MS),
   listSessions: () => get<ChatSession[]>("/chat/sessions"),
   getSession: (sessionId: string) => get<ChatSession>(`/chat/sessions/${sessionId}`),
   deleteSession: (sessionId: string) => del<{ status: string }>(`/chat/sessions/${sessionId}`),
@@ -87,7 +135,7 @@ export const agentApi = {
   send: (
     messages: { role: "user" | "assistant"; content: string }[],
     options?: { session_id?: string; document_text?: string; cv_context?: Partial<CVDraft> }
-  ) => post<AgentResponse>("/chat/agent", { messages, ...options }),
+  ) => post<AgentResponse>("/chat/agent", { messages, ...options }, AI_TIMEOUT_MS),
 };
 
 export interface AgentAction {
@@ -111,9 +159,9 @@ export interface AgentResponse {
 
 export const cvApi = {
   analyze: (job: { title: string; company?: string; description: string }): Promise<CVAnalyzeResponse> =>
-    post<CVAnalyzeResponse>("/analyze", job),
-  tailor: (body: unknown) => post<CVTailorResponse>("/tailor-cv", body),
-  coverLetter: (body: unknown) => post<{ cover_letter: string }>("/cover-letter", body),
+    post<CVAnalyzeResponse>("/analyze", job, AI_TIMEOUT_MS),
+  tailor: (body: unknown) => post<CVTailorResponse>("/tailor-cv", body, AI_TIMEOUT_MS),
+  coverLetter: (body: unknown) => post<{ cover_letter: string }>("/cover-letter", body, AI_TIMEOUT_MS),
   generateDocx: (body: unknown) => post<{ docx_path: string }>("/cv/generate-docx", body),
   download: (filename: string) => getBlob(`/download/${encodeURIComponent(filename)}`),
 };
@@ -138,12 +186,12 @@ export const documentsApi = {
     form.append("file", file);
     form.append("doc_type", docType);
     const authHeader = await getAuthHeader();
-    const res = await fetch(`${API_BASE}/documents/upload-profile`, {
-      method: "POST",
-      body: form,
-      headers: authHeader,
-    });
-    if (!res.ok) throw new Error(await res.text());
+    const res = await fetchWithTimeout(
+      `${API_BASE}/documents/upload-profile`,
+      { method: "POST", body: form, headers: authHeader },
+      AI_TIMEOUT_MS
+    );
+    if (!res.ok) throw new Error(await friendlyError(res));
     return res.json();
   },
   download: (docId: string) => getBlob(`/documents/profile-docs/${docId}/download`),
@@ -152,26 +200,26 @@ export const documentsApi = {
     form.append("file", file);
     form.append("values", JSON.stringify(values));
     const authHeader = await getAuthHeader();
-    const res = await fetch(`${API_BASE}/documents/fill`, {
-      method: "POST",
-      body: form,
-      headers: authHeader,
-    });
-    if (!res.ok) throw new Error(await res.text());
+    const res = await fetchWithTimeout(
+      `${API_BASE}/documents/fill`,
+      { method: "POST", body: form, headers: authHeader },
+      AI_TIMEOUT_MS
+    );
+    if (!res.ok) throw new Error(await friendlyError(res));
     return res.json();
   },
   suggestFill: (body: { fields: string[]; document_text: string; profile?: unknown }) =>
-    post<{ suggestions: Record<string, string> }>("/documents/suggest-fill", body),
+    post<{ suggestions: Record<string, string> }>("/documents/suggest-fill", body, AI_TIMEOUT_MS),
   extract: async (file: File): Promise<ExtractedForm> => {
     const form = new FormData();
     form.append("file", file);
     const authHeader = await getAuthHeader();
-    const res = await fetch(`${API_BASE}/documents/extract`, {
-      method: "POST",
-      body: form,
-      headers: authHeader,
-    });
-    if (!res.ok) throw new Error(await res.text());
+    const res = await fetchWithTimeout(
+      `${API_BASE}/documents/extract`,
+      { method: "POST", body: form, headers: authHeader },
+      AI_TIMEOUT_MS
+    );
+    if (!res.ok) throw new Error(await friendlyError(res));
     return res.json();
   },
   formChat: (body: {
@@ -180,7 +228,7 @@ export const documentsApi = {
     values: Record<string, string>;
     document_text?: string;
     profile?: unknown;
-  }) => post<{ reply: string; values: Record<string, string> }>("/documents/form-chat", body),
+  }) => post<{ reply: string; values: Record<string, string> }>("/documents/form-chat", body, AI_TIMEOUT_MS),
 };
 
 export interface ExtractedForm {
@@ -210,38 +258,6 @@ export const profileApi = {
   checkSaved: (jobId: string) => get<{ saved: boolean }>(`/profile/saved-jobs/${jobId}/status`),
 };
 
-// ── Gmail ─────────────────────────────────────────────────────────────────────
-
-export interface GmailStatus {
-  configured: boolean;
-  connected: boolean;
-  email: string;
-  connected_at?: string;
-}
-
-export interface GmailDraftPayload {
-  to?: string;
-  subject: string;
-  body: string;
-  attachment_filename?: string;
-  attachment_base64?: string;
-}
-
-export const gmailApi = {
-  status: () => get<GmailStatus>("/gmail/status"),
-  authUrl: (redirectUri: string) =>
-    post<{ url: string; state: string }>("/gmail/auth-url", { redirect_uri: redirectUri }),
-  exchange: (code: string, redirectUri: string) =>
-    post<{ status: string; email: string }>("/gmail/exchange", { code, redirect_uri: redirectUri }),
-  disconnect: () => del<{ status: string }>("/gmail/disconnect"),
-  createDraft: (payload: GmailDraftPayload) =>
-    post<{ status: string; draft_id: string; gmail_url: string }>("/gmail/draft", payload),
-};
-
-export const GMAIL_REDIRECT_URI = `${window.location.origin}/gmail/callback`;
-
-
-
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface Job {
@@ -251,7 +267,7 @@ export interface Job {
   location: string;
   description: string;
   url: string;
-  source: "indeed" | "pnet" | "linkedin" | "adzuna" | "jooble" | "careerjet" | "reed" | "themuse" | "dpsa" | "manual";
+  source: "dpsa" | "manual";
   date_posted?: string;
   ats_score?: number;
   keywords: string[];
@@ -274,6 +290,9 @@ export interface CVTailorResponse {
   experience: string[];
   education?: string;
   docx_path?: string;
+  ats_score?: number;
+  matched_keywords?: string[];
+  missing_keywords?: string[];
 }
 
 export interface CVAnalyzeResponse {

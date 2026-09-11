@@ -23,6 +23,9 @@ interface TailoredCV {
   experience: string[];
   education?: string;
   docx_path?: string;
+  ats_score?: number;
+  matched_keywords?: string[];
+  missing_keywords?: string[];
 }
 
 /** Pull bullet-point style duties out of a raw job description */
@@ -31,7 +34,7 @@ function extractDuties(description: string): string[] {
 
   const lines = description
     .split(/\n/)
-    .map((l) => l.replace(/^[\s\-\u2022\*\u00b7]+/, "").trim())
+    .map((l) => l.replace(/^[\s\-\u2022*\u00b7]+/, "").trim())
     .filter((l) => l.length > 20 && l.length < 200);
 
   // Prefer lines that start with action verbs or look like duties
@@ -42,38 +45,6 @@ function extractDuties(description: string): string[] {
   const fallback = lines.filter((l) => !dutyPattern.test(l));
 
   return [...duty, ...fallback].slice(0, 8);
-}
-
-const STOPWORDS = new Set([
-  "and","or","the","a","an","in","on","at","to","for","of","with","is","are","will",
-  "you","your","we","our","this","that","be","as","by","from","have","has","can","may",
-  "must","should","all","any","other","their","they","it","its","not","but","also",
-  "both","been","were","was","do","does","did","who","what","how","which","when",
-  "where","would","could","should","about","into","than","then","there","these",
-  "those","very","more","some","such","over","under","per","via","etc","i","me","my",
-]);
-
-function computeAtsMatch(jobDesc: string, tailored: TailoredCV) {
-  const extract = (text: string) =>
-    (text.toLowerCase().match(/\b[a-z][a-z+#.\-]{3,}\b/g) ?? []).filter(
-      (w) => !STOPWORDS.has(w)
-    );
-
-  const jobWords = new Set(extract(jobDesc));
-  const cvText = [
-    tailored.summary,
-    tailored.skills.join(" "),
-    tailored.experience.join(" "),
-  ].join(" ");
-  const cvWords = new Set(extract(cvText));
-
-  const matched = [...jobWords].filter((w) => cvWords.has(w));
-  const missing = [...jobWords]
-    .filter((w) => !cvWords.has(w))
-    .sort((a, b) => b.length - a.length)
-    .slice(0, 12);
-  const score = jobWords.size > 0 ? Math.round((matched.length / jobWords.size) * 100) : 0;
-  return { score, matchedCount: matched.length, total: jobWords.size, missing };
 }
 
 export default function CVEditor() {
@@ -431,10 +402,13 @@ export default function CVEditor() {
         </div>
       )}
 
-      {/* Match score */}
-      {tailored && selectedJob && (() => {
-        const ats = computeAtsMatch(selectedJob.description, tailored);
-        const color = ats.score >= 70 ? "green" : ats.score >= 45 ? "amber" : "red";
+      {/* Match score — computed server-side from the job's own extracted keywords */}
+      {tailored && selectedJob && tailored.ats_score !== undefined && (() => {
+        const score = tailored.ats_score ?? 0;
+        const matched = tailored.matched_keywords ?? [];
+        const missing = tailored.missing_keywords ?? [];
+        const total = matched.length + missing.length;
+        const color = score >= 70 ? "green" : score >= 45 ? "amber" : "red";
         const colorMap = {
           green: { bar: "bg-green-500", badge: "bg-green-50 text-green-700", ring: "ring-green-100" },
           amber: { bar: "bg-amber-400", badge: "bg-amber-50 text-amber-700", ring: "ring-amber-100" },
@@ -448,22 +422,22 @@ export default function CVEditor() {
                   <TrendingUp className="w-4 h-4 text-gray-400" />
                   <span className="text-sm font-medium text-gray-700">Match score</span>
                   <Badge className={`${colorMap.badge} border-0 text-xs font-semibold`}>
-                    {ats.score}%
+                    {score}%
                   </Badge>
                 </div>
-                <span className="text-xs text-gray-400">{ats.matchedCount} / {ats.total} keywords</span>
+                <span className="text-xs text-gray-400">{matched.length} / {total} keywords</span>
               </div>
               <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-500 ${colorMap.bar}`}
-                  style={{ width: `${ats.score}%` }}
+                  style={{ width: `${score}%` }}
                 />
               </div>
-              {ats.missing.length > 0 && (
+              {missing.length > 0 && (
                 <div className="space-y-1">
                   <p className="text-xs text-gray-400">Missing keywords — consider adding these to your CV:</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {ats.missing.map((kw) => (
+                    {missing.slice(0, 12).map((kw) => (
                       <span
                         key={kw}
                         className="px-2 py-0.5 rounded-md text-xs bg-gray-100 text-gray-500 font-mono"

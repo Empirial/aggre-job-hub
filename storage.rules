@@ -2,8 +2,13 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     match /{allPaths=**} {
-      // Deny all direct client access — files are served via backend API only.
-      // TODO: Add authenticated read access once Firebase Auth is wired up.
+      // Deny all direct client access, by design — not a placeholder. This bucket
+      // holds private user documents (uploaded CVs, supporting docs, filled Z83
+      // forms). The backend (routes/documents.py) is the only reader/writer: it
+      // verifies the caller's Firebase Auth token and that they own the document
+      // before touching Storage via the Admin SDK, which bypasses these rules
+      // entirely. Opening direct client reads here would let any signed-in user
+      // fetch any other user's documents by storage path.
       allow read, write: if false;
     }
   }

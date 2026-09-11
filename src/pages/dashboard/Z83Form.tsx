@@ -87,7 +87,7 @@ export default function Z83Form() {
     }
   }
 
-  async function useSaved(docId: string, filename: string) {
+  async function openSavedForm(docId: string, filename: string) {
     setLoadingForm(true);
     try {
       const blob = await documentsApi.download(docId);
@@ -219,7 +219,7 @@ export default function Z83Form() {
                     {savedForms.map((d) => (
                       <button
                         key={d.id}
-                        onClick={() => useSaved(d.id, d.original_filename)}
+                        onClick={() => openSavedForm(d.id, d.original_filename)}
                         className="w-full text-left text-sm px-3 py-2 rounded-lg border border-gray-100 hover:bg-gray-50 truncate"
                       >
                         {d.original_filename}

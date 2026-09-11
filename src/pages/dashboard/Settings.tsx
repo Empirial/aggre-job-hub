@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Save, Plus, X, Upload, FileText, Trash2, Loader2, User,
-  Briefcase, Code, GraduationCap, BookOpen, RefreshCw, Mail, CheckCircle2,
+  Briefcase, Code, GraduationCap, BookOpen, RefreshCw,
 } from "lucide-react";
 import { useZaraSuggest, ZaraTrigger, ZaraSuggestionCard } from "@/components/ZaraSuggest";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +17,7 @@ import {
   useUploadProfileDocument,
   useDeleteProfileDocument,
 } from "@/hooks/useProfileDocuments";
-import { documentsApi, gmailApi, GMAIL_REDIRECT_URI, type GmailStatus } from "@/lib/api";
+import { documentsApi } from "@/lib/api";
 import { toast } from "sonner";
 
 export default function Settings() {
@@ -493,9 +493,6 @@ One line per thing you've done. Zara rewrites these to match each job.
       {/* ── Documents ────────────────────────────────────────────────── */}
       <DocumentsSection />
 
-      {/* ── Gmail ────────────────────────────────────────────────────── */}
-      <GmailSection />
-
       {/* ── Sticky save bar ──────────────────────────────────────────── */}
       <div className="sticky bottom-0 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-white/90 backdrop-blur border-t border-gray-100 flex justify-end">
         <Button
@@ -696,90 +693,6 @@ function DocumentsSection() {
         </div>
 
         {error && <p className="text-xs text-red-400">{error}</p>}
-      </CardContent>
-    </Card>
-  );
-}
-
-
-// ── Gmail connection section ──────────────────────────────────────────────────
-
-function GmailSection() {
-  const [status, setStatus] = useState<GmailStatus | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-
-  const refresh = () => {
-    setLoading(true);
-    gmailApi
-      .status()
-      .then(setStatus)
-      .catch(() => setStatus(null))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(refresh, []);
-
-  const connect = async () => {
-    setBusy(true);
-    try {
-      const { url } = await gmailApi.authUrl(GMAIL_REDIRECT_URI);
-      window.location.href = url;
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not open Gmail sign-in. Please try again.");
-      setBusy(false);
-    }
-  };
-
-  const disconnect = async () => {
-    setBusy(true);
-    try {
-      await gmailApi.disconnect();
-      toast.success("Gmail unlinked.");
-      refresh();
-    } catch {
-      toast.error("Could not unlink Gmail. Please try again.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  if (loading || !status?.configured) return null;
-
-  return (
-    <Card className="border-0 shadow-sm">
-      <CardHeader className="pb-2 pt-4">
-        <CardTitle className="text-sm font-medium text-gray-700 flex items-center gap-2">
-          <Mail className="w-4 h-4 text-brand-600" />
-          Email your applications
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm text-gray-500">
-          Link your Gmail and Zara will write the application email, attach your tailored CV, and
-          leave it in your drafts. Nothing goes out until you press send.
-        </p>
-
-        {status.connected ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-emerald-100 bg-emerald-50 p-3">
-            <span className="flex items-center gap-2 text-sm text-emerald-800">
-              <CheckCircle2 className="w-4 h-4" />
-              Linked{status.email ? ` — ${status.email}` : ""}
-            </span>
-            <Button size="sm" variant="outline" disabled={busy} onClick={disconnect}>
-              Unlink
-            </Button>
-          </div>
-        ) : (
-          <Button
-            className="bg-brand-600 hover:bg-brand-700 text-white"
-            disabled={busy}
-            onClick={connect}
-          >
-            {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
-            Link my Gmail
-          </Button>
-        )}
       </CardContent>
     </Card>
   );

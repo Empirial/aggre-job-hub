@@ -31,6 +31,14 @@ _memory_store: Dict[str, Any] = {
 firebase_initialized: bool = False
 
 
+def _on_cloud_run() -> bool:
+    """Cloud Run sets K_SERVICE automatically — used to tell "really deployed"
+    apart from a developer running the backend locally with no Firebase
+    credentials set up. A function (not a module-level constant) so tests can
+    monkeypatch the env var without needing to reimport this module."""
+    return bool(os.getenv("K_SERVICE"))
+
+
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -62,6 +70,14 @@ def init_firebase() -> None:
     )
 
     if not creds_json and (not creds_path or not os.path.exists(creds_path)) and not use_adc:
+        if _on_cloud_run():
+            # A real deployment with no way to reach Firestore is a misconfiguration,
+            # not a mode to run in — refuse to start rather than silently serving
+            # every user from a per-instance in-memory store that vanishes on restart.
+            raise RuntimeError(
+                "No Firebase credentials found on Cloud Run — refusing to start in "
+                "data-loss (in-memory) mode. Check ADC / FIREBASE_CREDENTIALS_*."
+            )
         logger.warning("No Firebase credentials found — using in-memory store. Data will NOT persist.")
         _use_memory = True
         return
@@ -92,6 +108,9 @@ def init_firebase() -> None:
         firebase_initialized = True
         logger.info("Connected to Firestore.")
     except Exception as e:
+        if _on_cloud_run():
+            logger.error("Firebase init failed on Cloud Run: %s", e, exc_info=True)
+            raise RuntimeError("Firebase init failed on Cloud Run — refusing to start in data-loss (in-memory) mode.") from e
         logger.error("Firebase init failed: %s — falling back to in-memory store.", e, exc_info=True)
         _use_memory = True
 
@@ -382,10 +401,10 @@ def get_user_context(uid: str) -> Dict[str, Any]:
     }
 
 
-# ── Third-party integrations (Gmail OAuth tokens, etc.) ───────────────────────
+# ── Third-party integrations (unused today — kept generic for future reuse) ──
 
 def save_integration(uid: str, name: str, data: Dict[str, Any]) -> None:
-    """Persist an integration record (e.g. Gmail OAuth tokens) for a user."""
+    """Persist an integration record (e.g. a future OAuth token) for a user."""
     payload = {**data, "updated_at": _now()}
     if _use_memory or _db is None:
         _user_mem(uid).setdefault("integrations", {})[name] = payload

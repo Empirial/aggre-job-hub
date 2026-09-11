@@ -16,7 +16,6 @@ import {
 import { cn } from "@/lib/utils";
 import { useProfile } from "@/hooks/useProfile";
 import { signOut } from "@/lib/auth";
-import { DEMO_MODE_KEY } from "@/hooks/useAuth";
 import ChatBot from "@/components/ChatBot";
 import Logo from "@/components/Logo";
 
@@ -52,7 +51,6 @@ function Sidebar({
     .toUpperCase();
 
   async function handleLogout() {
-    sessionStorage.removeItem(DEMO_MODE_KEY);
     try {
       await signOut();
     } catch {

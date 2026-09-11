@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Calendar, Globe, Loader2, CheckCircle, ExternalLink, Download } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Globe, Loader2, CheckCircle, ExternalLink, Download, Bookmark, BookmarkCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useJob } from "@/hooks/useJobs";
 import { useProfile } from "@/hooks/useProfile";
+import { useIsJobSaved, useSaveJob, useRemoveSavedJob } from "@/hooks/useSavedJobs";
 import { cvApi, triggerBlobDownload } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -21,6 +22,18 @@ export default function JobDetail() {
   const { data: profile } = useProfile();
   const [genState, setGenState] = useState<GenerateState>("idle");
   const [docxPath, setDocxPath] = useState<string | null>(null);
+  const isSaved = useIsJobSaved(id!);
+  const saveJob = useSaveJob();
+  const removeSavedJob = useRemoveSavedJob();
+
+  const handleToggleSave = () => {
+    if (!id) return;
+    if (isSaved) {
+      removeSavedJob.mutate(id, { onError: () => toast.error("Couldn't remove this job. Please try again.") });
+    } else {
+      saveJob.mutate(id, { onError: () => toast.error("Couldn't save this job. Please try again.") });
+    }
+  };
 
   const handleGenerate = async () => {
     if (!job || !profile) return;
@@ -101,6 +114,19 @@ export default function JobDetail() {
         </div>
         <div className="flex flex-col items-end gap-2 shrink-0">
           <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className={isSaved ? "text-brand-600 border-brand-200" : "text-gray-500"}
+              onClick={handleToggleSave}
+              disabled={saveJob.isPending || removeSavedJob.isPending}
+            >
+              {isSaved ? (
+                <><BookmarkCheck className="w-4 h-4 mr-1.5" />Saved</>
+              ) : (
+                <><Bookmark className="w-4 h-4 mr-1.5" />Save</>
+              )}
+            </Button>
             {job.ats_score && (
               <Badge className="bg-brand-50 text-brand-600 border-0 text-sm px-3 py-1">
                 {job.ats_score}% match

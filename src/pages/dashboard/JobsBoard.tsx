@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search, MapPin, Calendar, RefreshCw, Loader2, Briefcase,
-  ChevronRight, ExternalLink,
+  ChevronRight, ExternalLink, Bookmark, BookmarkCheck,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useJobs, useScrapeJobs } from "@/hooks/useJobs";
+import { useIsJobSaved, useSaveJob, useRemoveSavedJob } from "@/hooks/useSavedJobs";
+import type { Job } from "@/lib/api";
 
 const scoreColor = (score?: number) => {
   if (!score) return "bg-gray-100 text-gray-400";
@@ -28,6 +30,91 @@ const sourceLabel = (source?: string) =>
 
 const sourceColor = (source?: string) =>
   source === "dpsa" ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-500";
+
+function JobCard({ job, onOpen }: { job: Job; onOpen: () => void }) {
+  const isSaved = useIsJobSaved(job.id);
+  const saveJob = useSaveJob();
+  const removeSavedJob = useRemoveSavedJob();
+
+  const toggleSave = (e: MouseEvent) => {
+    e.stopPropagation();
+    if (isSaved) removeSavedJob.mutate(job.id);
+    else saveJob.mutate(job.id);
+  };
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onOpen()}
+      className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-left hover:shadow-md hover:border-brand-100 transition-all group cursor-pointer"
+    >
+      {/* Top row */}
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2 group-hover:text-brand-600 transition-colors">
+            {job.title}
+          </p>
+          <p className="text-xs text-gray-500 mt-0.5 truncate">{job.company}</p>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={toggleSave}
+            aria-label={isSaved ? "Remove from saved jobs" : "Save this job"}
+            aria-pressed={isSaved}
+            className={`p-1 rounded-md transition-colors ${isSaved ? "text-brand-600" : "text-gray-300 hover:text-gray-500"}`}
+          >
+            {isSaved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+          </button>
+          {job.ats_score ? (
+            <Badge className={`text-xs border-0 font-semibold ${scoreColor(job.ats_score)}`}>
+              {job.ats_score}%
+            </Badge>
+          ) : (
+            <ChevronRight className="w-4 h-4 text-gray-300 mt-0.5 group-hover:text-brand-400 transition-colors" />
+          )}
+        </div>
+      </div>
+
+      {/* Meta row */}
+      <div className="flex items-center gap-3 flex-wrap">
+        {job.location && (
+          <span className="flex items-center gap-1 text-xs text-gray-400">
+            <MapPin className="w-3 h-3" />
+            {job.location}
+          </span>
+        )}
+        {job.date_posted && (
+          <span className="flex items-center gap-1 text-xs text-gray-400">
+            <Calendar className="w-3 h-3" />
+            {job.date_posted}
+          </span>
+        )}
+      </div>
+
+      {/* Footer row */}
+      <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
+        {job.source === "dpsa" || job.source === "manual" ? (
+          <Badge className={`text-xs border-0 ${sourceColor(job.source)}`}>
+            {sourceLabel(job.source)}
+          </Badge>
+        ) : (
+          <span />
+        )}
+        {job.cv_generated ? (
+          <span className="text-xs text-emerald-500 font-medium flex items-center gap-1">
+            <ExternalLink className="w-3 h-3" />
+            CV ready
+          </span>
+        ) : (
+          <span className="text-xs text-gray-400">Tailor my CV →</span>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function JobsBoard() {
   const navigate = useNavigate();
@@ -179,63 +266,7 @@ export default function JobsBoard() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((job) => (
-            <button
-              key={job.id}
-              onClick={() => navigate(`/jobs/${job.id}`)}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-left hover:shadow-md hover:border-brand-100 transition-all group"
-            >
-              {/* Top row */}
-              <div className="flex items-start justify-between gap-2 mb-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2 group-hover:text-brand-600 transition-colors">
-                    {job.title}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5 truncate">{job.company}</p>
-                </div>
-                {job.ats_score ? (
-                  <Badge className={`text-xs border-0 shrink-0 font-semibold ${scoreColor(job.ats_score)}`}>
-                    {job.ats_score}%
-                  </Badge>
-                ) : (
-                  <ChevronRight className="w-4 h-4 text-gray-300 shrink-0 mt-0.5 group-hover:text-brand-400 transition-colors" />
-                )}
-              </div>
-
-              {/* Meta row */}
-              <div className="flex items-center gap-3 flex-wrap">
-                {job.location && (
-                  <span className="flex items-center gap-1 text-xs text-gray-400">
-                    <MapPin className="w-3 h-3" />
-                    {job.location}
-                  </span>
-                )}
-                {job.date_posted && (
-                  <span className="flex items-center gap-1 text-xs text-gray-400">
-                    <Calendar className="w-3 h-3" />
-                    {job.date_posted}
-                  </span>
-                )}
-              </div>
-
-              {/* Footer row */}
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
-                {job.source === "dpsa" || job.source === "manual" ? (
-                  <Badge className={`text-xs border-0 ${sourceColor(job.source)}`}>
-                    {sourceLabel(job.source)}
-                  </Badge>
-                ) : (
-                  <span />
-                )}
-                {job.cv_generated ? (
-                  <span className="text-xs text-emerald-500 font-medium flex items-center gap-1">
-                    <ExternalLink className="w-3 h-3" />
-                    CV ready
-                  </span>
-                ) : (
-                  <span className="text-xs text-gray-400">Tailor my CV →</span>
-                )}
-              </div>
-            </button>
+            <JobCard key={job.id} job={job} onOpen={() => navigate(`/jobs/${job.id}`)} />
           ))}
         </div>
       )}

@@ -1,6 +1,6 @@
 from typing import List, Optional, Literal
 from pydantic import BaseModel, Field
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 # ── Job scraping ──────────────────────────────────────────────────────────────
@@ -17,7 +17,7 @@ class ScrapedJob(BaseModel):
     ats_score: Optional[int] = None
     keywords: List[str] = Field(default_factory=list)
     cv_generated: bool = False
-    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
 class ScrapeRequest(BaseModel):
@@ -84,6 +84,9 @@ class CVTailorResponse(BaseModel):
     experience: List[str]
     education: Optional[str] = None
     docx_path: Optional[str] = None
+    ats_score: Optional[int] = None
+    matched_keywords: List[str] = Field(default_factory=list)
+    missing_keywords: List[str] = Field(default_factory=list)
 
 
 class CVDocxRequest(BaseModel):

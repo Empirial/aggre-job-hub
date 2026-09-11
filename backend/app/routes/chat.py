@@ -9,7 +9,7 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 from app.limiter import limiter
-from app.auth import require_auth
+from app.auth import require_auth, rate_limit_key
 from app import firebase_client as db
 
 logger = logging.getLogger(__name__)
@@ -274,7 +274,7 @@ class ChatSession(BaseModel):
 
 
 @router.post("", response_model=ChatResponse)
-@limiter.limit("30/minute")
+@limiter.limit("30/minute", key_func=rate_limit_key)
 async def chat(request: Request, body: ChatRequest, uid: str = Depends(require_auth)):
     if not body.messages:
         raise HTTPException(status_code=400, detail="No messages provided")
@@ -456,7 +456,7 @@ def _parse_agent_response(raw: str) -> tuple[str, Optional[dict]]:
 
 
 @router.post("/agent", response_model=AgentResponse)
-@limiter.limit("30/minute")
+@limiter.limit("30/minute", key_func=rate_limit_key)
 async def agent_chat(request: Request, body: AgentRequest, uid: str = Depends(require_auth)):
     if not body.messages:
         raise HTTPException(status_code=400, detail="No messages provided")

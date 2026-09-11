@@ -76,7 +76,9 @@ def add_manual_job(request: Request, body: ManualJobRequest, uid: str = Depends(
 
 
 # How long a fresh scrape is considered good for everyone on the site.
-SCRAPE_FRESH_HOURS = 12
+# DPSA only publishes a new circular about once a week (Fridays), so there is
+# no daily cron — one shared scrape stays valid until the next circular is due.
+SCRAPE_FRESH_HOURS = 24 * 7
 # If a scrape started less than this many minutes ago, assume it is still running.
 SCRAPE_LOCK_MINUTES = 10
 

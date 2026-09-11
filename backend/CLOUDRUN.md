@@ -49,22 +49,19 @@ Put the URL in the project root `.env`:
 VITE_API_URL="https://careergate-api-xxxxx.africa-south1.run.app"
 ```
 
-## 6. Daily job scraper
+## 6. Job scraping — no cron needed
 
-Deploy the scraper as a Cloud Run Job triggered by Cloud Scheduler:
+There is no scheduled scraper and none is needed. `POST /jobs/scrape`
+(`app/routes/jobs.py`) is a shared, on-demand action: whoever triggers it
+(any signed-in user pressing "Scrape" in the Jobs Board) pulls the DPSA
+circular once, saves it to the shared `jobs` Firestore collection, and
+every other user just reads that same data — nobody scrapes their own
+copy. A 12-hour lock/cache (`SCRAPE_FRESH_HOURS`) stops back-to-back
+triggers from re-scraping needlessly.
 
-```bash
-gcloud run jobs deploy careergate-scraper \
-  --source . --region africa-south1 \
-  --command python --args=-m,app.jobs.schedule \
-  --set-env-vars "GOOGLE_CLOUD_PROJECT=jobs-e038b" \
-  --set-secrets "DEEPSEEK_API_KEY=DEEPSEEK_API_KEY:latest"
-
-gcloud scheduler jobs create http careergate-scraper-daily \
-  --location africa-south1 --schedule "0 4 * * *" \
-  --uri "https://africa-south1-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/jobs-e038b/jobs/careergate-scraper:run" \
-  --http-method POST --oauth-service-account-email "$(gcloud config get-value account)"
-```
+DPSA only publishes a new circular about once a week (Fridays), so a
+scrape earlier in the week already has the latest data — re-scraping mid-week
+just re-fetches the same circular.
 
 ## CORS
 

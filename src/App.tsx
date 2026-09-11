@@ -18,7 +18,6 @@ const Chat = lazy(() => import("./pages/dashboard/Chat"));
 const Z83Form = lazy(() => import("./pages/dashboard/Z83Form"));
 const Login = lazy(() => import("./pages/Login"));
 const Landing = lazy(() => import("./pages/Landing"));
-const GmailCallback = lazy(() => import("./pages/GmailCallback"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -84,7 +83,6 @@ const App = () => (
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route element={<ProtectedRoute />}>
-                <Route path="/gmail/callback" element={<GmailCallback />} />
                 <Route element={<DashboardLayout />}>
                   <Route path="/dashboard" element={<Overview />} />
                   <Route path="/jobs" element={<JobsBoard />} />

@@ -1,8 +1,25 @@
-from typing import List
+from typing import List, Tuple
 from app.models import JobAnalysisResponse
 
 
 class ATSMirror:
+    @staticmethod
+    def compute_match(
+        summary: str, skills: List[str], experience: List[str], analysis: JobAnalysisResponse
+    ) -> Tuple[int, List[str], List[str]]:
+        """Real ATS match score: what fraction of the job's own extracted
+        keywords/required skills actually show up in the tailored CV text.
+        Returns (score_0_to_100, matched_keywords, missing_keywords)."""
+        targets = list(dict.fromkeys([*analysis.keywords, *analysis.required_skills]))
+        if not targets:
+            return 0, [], []
+
+        cv_text = " ".join([summary or "", *skills, *experience]).lower()
+        matched = [kw for kw in targets if kw.lower() in cv_text]
+        missing = [kw for kw in targets if kw not in matched]
+        score = round((len(matched) / len(targets)) * 100)
+        return score, matched, missing
+
     @staticmethod
     def rewrite_summary(base_summary: str, job: object, analysis: JobAnalysisResponse) -> str:
         if base_summary:
